@@ -1,0 +1,159 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="slide-over" role="dialog" aria-modal="true">
+    <header class="slide-over-header">
+      <h2>{{ isEditMode ? 'Edit Vehicle' : 'Add Vehicle' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (lookupsLoading) {
+      <div class="state-message">Loading form options…</div>
+    } @else if (lookupsError) {
+      <div class="state-message state-message--error">{{ lookupsError }}</div>
+    } @else {
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field-grid">
+          <label class="field">
+            <span>Plate Number *</span>
+            <input type="text" formControlName="plate_number" />
+          </label>
+
+          <label class="field">
+            <span>Vehicle Type *</span>
+            <select formControlName="vehicle_type_id">
+              <option [ngValue]="''" disabled>Select type…</option>
+              @for (t of vehicleTypes; track t.id) {
+                <option [ngValue]="t.id">{{ t.name_en || t.name_ar }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Operating Dept</span>
+            <select formControlName="operating_department_id">
+              <option [ngValue]="null">—</option>
+              @for (d of departments; track d.id) {
+                <option [ngValue]="d.id">{{ d.name_en || d.name_ar }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Repair Dept (Workshop) *</span>
+            <select formControlName="maintenance_workshop_id">
+              <option [ngValue]="''" disabled>Select workshop…</option>
+              @for (w of workshops; track w.id) {
+                <option [ngValue]="w.id">{{ w.name_en || w.name_ar }} ({{ w.workshop_type }})</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Current Engine</span>
+            <select formControlName="current_engine_id">
+              <option [ngValue]="null">— None —</option>
+              @for (e of engines; track e.id) {
+                <option [ngValue]="e.id">{{ e.engine_serial_number }} — {{ e.model_name || 'Unknown model' }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Status *</span>
+            <select formControlName="status">
+              @for (s of statusOptions; track s.value) {
+                <option [ngValue]="s.value">{{ s.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Make</span>
+            <input type="text" formControlName="make" />
+          </label>
+
+          <label class="field">
+            <span>Model</span>
+            <input type="text" formControlName="model" />
+          </label>
+
+          <label class="field">
+            <span>Manufacture Year</span>
+            <input type="number" formControlName="manufacture_year" />
+          </label>
+
+          <label class="field">
+            <span>Chassis No.</span>
+            <input type="text" formControlName="chassis_number" />
+          </label>
+
+          <label class="field">
+            <span>Color</span>
+            <input type="text" formControlName="color" />
+          </label>
+
+          <label class="field">
+            <span>Odometer Reading</span>
+            <input type="number" formControlName="odometer_km" />
+          </label>
+
+          <label class="field">
+            <span>Odometer Unit</span>
+            <select formControlName="odometer_unit">
+              <option value="km">km</option>
+              <option value="hours">hours</option>
+              <option value="other">other</option>
+            </select>
+          </label>
+
+          <label class="field field--checkbox">
+            <input type="checkbox" formControlName="odometer_working" />
+            <span>Odometer working</span>
+          </label>
+
+          <label class="field">
+            <span>Last Odometer Reading Date</span>
+            <input type="date" formControlName="last_odometer_reading_date" />
+          </label>
+
+          <label class="field">
+            <span>Garage Location (if lodged)</span>
+            <select formControlName="current_garage_location_id">
+              <option [ngValue]="null">— Not lodged —</option>
+              @for (g of garageLocations; track g.id) {
+                <option [ngValue]="g.id">{{ g.garage_name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Custodian Name</span>
+            <input type="text" formControlName="custodian_name" />
+          </label>
+
+          <label class="field">
+            <span>Custodian Phone</span>
+            <input type="text" formControlName="custodian_phone" />
+          </label>
+
+          <label class="field field--wide">
+            <span>Notes</span>
+            <textarea formControlName="notes" rows="3"></textarea>
+          </label>
+        </div>
+
+        @if (saveError) {
+          <div class="state-message state-message--error">{{ saveError }}</div>
+        }
+
+        <footer class="slide-over-footer">
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving">
+            {{ saving ? 'Saving…' : (isEditMode ? 'Save Changes' : 'Add Vehicle') }}
+          </button>
+        </footer>
+      </form>
+    }
+  </aside>
+}

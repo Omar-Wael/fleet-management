@@ -1,0 +1,117 @@
+<div class="lookup-panel">
+  <header class="panel-header">
+    <div>
+      <h2>Maintenance Workshops</h2>
+      <p class="panel-subtitle">{{ rows.length }} workshop(s)</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
+      + Add Workshop
+    </button>
+  </header>
+
+  @if (saveError) {
+    <div class="state-message state-message--error">{{ saveError }}</div>
+  }
+
+  @if (loading) {
+    <div class="state-message">Loading workshops…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Name (Arabic)</th>
+            <th>Name (English)</th>
+            <th>Type</th>
+            <th>Location Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (addingNew) {
+            <tr class="editing-row">
+              <td>
+                <input type="text" [(ngModel)]="newDraft.name_ar" placeholder="الاسم بالعربي" />
+              </td>
+              <td><input type="text" [(ngModel)]="newDraft.name_en" placeholder="Name" /></td>
+              <td>
+                <select [(ngModel)]="newDraft.workshop_type">
+                  <option value="" disabled>Select type</option>
+                  @for (type of workshopTypes; track type) {
+                    <option [value]="type">{{ type }}</option>
+                  }
+                </select>
+              </td>
+              <td><input type="text" [(ngModel)]="newDraft.location_notes" /></td>
+              <td class="actions-cell">
+                <div class="actions-cell-btns">
+                  <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
+                    Save
+                  </button>
+                  <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @for (row of rows; track row.id) {
+            @if (row._draft) {
+              <tr class="editing-row">
+                <td><input type="text" [(ngModel)]="row._draft.name_ar" /></td>
+                <td><input type="text" [(ngModel)]="row._draft.name_en" /></td>
+                <td>
+                  <select [(ngModel)]="row._draft.workshop_type">
+                    <option value="" disabled>Select type</option>
+                    @for (type of workshopTypes; track type) {
+                      <option [value]="type">{{ type }}</option>
+                    }
+                  </select>
+                </td>
+                <td><input type="text" [(ngModel)]="row._draft.location_notes" /></td>
+                <td class="actions-cell">
+                  <div class="actions-cell-btns">
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="confirmEdit(row)"
+                      [disabled]="saving"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="cancelEdit(row)"
+                      [disabled]="saving"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              <tr>
+                <td>{{ row.name_ar }}</td>
+                <td>{{ row.name_en || '—' }}</td>
+                <td>{{ row.workshop_type }}</td>
+                <td>{{ row.location_notes || '—' }}</td>
+                <td class="actions-cell">
+                  <div class="actions-cell-btns">
+                    <button type="button" class="link-btn" (click)="startEdit(row)">Edit</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-row">No workshops yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

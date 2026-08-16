@@ -1,0 +1,51 @@
+<div class="tab-nav">
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'vehicle-cost'"
+    (click)="setTab('vehicle-cost')"
+  >
+    Cost by Vehicle
+  </button>
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'department-cost'"
+    (click)="setTab('department-cost')"
+  >
+    Cost by Department
+  </button>
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'technician-kpis'"
+    (click)="setTab('technician-kpis')"
+  >
+    Technician KPIs
+  </button>
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'vendor-pricing'"
+    (click)="setTab('vendor-pricing')"
+  >
+    Vendor Price Comparison
+  </button>
+</div>
+
+<div class="tab-content">
+  @switch (activeTab) {
+    @case ('vehicle-cost') {
+      <app-cost-by-vehicle></app-cost-by-vehicle>
+    }
+    @case ('department-cost') {
+      <app-cost-by-department></app-cost-by-department>
+    }
+    @case ('technician-kpis') {
+      <app-technician-kpis></app-technician-kpis>
+    }
+    @case ('vendor-pricing') {
+      <app-vendor-price-comparison></app-vendor-price-comparison>
+    }
+  }
+</div>

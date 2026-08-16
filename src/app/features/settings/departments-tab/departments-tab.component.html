@@ -1,0 +1,118 @@
+<div class="lookup-panel">
+  <header class="panel-header">
+    <div>
+      <h2>Operating Departments</h2>
+      <p class="panel-subtitle">{{ rows.length }} department(s)</p>
+    </div>
+    <div class="panel-actions">
+      <label class="filter-checkbox">
+        <input type="checkbox" [(ngModel)]="activeOnly" (change)="load()" />
+        Active only
+      </label>
+      <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
+        + Add Department
+      </button>
+    </div>
+  </header>
+
+  @if (saveError) {
+    <div class="state-message state-message--error">{{ saveError }}</div>
+  }
+
+  @if (loading) {
+    <div class="state-message">Loading departments…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Name (Arabic)</th>
+            <th>Name (English)</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (addingNew) {
+            <tr class="editing-row">
+              <td>
+                <input type="text" [(ngModel)]="newDraft.name_ar" placeholder="الاسم بالعربي" />
+              </td>
+              <td><input type="text" [(ngModel)]="newDraft.name_en" placeholder="Name" /></td>
+              <td>—</td>
+              <td class="actions-cell">
+                <div class="actions-cell-btns">
+                  <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
+                    Save
+                  </button>
+                  <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @for (row of rows; track row.id) {
+            @if (row._draft) {
+              <tr class="editing-row">
+                <td><input type="text" [(ngModel)]="row._draft.name_ar" /></td>
+                <td><input type="text" [(ngModel)]="row._draft.name_en" /></td>
+                <td>{{ row.is_active ? 'Active' : 'Inactive' }}</td>
+                <td class="actions-cell">
+                  <div class="actions-cell-btns">
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="confirmEdit(row)"
+                      [disabled]="saving"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="cancelEdit(row)"
+                      [disabled]="saving"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              <tr>
+                <td>{{ row.name_ar }}</td>
+                <td>{{ row.name_en || '—' }}</td>
+                <td>
+                  @if (row.is_active) {
+                    <span class="badge badge--ok">Active</span>
+                  } @else {
+                    <span class="badge badge--warn">Inactive</span>
+                  }
+                </td>
+                <td class="actions-cell">
+                  <div class="actions-cell-btns">
+                    <button type="button" class="link-btn" (click)="startEdit(row)">Edit</button>
+                    <button
+                      type="button"
+                      class="link-btn link-btn--danger"
+                      (click)="toggleActive(row)"
+                    >
+                      {{ row.is_active ? 'Deactivate' : 'Reactivate' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-row">No departments yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

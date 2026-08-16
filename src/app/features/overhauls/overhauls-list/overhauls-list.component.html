@@ -1,0 +1,113 @@
+<div class="overhauls-page">
+  <header class="page-header">
+    <div>
+      <h1>Overhauls</h1>
+      <p class="page-subtitle">{{ filteredOverhauls.length }} of {{ overhauls.length }} overhauls</p>
+    </div>
+
+    <div class="page-actions">
+      <input
+        #importFileInput
+        type="file"
+        accept=".xlsx,.xls,.csv,.pdf,.docx"
+        hidden
+        (change)="onFileSelected($event)"
+      />
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">Download Template</button>
+      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
+        {{ importing ? 'Importing…' : 'Import' }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">+ New Overhaul</button>
+    </div>
+  </header>
+
+  @if (importError) {
+    <div class="state-message state-message--error">{{ importError }}</div>
+  }
+
+  @if (importSummary) {
+    <div class="state-message state-message--ok">
+      Imported {{ importSummary.savedCount }} overhaul(s).
+      @if (importSummary.unresolvedCount) {
+        {{ importSummary.unresolvedCount }} row(s) skipped — check plate numbers match existing vehicles.
+      }
+    </div>
+  }
+
+  <div class="filters">
+    <input
+      type="text"
+      class="filters-search"
+      placeholder="Search plate, machine shop, scope…"
+      [(ngModel)]="searchTerm"
+    />
+    <label class="filter-checkbox">
+      <input type="checkbox" [(ngModel)]="openOnly" />
+      In progress only
+    </label>
+  </div>
+
+  @if (loading) {
+    <div class="state-message">Loading overhauls…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Vehicle</th>
+            <th>Machine Shop</th>
+            <th>Current Stage</th>
+            <th>Entry Date</th>
+            <th>Exit Date</th>
+            <th>Duration</th>
+            <th>Total Cost</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (o of filteredOverhauls; track o.id) {
+            <tr>
+              <td class="mono">{{ o.vehicles?.plate_number || '—' }}</td>
+              <td>{{ o.external_workshops?.name || '—' }}</td>
+              <td>
+                @if (o.current_stage === 'completed') {
+                  <span class="badge badge--ok">{{ stageLabels[o.current_stage] }}</span>
+                } @else {
+                  <span class="badge badge--warn">{{ stageLabels[o.current_stage] }}</span>
+                }
+              </td>
+              <td>{{ o.entry_date | date : 'mediumDate' }}</td>
+              <td>{{ o.exit_date ? (o.exit_date | date : 'mediumDate') : '—' }}</td>
+              <td class="mono">{{ totalDurationDays(o) }} d</td>
+              <td class="mono">{{ totalCost(o) | number : '1.2-2' }}</td>
+              <td class="actions-cell">
+                <button type="button" class="link-btn" (click)="openPipeline(o)">View</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-row">No overhauls match the current filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<app-overhaul-form
+  [open]="formOpen"
+  (closed)="onFormClosed()"
+  (saved)="onFormSaved()"
+></app-overhaul-form>
+
+<app-overhaul-pipeline-drawer
+  [open]="drawerOpen"
+  [overhaul]="selectedOverhaul"
+  (closed)="onDrawerClosed()"
+  (updated)="onDrawerUpdated()"
+></app-overhaul-pipeline-drawer>

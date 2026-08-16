@@ -1,0 +1,75 @@
+<div class="disbursements-page">
+  <header class="page-header">
+    <div>
+      <h2>Stock Disbursement Requests</h2>
+      <p class="page-subtitle">{{ requests.length }} request(s)</p>
+    </div>
+
+    <div class="page-actions">
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">+ New Request</button>
+    </div>
+  </header>
+
+  <div class="filters">
+    <select [(ngModel)]="statusFilter" (change)="loadRequests()">
+      <option value="">All Statuses</option>
+      @for (s of statusOptions; track s) {
+        <option [value]="s">{{ statusLabels[s] }}</option>
+      }
+    </select>
+  </div>
+
+  @if (loading) {
+    <div class="state-message">Loading requests…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Vehicle</th>
+            <th>Requested By</th>
+            <th>Status</th>
+            <th>Requested At</th>
+            <th>Parts</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of requests; track r.id) {
+            <tr>
+              <td class="mono">{{ r.vehicles?.plate_number || '—' }}</td>
+              <td>{{ r.technicians?.full_name || '—' }}</td>
+              <td><span class="badge">{{ statusLabels[r.status] }}</span></td>
+              <td>{{ r.requested_at | date : 'medium' }}</td>
+              <td class="parts-cell" [title]="itemsSummary(r)">{{ itemsSummary(r) }}</td>
+              <td class="actions-cell">
+                <button type="button" class="link-btn" (click)="openDetail(r)">View</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-row">No disbursement requests match the current filter.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<app-disbursement-form
+  [open]="formOpen"
+  (closed)="onFormClosed()"
+  (saved)="onFormSaved()"
+></app-disbursement-form>
+
+<app-disbursement-detail-drawer
+  [open]="drawerOpen"
+  [request]="selectedRequest"
+  (closed)="onDrawerClosed()"
+  (updated)="onDrawerUpdated()"
+></app-disbursement-detail-drawer>

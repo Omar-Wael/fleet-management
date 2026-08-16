@@ -1,0 +1,92 @@
+<div class="analytics-panel">
+  <header class="panel-header">
+    <div>
+      <h2>Technician KPIs</h2>
+      <p class="panel-subtitle">{{ rows.length }} technician(s), sorted by lowest bounce rate</p>
+    </div>
+
+    <div class="panel-actions">
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!rows.length">
+        Export Excel
+      </button>
+    </div>
+  </header>
+
+  @if (loading) {
+    <div class="state-message">Loading technician KPIs…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Technician</th>
+            <th>Work Orders</th>
+            <th>Bounces</th>
+            <th>Bounce Rate</th>
+            <th>Disbursement Requests</th>
+            <th>Overhaul Stages</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows; track r.technician_id) {
+            <tr class="row-clickable" (click)="toggleBounces(r.technician_id)">
+              <td>{{ r.full_name }}</td>
+              <td class="mono">{{ r.work_orders_count }}</td>
+              <td class="mono">{{ r.bounces_count }}</td>
+              <td>
+                <div class="rate-bar" [attr.title]="bouncePercent(r.bounce_rate) + '%'">
+                  <div class="rate-bar__fill" [style.width.%]="bouncePercent(r.bounce_rate)"></div>
+                </div>
+                <span class="rate-label mono">{{ bouncePercent(r.bounce_rate) }}%</span>
+              </td>
+              <td class="mono">{{ r.disbursement_requests_count }}</td>
+              <td class="mono">{{ r.overhaul_stages_worked }}</td>
+              <td class="expand-cell">{{ expandedTechnicianId === r.technician_id ? '▲' : '▼' }}</td>
+            </tr>
+            @if (expandedTechnicianId === r.technician_id) {
+              <tr class="expanded-row">
+                <td colspan="7">
+                  @if (bouncesLoading) {
+                    <div class="state-message state-message--inline">Loading bounce history…</div>
+                  } @else if (bouncesError) {
+                    <div class="state-message state-message--error">{{ bouncesError }}</div>
+                  } @else if (!bounces.length) {
+                    <div class="state-message state-message--inline">No repair bounces recorded.</div>
+                  } @else {
+                    <table class="sub-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Reason</th>
+                          <th>Days Between</th>
+                          <th>Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (b of bounces; track b.id) {
+                          <tr>
+                            <td>{{ b.created_at | date : 'mediumDate' }}</td>
+                            <td>{{ b.reason }}</td>
+                            <td class="mono">{{ b.days_between ?? '—' }}</td>
+                            <td>{{ b.notes || '—' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  }
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-row">No technician KPI data yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

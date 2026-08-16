@@ -1,0 +1,97 @@
+<div class="dashboard">
+  <header class="dashboard-header">
+    <div>
+      <p class="dashboard-eyebrow">Fleet Operations</p>
+      <h1 class="dashboard-title">Dashboard</h1>
+    </div>
+    <button type="button" class="refresh-btn" (click)="loadDashboard()" [disabled]="loading">
+      {{ loading ? 'Refreshing…' : 'Refresh' }}
+    </button>
+  </header>
+
+  @if (loadError) {
+    <div class="dashboard-error">
+      Couldn't load the dashboard: {{ loadError }}
+      <button type="button" (click)="loadDashboard()">Try again</button>
+    </div>
+  }
+
+  <!--
+    NOTE: this content is always rendered (not gated behind @if (!loading)),
+    so the <canvas> below is available to Chart.js from ngAfterViewInit
+    onward regardless of how long the data takes to arrive — see
+    renderCostChart() in the component. `[class.is-loading]` just dims it
+    slightly while a (re)load is in flight, rather than unmounting it.
+  -->
+  <div class="dashboard-content" [class.is-loading]="loading">
+    <!-- Top alert banners: licenses due / maintenance due this month -->
+    <app-alert-banner
+      [licenses]="summary.licensesDueThisMonth"
+      [maintenance]="summary.maintenanceDueThisMonth"
+      (viewLicenses)="onReviewLicenses()"
+      (viewMaintenance)="onReviewMaintenance()"
+    ></app-alert-banner>
+
+    <!-- KPI row: signature gauge + quick stat cards -->
+    <section class="kpi-row">
+      <div class="kpi-card kpi-card--gauge">
+        <app-fleet-gauge [value]="fleetHealthPercent" label="Vehicles active"></app-fleet-gauge>
+        <p class="kpi-subline">{{ activeVehicles }} of {{ totalVehicles }} vehicles active</p>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-value">{{ summary.licensesDueThisMonth.length }}</span>
+        <span class="kpi-label">Licenses due this month</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-value">{{ summary.maintenanceDueThisMonth.length }}</span>
+        <span class="kpi-label">Preventive maintenance due</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-value">{{ openOverhaulsCount }}</span>
+        <span class="kpi-label">Overhauls in progress</span>
+      </div>
+    </section>
+
+    <!-- Cost analytics + technician ranking -->
+    <section class="analytics-row">
+      <div class="panel panel--chart">
+        <h2 class="panel-title">Maintenance cost by operating department</h2>
+        <div class="chart-canvas-wrap">
+          <canvas #costChartCanvas></canvas>
+        </div>
+        @if (!departmentCostChartData.length) {
+          <p class="panel-empty">No recorded costs yet.</p>
+        }
+      </div>
+
+      <div class="panel panel--list">
+        <h2 class="panel-title">Technician performance</h2>
+        <p class="panel-subtitle">Ranked by lowest bounce rate</p>
+        @if (technicianKpis.length) {
+          <ol class="technician-list">
+            @for (t of technicianKpis; track t.technician_id) {
+              <li class="technician-row">
+                <span class="technician-name">{{ t.full_name }}</span>
+                <span class="technician-stats">
+                  <span class="stat">
+                    <span class="stat-value">{{ t.work_orders_count }}</span>
+                    <span class="stat-label">jobs</span>
+                  </span>
+                  <span class="stat">
+                    <span class="stat-value">{{ (t.bounce_rate * 100).toFixed(0) }}%</span>
+                    <span class="stat-label">bounce</span>
+                  </span>
+                </span>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="panel-empty">No technician activity recorded yet.</p>
+        }
+      </div>
+    </section>
+  </div>
+</div>

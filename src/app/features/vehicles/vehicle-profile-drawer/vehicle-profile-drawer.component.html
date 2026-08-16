@@ -1,0 +1,158 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>{{ profile?.vehicle?.plate_number || 'Vehicle Profile' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (loading) {
+      <div class="state-message">Loading vehicle profile…</div>
+    } @else if (loadError) {
+      <div class="state-message state-message--error">{{ loadError }}</div>
+    } @else if (profile) {
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>Overview</h3>
+          <dl>
+            <dt>Vehicle Type</dt>
+            <dd>{{ profile.vehicle.vehicle_types?.name_en || profile.vehicle.vehicle_types?.name_ar || '—' }}</dd>
+            <dt>Make / Model</dt>
+            <dd>{{ profile.vehicle.make || '—' }} {{ profile.vehicle.model || '' }}</dd>
+            <dt>Manufacture Year</dt>
+            <dd>{{ profile.vehicle.manufacture_year || '—' }}</dd>
+            <dt>Chassis No.</dt>
+            <dd>{{ profile.vehicle.chassis_number || '—' }}</dd>
+            <dt>Color</dt>
+            <dd>{{ profile.vehicle.color || '—' }}</dd>
+            <dt>Status</dt>
+            <dd><span class="badge">{{ profile.vehicle.status }}</span></dd>
+            <dt>Operating Dept</dt>
+            <dd>{{ profile.vehicle.operating_departments?.name_en || profile.vehicle.operating_departments?.name_ar || '—' }}</dd>
+            <dt>Repair Dept</dt>
+            <dd>{{ profile.vehicle.maintenance_workshops?.name_en || profile.vehicle.maintenance_workshops?.name_ar || '—' }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Engine</h3>
+          @if (profile.vehicle.engines) {
+            <dl>
+              <dt>Serial No.</dt>
+              <dd class="mono">{{ profile.vehicle.engines.engine_serial_number }}</dd>
+              <dt>Model</dt>
+              <dd>{{ profile.vehicle.engines.model_name || '—' }}</dd>
+              <dt>Fuel Type</dt>
+              <dd>{{ profile.vehicle.engines.fuel_type || '—' }}</dd>
+            </dl>
+          } @else {
+            <p class="muted">No engine currently assigned.</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>Odometer</h3>
+          <dl>
+            <dt>Reading</dt>
+            <dd class="mono">{{ profile.vehicle.odometer_km | number }} {{ profile.vehicle.odometer_unit }}</dd>
+            <dt>Working</dt>
+            <dd>
+              @if (profile.vehicle.odometer_working) {
+                <span class="badge badge--ok">Yes</span>
+              } @else {
+                <span class="badge badge--warn">No</span>
+              }
+            </dd>
+            <dt>Last Reading Date</dt>
+            <dd>{{ profile.vehicle.last_odometer_reading_date | date : 'mediumDate' }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Custodian</h3>
+          <dl>
+            <dt>Name</dt>
+            <dd>{{ profile.vehicle.custodian_name || '—' }}</dd>
+            <dt>Phone</dt>
+            <dd>{{ profile.vehicle.custodian_phone || '—' }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Last Maintenance</h3>
+          @if (profile.lastWorkOrder) {
+            <dl>
+              <dt>Opened</dt>
+              <dd>{{ profile.lastWorkOrder.opened_at | date : 'mediumDate' }}</dd>
+              <dt>Description</dt>
+              <dd>{{ profile.lastWorkOrder.description }}</dd>
+              <dt>Total Cost</dt>
+              <dd class="mono">{{ profile.lastWorkOrder.total_cost | number }}</dd>
+            </dl>
+          } @else {
+            <p class="muted">No work orders recorded yet.</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>Oil &amp; Filter</h3>
+          <dl>
+            <dt>Last Oil Change</dt>
+            <dd>{{ profile.lastOilChange?.change_date ? (profile.lastOilChange!.change_date | date : 'mediumDate') : '—' }}</dd>
+            <dt>Last Filter Change</dt>
+            <dd>{{ profile.lastFilterChange?.change_date ? (profile.lastFilterChange!.change_date | date : 'mediumDate') : '—' }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Licensing</h3>
+          @if (profile.licensing) {
+            <dl>
+              <dt>License Expiry</dt>
+              <dd>{{ profile.licensing.license_expiry_date | date : 'mediumDate' }}</dd>
+              <dt>Inspection Due</dt>
+              <dd>{{ profile.licensing.inspection_due_date | date : 'mediumDate' }}</dd>
+              <dt>Insurance Expiry</dt>
+              <dd>{{ profile.licensing.insurance_expiry_date | date : 'mediumDate' }}</dd>
+            </dl>
+          } @else {
+            <p class="muted">No licensing record on file.</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>Clutch Kit</h3>
+          <dl>
+            <dt>Last Change Date</dt>
+            <dd>{{ profile.vehicle.clutch_kit_last_change_date | date : 'mediumDate' }}</dd>
+            <dt>Last Change Odometer</dt>
+            <dd class="mono">{{ profile.vehicle.clutch_kit_last_change_odometer | number }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Status Flags</h3>
+          <div class="flag-row">
+            @if (profile.openOverhaul) {
+              <span class="badge badge--warn">Open Overhaul: {{ profile.openOverhaul.current_stage }}</span>
+            }
+            @if (profile.activeLodging) {
+              <span class="badge badge--warn">In Garage Lodging</span>
+            }
+            @if (!profile.openOverhaul && !profile.activeLodging) {
+              <span class="badge badge--ok">No open overhaul or lodging</span>
+            }
+          </div>
+        </section>
+
+        @if (profile.vehicle.notes) {
+          <section class="profile-section">
+            <h3>Notes</h3>
+            <p class="notes-text">{{ profile.vehicle.notes }}</p>
+          </section>
+        }
+      </div>
+    }
+  </aside>
+}

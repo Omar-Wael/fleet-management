@@ -1,0 +1,101 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="slide-over" role="dialog" aria-modal="true">
+    <header class="slide-over-header">
+      <h2>{{ isEditMode ? 'Edit Engine' : 'Add Engine' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (lookupsLoading) {
+      <div class="state-message">Loading form options…</div>
+    } @else {
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
+        @if (lookupsError) {
+          <div class="state-message state-message--error">{{ lookupsError }}</div>
+        }
+
+        <div class="field-grid">
+          <label class="field">
+            <span>Engine Serial No. *</span>
+            <input type="text" formControlName="engine_serial_number" />
+          </label>
+
+          <label class="field">
+            <span>Model</span>
+            <input type="text" formControlName="model_name" />
+          </label>
+
+          <label class="field">
+            <span>Manufacturer</span>
+            <input type="text" formControlName="manufacturer" />
+          </label>
+
+          <label class="field">
+            <span>Fuel Type</span>
+            <input type="text" formControlName="fuel_type" placeholder="e.g. diesel, petrol" />
+          </label>
+
+          <label class="field">
+            <span>Horsepower</span>
+            <input type="number" formControlName="horsepower" />
+          </label>
+
+          <label class="field">
+            <span>Displacement (cc)</span>
+            <input type="number" formControlName="cc" />
+          </label>
+
+          <label class="field field--checkbox">
+            <input type="checkbox" formControlName="is_in_stock" />
+            <span>In stock (not currently fitted to a vehicle)</span>
+          </label>
+
+          <label class="field field--wide">
+            <span>Notes</span>
+            <textarea formControlName="notes" rows="3"></textarea>
+          </label>
+        </div>
+
+        <section class="compat-section">
+          <h3>Compatible Vehicle Types</h3>
+          <div class="chip-grid">
+            @for (t of vehicleTypes; track t.id) {
+              <label class="chip" [class.chip--active]="selectedVehicleTypeIds.has(t.id)">
+                <input
+                  type="checkbox"
+                  [checked]="selectedVehicleTypeIds.has(t.id)"
+                  (change)="toggleVehicleType(t.id)"
+                />
+                {{ t.name_en || t.name_ar }}
+              </label>
+            }
+          </div>
+        </section>
+
+        <section class="compat-section">
+          <h3>Compatible Spare Parts</h3>
+          <div class="chip-grid">
+            @for (p of spareParts; track p.id) {
+              <label class="chip" [class.chip--active]="selectedPartIds.has(p.id)">
+                <input type="checkbox" [checked]="selectedPartIds.has(p.id)" (change)="togglePart(p.id)" />
+                {{ p.name_en || p.name_ar }}
+              </label>
+            }
+          </div>
+        </section>
+
+        @if (saveError) {
+          <div class="state-message state-message--error">{{ saveError }}</div>
+        }
+
+        <footer class="slide-over-footer">
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving">
+            {{ saving ? 'Saving…' : (isEditMode ? 'Save Changes' : 'Add Engine') }}
+          </button>
+        </footer>
+      </form>
+    }
+  </aside>
+}

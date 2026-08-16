@@ -1,0 +1,75 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="slide-over" role="dialog" aria-modal="true">
+    <header class="slide-over-header">
+      <h2>{{ (isEditMode ? 'technicians.editTitle' : 'technicians.addTitle') | translate }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (lookupsLoading) {
+      <div class="state-message">{{ 'technicians.loadingFormOptions' | translate }}</div>
+    } @else {
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
+        @if (lookupsError) {
+          <div class="state-message state-message--error">{{ lookupsError }}</div>
+        }
+
+        <div class="field-grid">
+          <label class="field field--wide">
+            <span>{{ 'technicians.fullName' | translate }} *</span>
+            <input type="text" formControlName="full_name" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'technicians.nationalId' | translate }}</span>
+            <input type="text" formControlName="national_id" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'technicians.specialty' | translate }}</span>
+            <input type="text" formControlName="specialty" [placeholder]="'technicians.specialtyPlaceholder' | translate" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'common.phone' | translate }}</span>
+            <input type="tel" formControlName="phone" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'technicians.hireDate' | translate }}</span>
+            <input type="date" formControlName="hire_date" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'technicians.workshop' | translate }}</span>
+            <select formControlName="workshop_id">
+              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
+              @for (w of workshops; track w.id) {
+                <option [ngValue]="w.id">{{ w.name_en || w.name_ar }} ({{ w.workshop_type }})</option>
+              }
+            </select>
+          </label>
+
+          <label class="field field--checkbox">
+            <input type="checkbox" formControlName="is_active" />
+            <span>{{ 'common.active' | translate }}</span>
+          </label>
+        </div>
+
+        @if (saveError) {
+          <div class="state-message state-message--error">{{ saveError }}</div>
+        }
+
+        <footer class="slide-over-footer">
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving">
+            {{ (saving ? 'common.saving' : (isEditMode ? 'common.saveChanges' : 'technicians.addButton')) | translate }}
+          </button>
+        </footer>
+      </form>
+    }
+  </aside>
+}

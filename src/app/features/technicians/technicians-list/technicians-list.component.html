@@ -1,0 +1,151 @@
+<div class="technicians-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'technicians.title' | translate }}</h1>
+      <p class="page-subtitle">
+        {{ filteredTechnicians.length }}/{{ technicians.length }}
+        {{ 'technicians.shown' | translate }}
+      </p>
+    </div>
+
+    <div class="page-actions">
+      <input
+        #importFileInput
+        type="file"
+        accept=".xlsx,.xls,.csv,.pdf,.docx"
+        hidden
+        (change)="onFileSelected($event)"
+      />
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">
+        {{ 'common.downloadTemplate' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="onImportButtonClick(importFileInput)"
+        [disabled]="importing"
+      >
+        {{ (importing ? 'common.importing' : 'common.import') | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">
+        {{ 'common.exportExcel' | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">
+        {{ 'common.exportPdf' | translate }}
+      </button>
+      <button type="button" class="btn btn--primary" (click)="openAddForm()">
+        {{ 'technicians.addButton' | translate }}
+      </button>
+    </div>
+  </header>
+
+  @if (importError) {
+    <div class="state-message state-message--error">{{ importError }}</div>
+  }
+
+  @if (importSummary) {
+    <div class="state-message state-message--ok">
+      {{ 'technicians.importedCount' | translate }} {{ importSummary.savedCount }}
+      {{ 'technicians.importedUnit' | translate }}
+      @if (importSummary.unresolvedCount) {
+        {{ importSummary.unresolvedCount }} {{ 'technicians.skippedRows' | translate }}
+      }
+    </div>
+  }
+
+  <div class="filters">
+    <input
+      type="text"
+      class="filters-search"
+      [placeholder]="'technicians.searchPlaceholder' | translate"
+      [(ngModel)]="searchTerm"
+    />
+
+    <select [(ngModel)]="workshopFilter">
+      <option value="">{{ 'common.allWorkshops' | translate }}</option>
+      @for (w of workshops; track w.id) {
+        <option [value]="w.id">{{ w.name_en || w.name_ar }}</option>
+      }
+    </select>
+
+    <label class="filter-checkbox">
+      <input type="checkbox" [(ngModel)]="activeOnly" (change)="loadTechnicians()" />
+      {{ 'common.activeOnly' | translate }}
+    </label>
+  </div>
+
+  @if (loading) {
+    <div class="state-message">{{ 'technicians.loadingList' | translate }}</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>{{ 'technicians.fullName' | translate }}</th>
+            <th>{{ 'technicians.nationalId' | translate }}</th>
+            <th>{{ 'technicians.specialty' | translate }}</th>
+            <th>{{ 'technicians.workshop' | translate }}</th>
+            <th>{{ 'common.phone' | translate }}</th>
+            <th>{{ 'technicians.hireDate' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of filteredTechnicians; track t.id) {
+            <tr>
+              <td>{{ t.full_name }}</td>
+              <td class="mono">{{ t.national_id || '—' }}</td>
+              <td>{{ t.specialty || '—' }}</td>
+              <td>{{ workshopName(t) }}</td>
+              <td class="mono">{{ t.phone || '—' }}</td>
+              <td>{{ t.hire_date ? (t.hire_date | date: 'mediumDate') : '—' }}</td>
+              <td>
+                @if (t.is_active) {
+                  <span class="badge badge--ok">{{ 'common.active' | translate }}</span>
+                } @else {
+                  <span class="badge badge--warn">{{ 'common.inactive' | translate }}</span>
+                }
+              </td>
+              <td class="actions-cell">
+                <div class="actions-cell-btns">
+                  <button type="button" class="link-btn" (click)="openProfile(t)">
+                    {{ 'common.view' | translate }}
+                  </button>
+                  <button type="button" class="link-btn" (click)="openEditForm(t)">
+                    {{ 'common.edit' | translate }}
+                  </button>
+                  <button type="button" class="link-btn link-btn--danger" (click)="toggleActive(t)">
+                    {{
+                      (t.is_active ? 'technicians.deactivate' : 'technicians.reactivate')
+                        | translate
+                    }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-row">{{ 'technicians.noResults' | translate }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<app-technician-form
+  [open]="formOpen"
+  [technician]="editingTechnician"
+  (closed)="onFormClosed()"
+  (saved)="onFormSaved()"
+></app-technician-form>
+
+<app-technician-profile-drawer
+  [open]="drawerOpen"
+  [technician]="selectedTechnician"
+  (closed)="onDrawerClosed()"
+></app-technician-profile-drawer>

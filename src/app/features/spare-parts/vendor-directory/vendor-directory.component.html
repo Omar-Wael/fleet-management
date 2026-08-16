@@ -1,0 +1,131 @@
+<div class="vendors-page">
+  <header class="page-header">
+    <div>
+      <h2>Vendor Directory</h2>
+      <p class="page-subtitle">{{ vendors.length }} vendor(s)</p>
+    </div>
+
+    <div class="page-actions">
+      <select [(ngModel)]="typeFilter" [ngModelOptions]="{ standalone: true }" (change)="loadAll()">
+        <option value="">All Types</option>
+        @for (t of vendorTypeOptions; track t.value) {
+          <option [value]="t.value">{{ t.label }}</option>
+        }
+      </select>
+      <button type="button" class="btn btn--primary" (click)="openAddForm()">+ Add Vendor</button>
+    </div>
+  </header>
+
+  @if (formOpen) {
+    <form class="add-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field-grid">
+        <label class="field">
+          <span>Name *</span>
+          <input type="text" formControlName="name" />
+        </label>
+
+        <label class="field">
+          <span>Vendor Type *</span>
+          <select formControlName="vendor_type">
+            @for (t of vendorTypeOptions; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Contact Person</span>
+          <input type="text" formControlName="contact_person" />
+        </label>
+
+        <label class="field">
+          <span>Phone</span>
+          <input type="text" formControlName="phone" />
+        </label>
+
+        <label class="field">
+          <span>Specialty</span>
+          <input type="text" formControlName="specialty" />
+        </label>
+
+        <label class="field">
+          <span>Address</span>
+          <input type="text" formControlName="address" />
+        </label>
+
+        <label class="field field--checkbox">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Active</span>
+        </label>
+      </div>
+
+      @if (saveError) {
+        <div class="state-message state-message--error">{{ saveError }}</div>
+      }
+
+      <div class="form-actions">
+        <button type="button" class="btn btn--ghost" (click)="cancelAddForm()" [disabled]="saving">Cancel</button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          {{ saving ? 'Saving…' : 'Add Vendor' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (loading) {
+    <div class="state-message">Loading vendors…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Contact</th>
+            <th>Phone</th>
+            <th>Active</th>
+            <th>Parts Supplied</th>
+            <th>Total Purchases</th>
+            <th>Avg Unit Price</th>
+            <th>Last Purchase</th>
+            <th>External Repairs</th>
+            <th>Avg Repair Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of vendors; track v.id) {
+            <tr>
+              <td>{{ v.name }}</td>
+              <td>{{ v.vendor_type }}</td>
+              <td>{{ v.contact_person || '—' }}</td>
+              <td>{{ v.phone || '—' }}</td>
+              <td>
+                @if (v.is_active) {
+                  <span class="badge badge--ok">Active</span>
+                } @else {
+                  <span class="badge badge--muted">Inactive</span>
+                }
+              </td>
+              <td class="mono">{{ v.performance?.distinct_parts_supplied ?? '—' }}</td>
+              <td class="mono">{{ v.performance?.total_purchases ?? '—' }}</td>
+              <td class="mono">
+                {{ v.performance?.avg_unit_price != null ? (v.performance!.avg_unit_price | number : '1.2-2') : '—' }}
+              </td>
+              <td>{{ v.performance?.last_purchase_date ? (v.performance!.last_purchase_date | date : 'mediumDate') : '—' }}</td>
+              <td class="mono">{{ v.performance?.external_repairs_count ?? '—' }}</td>
+              <td class="mono">
+                {{ v.performance?.avg_external_repair_cost != null ? (v.performance!.avg_external_repair_cost | number : '1.2-2') : '—' }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="11" class="empty-row">No vendors match the current filter.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

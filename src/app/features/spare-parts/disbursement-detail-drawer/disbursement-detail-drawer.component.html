@@ -1,0 +1,123 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>{{ request?.vehicles?.plate_number || 'Disbursement Request' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (request) {
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>Overview</h3>
+          <dl>
+            <dt>Status</dt>
+            <dd><span class="badge">{{ statusLabels[request.status] }}</span></dd>
+            <dt>Requested By</dt>
+            <dd>{{ request.technicians?.full_name || '—' }}</dd>
+            <dt>Requested At</dt>
+            <dd>{{ request.requested_at | date : 'medium' }}</dd>
+            <dt>Issued At</dt>
+            <dd>{{ request.issued_at ? (request.issued_at | date : 'medium') : '—' }}</dd>
+            @if (request.purchase_committee_receiver_name) {
+              <dt>Committee Receiver</dt>
+              <dd>{{ request.purchase_committee_receiver_name }}</dd>
+            }
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Parts</h3>
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Part</th>
+                <th>Qty</th>
+                <th>Unit Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of request.stock_disbursement_items; track item.id) {
+                <tr>
+                  <td>{{ item.spare_parts?.name_ar || '—' }}</td>
+                  <td class="mono">{{ item.qty }}</td>
+                  <td class="mono">{{ item.unit_cost_at_issue != null ? (item.unit_cost_at_issue | number : '1.2-2') : '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="3" class="muted">No items recorded.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (itemsTotal > 0) {
+            <p class="items-total">Total: <span class="mono">{{ itemsTotal | number : '1.2-2' }}</span></p>
+          }
+        </section>
+
+        @if (request.notes) {
+          <section class="profile-section">
+            <h3>Notes</h3>
+            <p class="notes-text">{{ request.notes }}</p>
+          </section>
+        }
+
+        <section class="profile-section">
+          <h3>Status History</h3>
+          @if (loading) {
+            <p class="muted">Loading…</p>
+          } @else if (loadError) {
+            <p class="state-message state-message--error">{{ loadError }}</p>
+          } @else if (history.length) {
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Status</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (h of history; track h.id) {
+                  <tr>
+                    <td>{{ h.changed_at | date : 'medium' }}</td>
+                    <td>{{ statusLabels[h.status] }}</td>
+                    <td>{{ h.changed_note || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="muted">No status changes recorded yet.</p>
+          }
+        </section>
+
+        @if (nextStatuses.length) {
+          <section class="profile-section">
+            <h3>Advance Status</h3>
+
+            @if (nextStatuses.includes('purchase_committee_received')) {
+              <label class="field">
+                <span>Purchase Committee Receiver Name</span>
+                <input type="text" [(ngModel)]="receiverName" placeholder="Required for this transition" />
+              </label>
+            }
+
+            @if (advanceError) {
+              <p class="state-message state-message--error">{{ advanceError }}</p>
+            }
+
+            <div class="advance-actions">
+              @for (status of nextStatuses; track status) {
+                <button type="button" class="btn btn--primary" [disabled]="advancing" (click)="advanceTo(status)">
+                  {{ advancing ? 'Updating…' : 'Mark as ' + statusLabels[status] }}
+                </button>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
+  </aside>
+}

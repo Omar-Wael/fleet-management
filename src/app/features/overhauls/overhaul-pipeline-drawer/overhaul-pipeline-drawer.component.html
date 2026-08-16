@@ -1,0 +1,103 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>{{ overhaul?.vehicles?.plate_number || 'Overhaul' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (overhaul) {
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>Overview</h3>
+          <dl>
+            <dt>Machine Shop</dt>
+            <dd>{{ overhaul.external_workshops?.name || '—' }}</dd>
+            <dt>Entry Date</dt>
+            <dd>{{ overhaul.entry_date | date : 'mediumDate' }}</dd>
+            <dt>Exit Date</dt>
+            <dd>{{ overhaul.exit_date ? (overhaul.exit_date | date : 'mediumDate') : '—' }}</dd>
+            <dt>Total Duration</dt>
+            <dd class="mono">{{ totalDurationDays }} days</dd>
+            <dt>Total Cost</dt>
+            <dd class="mono">{{ totalCost | number : '1.2-2' }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Scope</h3>
+          <p class="notes-text">{{ overhaul.scope_description }}</p>
+        </section>
+
+        <section class="profile-section">
+          <h3>Pipeline</h3>
+          <div class="pipeline">
+            @for (stage of stageOrder; track stage; let i = $index) {
+              <div
+                class="pipeline-step"
+                [class.pipeline-step--done]="i < currentStageIndex"
+                [class.pipeline-step--current]="i === currentStageIndex"
+              >
+                <span class="pipeline-dot"></span>
+                <span class="pipeline-label">{{ stageLabels[stage] }}</span>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <h3>Stage History</h3>
+          @if (loading) {
+            <p class="muted">Loading…</p>
+          } @else if (loadError) {
+            <p class="state-message state-message--error">{{ loadError }}</p>
+          } @else if (stageHistory.length) {
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>Stage</th>
+                  <th>Entered</th>
+                  <th>Exited</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of stageHistory; track s.id) {
+                  <tr>
+                    <td>{{ stageLabels[s.stage] }}</td>
+                    <td>{{ s.entered_at | date : 'medium' }}</td>
+                    <td>{{ s.exited_at ? (s.exited_at | date : 'medium') : '—' }}</td>
+                    <td class="mono">{{ formatDuration(s.duration_seconds) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="muted">No stage history yet.</p>
+          }
+        </section>
+
+        @if (remainingStages.length) {
+          <section class="profile-section">
+            <h3>Advance Stage</h3>
+
+            @if (advanceError) {
+              <p class="state-message state-message--error">{{ advanceError }}</p>
+            }
+
+            <div class="advance-actions">
+              @for (stage of remainingStages; track stage) {
+                <button type="button" class="btn btn--primary" [disabled]="advancing" (click)="advanceTo(stage)">
+                  {{ advancing ? 'Updating…' : 'Advance to ' + stageLabels[stage] }}
+                </button>
+              }
+            </div>
+          </section>
+        } @else {
+          <p class="muted">This overhaul has reached the final stage.</p>
+        }
+      </div>
+    }
+  </aside>
+}

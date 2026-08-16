@@ -1,0 +1,102 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="slide-over" role="dialog" aria-modal="true">
+    <header class="slide-over-header">
+      <h2>New Disbursement Request</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (lookupsLoading) {
+      <div class="state-message">Loading form options…</div>
+    } @else {
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
+        @if (lookupsError) {
+          <div class="state-message state-message--error">{{ lookupsError }}</div>
+        }
+
+        <div class="field-grid">
+          <label class="field">
+            <span>Vehicle *</span>
+            <select formControlName="vehicle_id" (change)="onVehicleChange()">
+              <option [ngValue]="''" disabled>Select vehicle…</option>
+              @for (v of vehicles; track v.id) {
+                <option [ngValue]="v.id">{{ v.plate_number }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Requested By (Technician) *</span>
+            <select formControlName="requested_by_technician_id">
+              <option [ngValue]="''" disabled>Select technician…</option>
+              @for (t of technicians; track t.id) {
+                <option [ngValue]="t.id">{{ t.full_name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field field--wide">
+            <span>Linked Work Order (optional)</span>
+            <select formControlName="work_order_id">
+              <option [ngValue]="null">— None —</option>
+              @for (w of workOrders; track w.id) {
+                <option [ngValue]="w.id">{{ w.description }} ({{ w.opened_at | slice : 0 : 10 }})</option>
+              }
+            </select>
+          </label>
+
+          <label class="field field--wide">
+            <span>Notes</span>
+            <textarea formControlName="notes" rows="2"></textarea>
+          </label>
+        </div>
+
+        <section class="items-section">
+          <div class="items-header">
+            <h3>Parts Requested</h3>
+            <button type="button" class="link-btn" (click)="addItemRow()">+ Add line</button>
+          </div>
+
+          @for (row of items; track $index; let i = $index) {
+            <div class="item-row">
+              <select [(ngModel)]="row.spare_part_id" [ngModelOptions]="{ standalone: true }" (change)="onItemPartChange(row)">
+                <option value="" disabled>Select part…</option>
+                @for (p of spareParts; track p.id) {
+                  <option [value]="p.id">
+                    {{ p.name_en || p.name_ar }}{{ isCompatible(p.id) ? ' ✓ compatible' : '' }}
+                  </option>
+                }
+              </select>
+
+              <input
+                type="number"
+                min="1"
+                class="qty-input"
+                [(ngModel)]="row.qty"
+                [ngModelOptions]="{ standalone: true }"
+              />
+
+              <button type="button" class="icon-btn" (click)="removeItemRow(i)" aria-label="Remove line">✕</button>
+
+              @if (row.lastDisbursementNote) {
+                <div class="item-note">{{ row.lastDisbursementNote }}</div>
+              }
+            </div>
+          }
+        </section>
+
+        @if (saveError) {
+          <div class="state-message state-message--error">{{ saveError }}</div>
+        }
+
+        <footer class="slide-over-footer">
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving">
+            {{ saving ? 'Saving…' : 'Create Request' }}
+          </button>
+        </footer>
+      </form>
+    }
+  </aside>
+}

@@ -1,0 +1,114 @@
+<div class="work-orders-page">
+  <header class="page-header">
+    <div>
+      <h2>Work Orders</h2>
+      <p class="page-subtitle">{{ filteredWorkOrders.length }} of {{ workOrders.length }} work orders</p>
+    </div>
+
+    <div class="page-actions">
+      <input
+        #importFileInput
+        type="file"
+        accept=".xlsx,.xls,.csv,.pdf,.docx"
+        hidden
+        (change)="onFileSelected($event)"
+      />
+      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">Import</button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">+ New Work Order</button>
+    </div>
+  </header>
+
+  @if (importing) {
+    <div class="state-message">Importing…</div>
+  }
+  @if (importError) {
+    <div class="state-message state-message--error">{{ importError }}</div>
+  }
+  @if (importSummary) {
+    <div class="state-message state-message--ok">
+      Imported {{ importSummary.savedCount }} work order(s).
+      @if (importSummary.unresolvedCount) {
+        {{ importSummary.unresolvedCount }} row(s) skipped — check plate numbers.
+      }
+    </div>
+  }
+
+  <div class="filters">
+    <input
+      type="text"
+      class="filters-search"
+      placeholder="Search plate, description, type…"
+      [(ngModel)]="searchTerm"
+    />
+    <label class="filter-checkbox">
+      <input type="checkbox" [(ngModel)]="openOnly" />
+      Open only
+    </label>
+  </div>
+
+  @if (loading) {
+    <div class="state-message">Loading work orders…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Vehicle</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Opened</th>
+            <th>Status</th>
+            <th>Odometer</th>
+            <th>Total Cost</th>
+            <th>Technicians</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (w of filteredWorkOrders; track w.id) {
+            <tr>
+              <td class="mono">{{ w.vehicles?.plate_number || '—' }}</td>
+              <td>{{ w.maintenance_type || '—' }}</td>
+              <td class="desc-cell" [title]="w.description">{{ w.description }}</td>
+              <td>{{ w.opened_at | date : 'mediumDate' }}</td>
+              <td>
+                @if (w.closed_at) {
+                  <span class="badge badge--ok">Closed</span>
+                } @else {
+                  <span class="badge badge--warn">Open</span>
+                }
+              </td>
+              <td class="mono">{{ w.odometer_km_at_service ?? '—' }}</td>
+              <td class="mono">{{ w.total_cost | number : '1.2-2' }}</td>
+              <td class="tech-cell" [title]="technicianNames(w)">{{ technicianNames(w) }}</td>
+              <td class="actions-cell">
+                <button type="button" class="link-btn" (click)="openDetail(w)">View</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="empty-row">No work orders match the current filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<app-work-order-form
+  [open]="formOpen"
+  (closed)="onFormClosed()"
+  (saved)="onFormSaved()"
+></app-work-order-form>
+
+<app-work-order-detail-drawer
+  [open]="drawerOpen"
+  [workOrder]="selectedWorkOrder"
+  (closed)="onDrawerClosed()"
+  (updated)="onDrawerUpdated()"
+></app-work-order-detail-drawer>

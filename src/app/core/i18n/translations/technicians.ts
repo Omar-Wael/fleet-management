@@ -1,0 +1,66 @@
+import { TranslationEntry } from './types';
+
+export const TECHNICIANS_TRANSLATIONS: Record<string, TranslationEntry> = {
+  'technicians.title': { en: 'Technicians', ar: 'الفنيون' },
+  'technicians.shown': { en: 'shown', ar: 'معروض' },
+  'technicians.addButton': { en: '+ Add Technician', ar: '+ إضافة فني' },
+  'technicians.addTitle': { en: 'Add Technician', ar: 'إضافة فني' },
+  'technicians.editTitle': { en: 'Edit Technician', ar: 'تعديل بيانات الفني' },
+  'technicians.searchPlaceholder': {
+    en: 'Search name, national ID, specialty, phone…',
+    ar: 'ابحث بالاسم أو الرقم القومي أو التخصص أو الهاتف…',
+  },
+  'technicians.fullName': { en: 'Full Name', ar: 'الاسم بالكامل' },
+  'technicians.nationalId': { en: 'National ID', ar: 'الرقم القومي' },
+  'technicians.specialty': { en: 'Specialty', ar: 'التخصص' },
+  'technicians.specialtyPlaceholder': {
+    en: 'e.g. engine overhaul, electrical',
+    ar: 'مثال: عمرة محركات، كهرباء',
+  },
+  'technicians.workshop': { en: 'Workshop', ar: 'ورشة العمل' },
+  'technicians.hireDate': { en: 'Hire Date', ar: 'تاريخ التعيين' },
+  'technicians.deactivate': { en: 'Deactivate', ar: 'إيقاف' },
+  'technicians.reactivate': { en: 'Reactivate', ar: 'إعادة تفعيل' },
+  'technicians.loadingList': { en: 'Loading technicians…', ar: 'جارٍ تحميل بيانات الفنيين…' },
+  'technicians.loadingFormOptions': { en: 'Loading form options…', ar: 'جارٍ تحميل خيارات النموذج…' },
+  'technicians.noResults': {
+    en: 'No technicians match the current filters.',
+    ar: 'لا يوجد فنيون مطابقون للفلاتر الحالية.',
+  },
+  'technicians.importedCount': { en: 'Imported', ar: 'تم استيراد' },
+  'technicians.importedUnit': { en: 'technician(s).', ar: 'فني/فنيين.' },
+  'technicians.skippedRows': {
+    en: 'row(s) skipped — check that Full Name is filled in.',
+    ar: 'صف/صفوف تم تخطيها — تأكد من تعبئة الاسم بالكامل.',
+  },
+  'technicians.importNoRows': {
+    en: 'No rows could be imported. Check that "Full Name" is filled in for every row.',
+    ar: 'لم يتم استيراد أي صف. تأكد من تعبئة "الاسم بالكامل" في كل صف.',
+  },
+
+  // Profile drawer
+  'technicians.profileFallbackTitle': { en: 'Technician Profile', ar: 'ملف الفني' },
+  'technicians.loadingProfile': { en: 'Loading technician profile…', ar: 'جارٍ تحميل ملف الفني…' },
+  'technicians.sectionOverview': { en: 'Overview', ar: 'نظرة عامة' },
+  'technicians.sectionKpis': { en: 'KPIs', ar: 'مؤشرات الأداء' },
+  'technicians.sectionWorkOrders': { en: 'Work Orders', ar: 'أوامر الشغل' },
+  'technicians.sectionBounceHistory': { en: 'Bounce History', ar: 'سجل الأعطال المتكررة' },
+  'technicians.kpiWorkOrders': { en: 'Work Orders', ar: 'أوامر الشغل' },
+  'technicians.kpiBounces': { en: 'Bounces', ar: 'الأعطال المتكررة' },
+  'technicians.kpiBounceRate': { en: 'Bounce Rate', ar: 'معدل تكرار العطل' },
+  'technicians.kpiDisbursementRequests': { en: 'Disbursement Requests', ar: 'طلبات الصرف' },
+  'technicians.kpiOverhaulStages': { en: 'Overhaul Stages Worked', ar: 'مراحل العمرة المنجزة' },
+  'technicians.noKpiData': {
+    en: "No KPI data yet — this technician hasn't been assigned to any work orders.",
+    ar: 'لا توجد بيانات أداء بعد — لم يتم إسناد أي أمر شغل لهذا الفني.',
+  },
+  'technicians.noWorkOrders': { en: 'No work orders assigned yet.', ar: 'لا توجد أوامر شغل مسندة بعد.' },
+  'technicians.noBounces': { en: 'No repair bounces recorded.', ar: 'لا توجد أعطال متكررة مسجلة.' },
+  'technicians.colVehicle': { en: 'Vehicle', ar: 'السيارة' },
+  'technicians.colDescription': { en: 'Description', ar: 'الوصف' },
+  'technicians.colOpened': { en: 'Opened', ar: 'تاريخ الفتح' },
+  'technicians.colReason': { en: 'Reason', ar: 'السبب' },
+  'technicians.colDaysBetween': { en: 'Days Between', ar: 'عدد الأيام بين البلاغين' },
+  'technicians.statusOpen': { en: 'Open', ar: 'مفتوح' },
+  'technicians.statusClosed': { en: 'Closed', ar: 'مغلق' },
+};

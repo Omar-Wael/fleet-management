@@ -1,0 +1,121 @@
+<div class="lookup-panel">
+  <header class="panel-header">
+    <div>
+      <h2>Garage Locations</h2>
+      <p class="panel-subtitle">{{ rows.length }} location(s)</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
+      + Add Location
+    </button>
+  </header>
+
+  @if (saveError) {
+    <div class="state-message state-message--error">{{ saveError }}</div>
+  }
+
+  @if (loading) {
+    <div class="state-message">Loading garage locations…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Garage Name</th>
+            <th>Workshop</th>
+            <th>Zone Label</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (addingNew) {
+            <tr class="editing-row">
+              <td><input type="text" [(ngModel)]="newDraft.garage_name" /></td>
+              <td>
+                <select [(ngModel)]="newDraft.workshop_id">
+                  <option [ngValue]="null">— None —</option>
+                  @for (w of workshops; track w.id) {
+                    <option [ngValue]="w.id">{{ w.name_en || w.name_ar }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input
+                  type="text"
+                  [(ngModel)]="newDraft.zone_label"
+                  placeholder="e.g. North Yard"
+                />
+              </td>
+              <td><input type="text" [(ngModel)]="newDraft.notes" /></td>
+              <td class="actions-cell">
+                <div class="actions-cell-btns">
+                  <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
+                    Save
+                  </button>
+                  <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @for (row of rows; track row.id) {
+            @if (row._draft) {
+              <tr class="editing-row">
+                <td><input type="text" [(ngModel)]="row._draft.garage_name" /></td>
+                <td>
+                  <select [(ngModel)]="row._draft.workshop_id">
+                    <option [ngValue]="null">— None —</option>
+                    @for (w of workshops; track w.id) {
+                      <option [ngValue]="w.id">{{ w.name_en || w.name_ar }}</option>
+                    }
+                  </select>
+                </td>
+                <td><input type="text" [(ngModel)]="row._draft.zone_label" /></td>
+                <td><input type="text" [(ngModel)]="row._draft.notes" /></td>
+                <td class="actions-cell">
+                  <div class="actions-cell-btns">
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="confirmEdit(row)"
+                      [disabled]="saving"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="cancelEdit(row)"
+                      [disabled]="saving"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              <tr>
+                <td>{{ row.garage_name }}</td>
+                <td>{{ workshopName(row.workshop_id) }}</td>
+                <td>{{ row.zone_label }}</td>
+                <td>{{ row.notes || '—' }}</td>
+                <td class="actions-cell">
+                  <div class="actions-cell-btns">
+                    <button type="button" class="link-btn" (click)="startEdit(row)">Edit</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-row">No garage locations yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

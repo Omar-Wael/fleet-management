@@ -1,0 +1,26 @@
+<div class="tab-nav">
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'work-orders'"
+    (click)="setTab('work-orders')"
+  >
+    Work Orders
+  </button>
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'oil-filter'"
+    (click)="setTab('oil-filter')"
+  >
+    Oil &amp; Filter Tracker
+  </button>
+</div>
+
+<div class="tab-content">
+  @if (activeTab === 'work-orders') {
+    <app-work-orders-list></app-work-orders-list>
+  } @else {
+    <app-oil-filter-tracker></app-oil-filter-tracker>
+  }
+</div>

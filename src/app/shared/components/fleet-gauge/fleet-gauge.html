@@ -1,0 +1,23 @@
+<div class="gauge">
+  <svg viewBox="0 0 200 160" class="gauge-svg">
+    <!-- Track -->
+    <path [attr.d]="arcPath(0, 100)" class="gauge-track" />
+    <!-- Zones: rust (0-40), amber (40-75), green (75-100) -->
+    <path [attr.d]="arcPath(0, 40)" class="gauge-zone gauge-zone--rust" />
+    <path [attr.d]="arcPath(40, 75)" class="gauge-zone gauge-zone--amber" />
+    <path [attr.d]="arcPath(75, 100)" class="gauge-zone gauge-zone--green" />
+    <!-- Needle -->
+    <line
+      x1="100"
+      y1="100"
+      [attr.x2]="needleTip().x"
+      [attr.y2]="needleTip().y"
+      class="gauge-needle"
+    />
+    <circle cx="100" cy="100" r="6" class="gauge-hub" />
+  </svg>
+  <div class="gauge-readout">
+    <span class="gauge-value">{{ value }}%</span>
+    <span class="gauge-caption">{{ label }}</span>
+  </div>
+</div>

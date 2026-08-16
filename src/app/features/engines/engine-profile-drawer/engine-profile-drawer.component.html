@@ -1,0 +1,116 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>{{ engine?.engine_serial_number || 'Engine Profile' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (loading) {
+      <div class="state-message">Loading engine profile…</div>
+    } @else if (loadError) {
+      <div class="state-message state-message--error">{{ loadError }}</div>
+    } @else if (profile && engine) {
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>Overview</h3>
+          <dl>
+            <dt>Model</dt>
+            <dd>{{ engine.model_name || '—' }}</dd>
+            <dt>Manufacturer</dt>
+            <dd>{{ engine.manufacturer || '—' }}</dd>
+            <dt>Fuel Type</dt>
+            <dd>{{ engine.fuel_type || '—' }}</dd>
+            <dt>Horsepower</dt>
+            <dd class="mono">{{ engine.horsepower ?? '—' }}</dd>
+            <dt>Displacement</dt>
+            <dd class="mono">{{ engine.cc | number }} cc</dd>
+            <dt>Status</dt>
+            <dd>
+              @if (engine.is_in_stock) {
+                <span class="badge badge--ok">In stock</span>
+              } @else {
+                <span class="badge badge--warn">Fitted</span>
+              }
+            </dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Currently Fitted To</h3>
+          @if (profile.fittedVehicles.length) {
+            <ul class="plain-list">
+              @for (v of profile.fittedVehicles; track v.id) {
+                <li class="mono">{{ v.plate_number }}</li>
+              }
+            </ul>
+          } @else {
+            <p class="muted">Not currently fitted to any vehicle.</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>Compatible Vehicle Types</h3>
+          @if (profile.compatibleTypes.length) {
+            <div class="chip-row">
+              @for (t of profile.compatibleTypes; track t.id) {
+                <span class="chip">{{ t.name_en || t.name_ar }}</span>
+              }
+            </div>
+          } @else {
+            <p class="muted">No compatible vehicle types set.</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>Compatible Spare Parts</h3>
+          @if (profile.compatibleParts.length) {
+            <div class="chip-row">
+              @for (p of profile.compatibleParts; track p.id) {
+                <span class="chip">{{ p.name_en || p.name_ar }}</span>
+              }
+            </div>
+          } @else {
+            <p class="muted">No compatible spare parts set.</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>Swap History</h3>
+          @if (profile.swapHistory.length) {
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Role</th>
+                  <th>Odometer</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of profile.swapHistory; track s.id) {
+                  <tr>
+                    <td>{{ s.swap_date | date : 'mediumDate' }}</td>
+                    <td>{{ s.new_engine_id === engine.id ? 'Installed' : 'Removed' }}</td>
+                    <td class="mono">{{ s.odometer_km_at_swap ?? '—' }}</td>
+                    <td>{{ s.reason || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="muted">No swap events recorded for this engine.</p>
+          }
+        </section>
+
+        @if (engine.notes) {
+          <section class="profile-section">
+            <h3>Notes</h3>
+            <p class="notes-text">{{ engine.notes }}</p>
+          </section>
+        }
+      </div>
+    }
+  </aside>
+}

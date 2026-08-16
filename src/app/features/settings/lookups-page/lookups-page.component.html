@@ -1,0 +1,31 @@
+<div class="tab-nav">
+  <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'vehicle-types'" (click)="setTab('vehicle-types')">
+    Vehicle Types
+  </button>
+  <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'departments'" (click)="setTab('departments')">
+    Operating Departments
+  </button>
+  <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'workshops'" (click)="setTab('workshops')">
+    Maintenance Workshops
+  </button>
+  <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'garage-locations'" (click)="setTab('garage-locations')">
+    Garage Locations
+  </button>
+</div>
+
+<div class="tab-content">
+  @switch (activeTab) {
+    @case ('vehicle-types') {
+      <app-vehicle-types-tab></app-vehicle-types-tab>
+    }
+    @case ('departments') {
+      <app-departments-tab></app-departments-tab>
+    }
+    @case ('workshops') {
+      <app-workshops-tab></app-workshops-tab>
+    }
+    @case ('garage-locations') {
+      <app-garage-locations-tab></app-garage-locations-tab>
+    }
+  }
+</div>

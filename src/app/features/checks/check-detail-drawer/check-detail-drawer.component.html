@@ -1,0 +1,68 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>{{ check?.check_number || 'Check' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (check) {
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>Overview</h3>
+          <dl>
+            <dt>Recipient</dt>
+            <dd>{{ check.recipient_name || '—' }}</dd>
+            <dt>Amount</dt>
+            <dd class="mono">{{ check.amount | number : '1.2-2' }}</dd>
+            <dt>Stage</dt>
+            <dd>{{ check.check_stage || '—' }}</dd>
+            <dt>Linked Vehicle</dt>
+            <dd class="mono">{{ linkedVehiclePlate || '—' }}</dd>
+            <dt>Created</dt>
+            <dd>{{ check.created_at | date : 'medium' }}</dd>
+          </dl>
+        </section>
+
+        @if (check.description) {
+          <section class="profile-section">
+            <h3>Description</h3>
+            <p class="notes-text">{{ check.description }}</p>
+          </section>
+        }
+
+        <section class="profile-section">
+          <h3>Approval Chain</h3>
+          <div class="approval-steps">
+            @for (step of approvalSteps; track step.key) {
+              <div class="approval-step" [class.approval-step--done]="check[step.key]">
+                <span class="approval-dot"></span>
+                <div class="approval-text">
+                  <span class="approval-label">{{ step.label }}</span>
+                  @if (check[step.key]) {
+                    <span class="approval-date">{{ check[step.key] | date : 'medium' }}</span>
+                  } @else {
+                    <span class="approval-date approval-date--pending">Pending</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (advanceError) {
+            <p class="state-message state-message--error">{{ advanceError }}</p>
+          }
+
+          @if (nextStep) {
+            <button type="button" class="btn btn--primary" [disabled]="advancing" (click)="advance()">
+              {{ advancing ? 'Updating…' : 'Mark as ' + nextStep.label }}
+            </button>
+          } @else {
+            <p class="muted">Fully processed — disbursed.</p>
+          }
+        </section>
+      </div>
+    }
+  </aside>
+}

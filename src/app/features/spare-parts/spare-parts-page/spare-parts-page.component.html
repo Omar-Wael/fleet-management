@@ -1,0 +1,51 @@
+<div class="tab-nav">
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'catalog'"
+    (click)="setTab('catalog')"
+  >
+    Parts Catalog
+  </button>
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'disbursements'"
+    (click)="setTab('disbursements')"
+  >
+    Disbursement Requests
+  </button>
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'price-intelligence'"
+    (click)="setTab('price-intelligence')"
+  >
+    Price Intelligence
+  </button>
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'vendors'"
+    (click)="setTab('vendors')"
+  >
+    Vendor Directory
+  </button>
+</div>
+
+<div class="tab-content">
+  @switch (activeTab) {
+    @case ('catalog') {
+      <app-spare-parts-catalog></app-spare-parts-catalog>
+    }
+    @case ('disbursements') {
+      <app-disbursement-requests></app-disbursement-requests>
+    }
+    @case ('price-intelligence') {
+      <app-price-intelligence></app-price-intelligence>
+    }
+    @case ('vendors') {
+      <app-vendor-directory></app-vendor-directory>
+    }
+  }
+</div>

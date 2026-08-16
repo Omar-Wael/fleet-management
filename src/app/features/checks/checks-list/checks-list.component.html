@@ -1,0 +1,87 @@
+<div class="checks-page">
+  <header class="page-header">
+    <div>
+      <h1>Checks</h1>
+      <p class="page-subtitle">{{ filteredChecks.length }} of {{ checks.length }} checks</p>
+    </div>
+
+    <div class="page-actions">
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">+ New Check</button>
+    </div>
+  </header>
+
+  <div class="filters">
+    <input
+      type="text"
+      class="filters-search"
+      placeholder="Search check no., recipient, vehicle…"
+      [(ngModel)]="searchTerm"
+    />
+    <label class="filter-checkbox">
+      <input type="checkbox" [(ngModel)]="pendingOnly" />
+      Not yet disbursed
+    </label>
+  </div>
+
+  @if (loading) {
+    <div class="state-message">Loading checks…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Check No.</th>
+            <th>Recipient</th>
+            <th>Amount</th>
+            <th>Stage</th>
+            <th>Vehicle</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of filteredChecks; track c.id) {
+            <tr>
+              <td class="mono">{{ c.check_number || '—' }}</td>
+              <td>{{ c.recipient_name || '—' }}</td>
+              <td class="mono">{{ c.amount | number : '1.2-2' }}</td>
+              <td>{{ c.check_stage || '—' }}</td>
+              <td class="mono">{{ linkedVehiclePlate(c) || '—' }}</td>
+              <td>
+                @if (c.disbursed_at) {
+                  <span class="badge badge--ok">Disbursed</span>
+                } @else {
+                  <span class="badge badge--warn">Pending</span>
+                }
+              </td>
+              <td class="actions-cell">
+                <button type="button" class="link-btn" (click)="openDetail(c)">View</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-row">No checks match the current filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<app-check-form
+  [open]="formOpen"
+  (closed)="onFormClosed()"
+  (saved)="onFormSaved()"
+></app-check-form>
+
+<app-check-detail-drawer
+  [open]="drawerOpen"
+  [check]="selectedCheck"
+  (closed)="onDrawerClosed()"
+  (updated)="onDrawerUpdated()"
+></app-check-detail-drawer>

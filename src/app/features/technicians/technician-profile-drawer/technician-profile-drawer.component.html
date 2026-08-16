@@ -1,0 +1,124 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>{{ technician?.full_name || ('technicians.profileFallbackTitle' | translate) }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (loading) {
+      <div class="state-message">{{ 'technicians.loadingProfile' | translate }}</div>
+    } @else if (loadError) {
+      <div class="state-message state-message--error">{{ loadError }}</div>
+    } @else if (profile && technician) {
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>{{ 'technicians.sectionOverview' | translate }}</h3>
+          <dl>
+            <dt>{{ 'technicians.nationalId' | translate }}</dt>
+            <dd>{{ technician.national_id || '—' }}</dd>
+            <dt>{{ 'technicians.specialty' | translate }}</dt>
+            <dd>{{ technician.specialty || '—' }}</dd>
+            <dt>{{ 'technicians.workshop' | translate }}</dt>
+            <dd>{{ workshopName() }}</dd>
+            <dt>{{ 'common.phone' | translate }}</dt>
+            <dd>{{ technician.phone || '—' }}</dd>
+            <dt>{{ 'technicians.hireDate' | translate }}</dt>
+            <dd>{{ technician.hire_date ? (technician.hire_date | date : 'mediumDate') : '—' }}</dd>
+            <dt>{{ 'common.status' | translate }}</dt>
+            <dd>
+              @if (technician.is_active) {
+                <span class="badge badge--ok">{{ 'common.active' | translate }}</span>
+              } @else {
+                <span class="badge badge--warn">{{ 'common.inactive' | translate }}</span>
+              }
+            </dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>{{ 'technicians.sectionKpis' | translate }}</h3>
+          @if (profile.kpi) {
+            <dl>
+              <dt>{{ 'technicians.kpiWorkOrders' | translate }}</dt>
+              <dd class="mono">{{ profile.kpi.work_orders_count }}</dd>
+              <dt>{{ 'technicians.kpiBounces' | translate }}</dt>
+              <dd class="mono">{{ profile.kpi.bounces_count }}</dd>
+              <dt>{{ 'technicians.kpiBounceRate' | translate }}</dt>
+              <dd class="mono">{{ (profile.kpi.bounce_rate * 100) | number : '1.0-1' }}%</dd>
+              <dt>{{ 'technicians.kpiDisbursementRequests' | translate }}</dt>
+              <dd class="mono">{{ profile.kpi.disbursement_requests_count }}</dd>
+              <dt>{{ 'technicians.kpiOverhaulStages' | translate }}</dt>
+              <dd class="mono">{{ profile.kpi.overhaul_stages_worked }}</dd>
+            </dl>
+          } @else {
+            <p class="muted">{{ 'technicians.noKpiData' | translate }}</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>{{ 'technicians.sectionWorkOrders' | translate }}</h3>
+          @if (profile.workOrders.length) {
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>{{ 'technicians.colVehicle' | translate }}</th>
+                  <th>{{ 'technicians.colDescription' | translate }}</th>
+                  <th>{{ 'technicians.colOpened' | translate }}</th>
+                  <th>{{ 'common.status' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (w of profile.workOrders; track w.id) {
+                  <tr>
+                    <td class="mono">{{ w.vehicles?.plate_number || '—' }}</td>
+                    <td>{{ w.description }}</td>
+                    <td>{{ w.opened_at | date : 'mediumDate' }}</td>
+                    <td>
+                      @if (w.closed_at) {
+                        <span class="badge badge--ok">{{ 'technicians.statusClosed' | translate }}</span>
+                      } @else {
+                        <span class="badge badge--warn">{{ 'technicians.statusOpen' | translate }}</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="muted">{{ 'technicians.noWorkOrders' | translate }}</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>{{ 'technicians.sectionBounceHistory' | translate }}</h3>
+          @if (profile.bounces.length) {
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>{{ 'common.date' | translate }}</th>
+                  <th>{{ 'technicians.colReason' | translate }}</th>
+                  <th>{{ 'technicians.colDaysBetween' | translate }}</th>
+                  <th>{{ 'common.notes' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (b of profile.bounces; track b.id) {
+                  <tr>
+                    <td>{{ b.created_at | date : 'mediumDate' }}</td>
+                    <td>{{ b.reason }}</td>
+                    <td class="mono">{{ b.days_between ?? '—' }}</td>
+                    <td>{{ b.notes || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="muted">{{ 'technicians.noBounces' | translate }}</p>
+          }
+        </section>
+      </div>
+    }
+  </aside>
+}

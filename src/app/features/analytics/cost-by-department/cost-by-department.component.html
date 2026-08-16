@@ -1,0 +1,53 @@
+<div class="analytics-panel">
+  <header class="panel-header">
+    <div>
+      <h2>Cost by Department</h2>
+      <p class="panel-subtitle">
+        {{ rows.length }} department(s) &middot; total {{ totalCost | number : '1.2-2' }}
+      </p>
+    </div>
+
+    <div class="panel-actions">
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!rows.length">
+        Export Excel
+      </button>
+    </div>
+  </header>
+
+  @if (loading) {
+    <div class="state-message">Loading department cost data…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="chart-card">
+      <canvas #costChartCanvas></canvas>
+    </div>
+
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Vehicles</th>
+            <th>Total Cost</th>
+            <th>Avg Cost / Vehicle</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows; track r.operating_department_id) {
+            <tr>
+              <td>{{ r.department_name_en || r.department_name_ar }}</td>
+              <td class="mono">{{ r.vehicle_count }}</td>
+              <td class="mono">{{ r.total_cost | number : '1.2-2' }}</td>
+              <td class="mono">{{ r.avg_cost_per_vehicle | number : '1.2-2' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-row">No department cost data yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

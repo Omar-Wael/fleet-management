@@ -1,0 +1,97 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>{{ invoice?.invoice_no || 'Invoice' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (invoice) {
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>Overview</h3>
+          <dl>
+            <dt>Vendor</dt>
+            <dd>{{ invoice.external_workshops?.name || '—' }}</dd>
+            <dt>Invoice Date</dt>
+            <dd>{{ invoice.invoice_date | date : 'mediumDate' }}</dd>
+            <dt>Source</dt>
+            <dd>{{ invoice.invoice_source || '—' }}</dd>
+            <dt>Subtotal</dt>
+            <dd class="mono">{{ invoice.subtotal_value | number : '1.2-2' }}</dd>
+            <dt>Tax</dt>
+            <dd class="mono">{{ invoice.tax_value | number : '1.2-2' }}</dd>
+            <dt>Discount</dt>
+            <dd class="mono">{{ invoice.discount_value | number : '1.2-2' }}</dd>
+            <dt>Total</dt>
+            <dd class="mono total-value">{{ invoice.total_value | number : '1.2-2' }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Line Items</h3>
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Unit Value</th>
+                <th>Line Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of invoice.invoice_items; track item.id) {
+                <tr>
+                  <td>{{ item.item_description }}</td>
+                  <td class="mono">{{ item.quantity }}</td>
+                  <td class="mono">{{ item.unit_value | number : '1.2-2' }}</td>
+                  <td class="mono">{{ item.line_total | number : '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="muted">No line items recorded.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </section>
+
+        <section class="profile-section">
+          <h3>Vehicles Covered</h3>
+          @if (loading) {
+            <p class="muted">Loading…</p>
+          } @else if (loadError) {
+            <p class="state-message state-message--error">{{ loadError }}</p>
+          } @else if (vehicles.length) {
+            <div class="chip-row">
+              @for (v of vehicles; track v.id) {
+                <span class="chip">{{ v.plate_number }}</span>
+              }
+            </div>
+          } @else {
+            <p class="muted">No vehicle linkage found for this invoice.</p>
+          }
+        </section>
+
+        @if (invoice.notes) {
+          <section class="profile-section">
+            <h3>Notes</h3>
+            <p class="notes-text">{{ invoice.notes }}</p>
+          </section>
+        }
+
+        @if (deleteError) {
+          <p class="state-message state-message--error">{{ deleteError }}</p>
+        }
+
+        <div class="drawer-actions">
+          <button type="button" class="btn btn--ghost" (click)="editInvoice()">Edit Header</button>
+          <button type="button" class="btn btn--danger" [disabled]="deleting" (click)="deleteInvoice()">
+            {{ deleting ? 'Deleting…' : 'Delete Invoice' }}
+          </button>
+        </div>
+      </div>
+    }
+  </aside>
+}

@@ -1,0 +1,105 @@
+<div class="lookup-panel">
+  <header class="panel-header">
+    <div>
+      <h2>Vehicle Types</h2>
+      <p class="panel-subtitle">{{ rows.length }} type(s)</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
+      + Add Type
+    </button>
+  </header>
+
+  @if (saveError) {
+    <div class="state-message state-message--error">{{ saveError }}</div>
+  }
+
+  @if (loading) {
+    <div class="state-message">Loading vehicle types…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Name (Arabic)</th>
+            <th>Name (English)</th>
+            <th>Default Workshop Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (addingNew) {
+            <tr class="editing-row">
+              <td>
+                <input type="text" [(ngModel)]="newDraft.name_ar" placeholder="الاسم بالعربي" />
+              </td>
+              <td><input type="text" [(ngModel)]="newDraft.name_en" placeholder="Name" /></td>
+              <td>
+                <input
+                  type="text"
+                  [(ngModel)]="newDraft.default_workshop_type"
+                  placeholder="e.g. heavy"
+                />
+              </td>
+              <td class="actions-cell">
+                <div class="actions-cell-btns">
+                  <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
+                    Save
+                  </button>
+                  <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @for (row of rows; track row.id) {
+            @if (row._draft) {
+              <tr class="editing-row">
+                <td><input type="text" [(ngModel)]="row._draft.name_ar" /></td>
+                <td><input type="text" [(ngModel)]="row._draft.name_en" /></td>
+                <td><input type="text" [(ngModel)]="row._draft.default_workshop_type" /></td>
+                <td class="actions-cell">
+                  <div class="actions-cell-btns">
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="confirmEdit(row)"
+                      [disabled]="saving"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="cancelEdit(row)"
+                      [disabled]="saving"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              <tr>
+                <td>{{ row.name_ar }}</td>
+                <td>{{ row.name_en || '—' }}</td>
+                <td>{{ row.default_workshop_type }}</td>
+                <td class="actions-cell">
+                  <div class="actions-cell-btns">
+                    <button type="button" class="link-btn" (click)="startEdit(row)">Edit</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-row">No vehicle types yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

@@ -1,0 +1,87 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="slide-over" role="dialog" aria-modal="true">
+    <header class="slide-over-header">
+      <h2>New Work Order</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (lookupsLoading) {
+      <div class="state-message">Loading form options…</div>
+    } @else {
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
+        @if (lookupsError) {
+          <div class="state-message state-message--error">{{ lookupsError }}</div>
+        }
+
+        <div class="field-grid">
+          <label class="field">
+            <span>Vehicle *</span>
+            <select formControlName="vehicle_id">
+              <option [ngValue]="''" disabled>Select vehicle…</option>
+              @for (v of vehicles; track v.id) {
+                <option [ngValue]="v.id">{{ v.plate_number }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Maintenance Type</span>
+            <input type="text" formControlName="maintenance_type" placeholder="e.g. corrective, preventive, inspection" />
+          </label>
+
+          <label class="field field--wide">
+            <span>Description *</span>
+            <textarea formControlName="description" rows="3"></textarea>
+          </label>
+
+          <label class="field field--wide">
+            <span>Repair Types (comma-separated)</span>
+            <input type="text" formControlName="repair_types" placeholder="e.g. brakes, electrical" />
+          </label>
+
+          <label class="field">
+            <span>Odometer at Service</span>
+            <input type="number" formControlName="odometer_km_at_service" />
+          </label>
+        </div>
+
+        <section class="compat-section">
+          <h3>Maintenance Categories</h3>
+          <div class="chip-grid">
+            @for (c of categoryOptions; track c) {
+              <label class="chip" [class.chip--active]="selectedCategories.has(c)">
+                <input type="checkbox" [checked]="selectedCategories.has(c)" (change)="toggleCategory(c)" />
+                {{ c }}
+              </label>
+            }
+          </div>
+        </section>
+
+        <section class="compat-section">
+          <h3>Assign Technicians</h3>
+          <div class="chip-grid">
+            @for (t of technicians; track t.id) {
+              <label class="chip" [class.chip--active]="selectedTechnicianIds.has(t.id)">
+                <input type="checkbox" [checked]="selectedTechnicianIds.has(t.id)" (change)="toggleTechnician(t.id)" />
+                {{ t.full_name }}
+              </label>
+            }
+          </div>
+        </section>
+
+        @if (saveError) {
+          <div class="state-message state-message--error">{{ saveError }}</div>
+        }
+
+        <footer class="slide-over-footer">
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving">
+            {{ saving ? 'Saving…' : 'Create Work Order' }}
+          </button>
+        </footer>
+      </form>
+    }
+  </aside>
+}

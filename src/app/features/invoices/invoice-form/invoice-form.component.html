@@ -1,0 +1,134 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="slide-over" role="dialog" aria-modal="true">
+    <header class="slide-over-header">
+      <h2>{{ isEditMode ? 'Edit Invoice' : 'New Invoice' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (lookupsLoading) {
+      <div class="state-message">Loading form options…</div>
+    } @else {
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
+        @if (lookupsError) {
+          <div class="state-message state-message--error">{{ lookupsError }}</div>
+        }
+
+        <div class="field-grid">
+          <label class="field">
+            <span>Invoice No. *</span>
+            <input type="text" formControlName="invoice_no" />
+          </label>
+
+          <label class="field">
+            <span>Vendor</span>
+            <select formControlName="vendor_id">
+              <option [ngValue]="null">— None —</option>
+              @for (v of vendors; track v.id) {
+                <option [ngValue]="v.id">{{ v.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Invoice Date *</span>
+            <input type="date" formControlName="invoice_date" />
+          </label>
+
+          <label class="field">
+            <span>Source</span>
+            <input type="text" formControlName="invoice_source" placeholder="e.g. manual, scanned" />
+          </label>
+
+          <label class="field">
+            <span>Tax</span>
+            <input type="number" step="0.01" formControlName="tax_value" />
+          </label>
+
+          <label class="field">
+            <span>Discount</span>
+            <input type="number" step="0.01" formControlName="discount_value" />
+          </label>
+
+          <label class="field field--wide">
+            <span>Notes</span>
+            <textarea formControlName="notes" rows="2"></textarea>
+          </label>
+        </div>
+
+        @if (isEditMode) {
+          <p class="muted">
+            Line items can't be edited after creation — this form only updates the invoice header.
+          </p>
+        } @else {
+          <section class="items-section">
+            <div class="items-header">
+              <h3>Line Items</h3>
+              <button type="button" class="link-btn" (click)="addItemRow()">+ Add line</button>
+            </div>
+
+            @for (row of items; track $index; let i = $index) {
+              <div class="item-row">
+                <select
+                  [(ngModel)]="row.spare_part_id"
+                  [ngModelOptions]="{ standalone: true }"
+                  (change)="onItemPartChange(row)"
+                >
+                  <option [ngValue]="null">— Free-text item —</option>
+                  @for (p of spareParts; track p.id) {
+                    <option [ngValue]="p.id">{{ p.name_en || p.name_ar }}</option>
+                  }
+                </select>
+
+                <input
+                  type="text"
+                  class="desc-input"
+                  placeholder="Item description"
+                  [(ngModel)]="row.item_description"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+
+                <input
+                  type="number"
+                  min="1"
+                  class="qty-input"
+                  placeholder="Qty"
+                  [(ngModel)]="row.quantity"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+
+                <input
+                  type="number"
+                  step="0.01"
+                  class="price-input"
+                  placeholder="Unit value"
+                  [(ngModel)]="row.unit_value"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+
+                <button type="button" class="icon-btn" (click)="removeItemRow(i)" aria-label="Remove line">✕</button>
+              </div>
+            }
+
+            <div class="totals-row">
+              <span>Subtotal: <strong class="mono">{{ computedSubtotal | number : '1.2-2' }}</strong></span>
+              <span>Total: <strong class="mono">{{ computedTotal | number : '1.2-2' }}</strong></span>
+            </div>
+          </section>
+        }
+
+        @if (saveError) {
+          <div class="state-message state-message--error">{{ saveError }}</div>
+        }
+
+        <footer class="slide-over-footer">
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving">
+            {{ saving ? 'Saving…' : (isEditMode ? 'Save Changes' : 'Create Invoice') }}
+          </button>
+        </footer>
+      </form>
+    }
+  </aside>
+}

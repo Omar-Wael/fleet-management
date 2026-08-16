@@ -1,0 +1,55 @@
+<div class="analytics-panel">
+  <header class="panel-header">
+    <div>
+      <h2>Vendor Price Comparison</h2>
+      <p class="panel-subtitle">{{ allRows.length }} vendor(s) with logged purchases, cheapest first</p>
+    </div>
+
+    <div class="panel-actions">
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!allRows.length">
+        Export Excel
+      </button>
+    </div>
+  </header>
+
+  @if (loading) {
+    <div class="state-message">Loading vendor pricing data…</div>
+  } @else if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  } @else {
+    <div class="chart-card">
+      <canvas #priceChartCanvas></canvas>
+    </div>
+
+    <div class="grid-wrapper">
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Type</th>
+            <th>Parts Supplied</th>
+            <th>Total Purchases</th>
+            <th>Avg Unit Price</th>
+            <th>Last Purchase</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of allRows; track r.vendor_id) {
+            <tr>
+              <td>{{ r.name }}</td>
+              <td>{{ vendorTypeLabel(r.vendor_type) }}</td>
+              <td class="mono">{{ r.distinct_parts_supplied }}</td>
+              <td class="mono">{{ r.total_purchases }}</td>
+              <td class="mono">{{ r.avg_unit_price | number : '1.2-2' }}</td>
+              <td>{{ r.last_purchase_date ? (r.last_purchase_date | date : 'mediumDate') : '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-row">No vendors have logged purchases yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

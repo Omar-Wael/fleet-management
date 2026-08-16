@@ -1,0 +1,34 @@
+@if (licenses.length || maintenance.length) {
+  <div class="alert-strip">
+    @if (licenses.length) {
+      <div class="alert-chip" [class.critical]="licenses.length > 0">
+        <span class="alert-dot"></span>
+        <span class="alert-count">{{ licenses.length }}</span>
+        <span class="alert-label">
+          {{ licenses.length === 1 ? 'license expires this month' : 'licenses expire this month' }}
+        </span>
+        <button type="button" class="alert-action" (click)="viewLicenses.emit()">Review</button>
+      </div>
+    }
+
+    @if (maintenance.length) {
+      <div class="alert-chip warning">
+        <span class="alert-dot"></span>
+        <span class="alert-count">{{ maintenance.length }}</span>
+        <span class="alert-label">
+          {{
+            maintenance.length === 1
+              ? 'vehicle due for preventive maintenance'
+              : 'vehicles due for preventive maintenance'
+          }}
+        </span>
+        <button type="button" class="alert-action" (click)="viewMaintenance.emit()">Review</button>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="alert-strip alert-strip--clear">
+    <span class="alert-dot ok"></span>
+    <span class="alert-label">No licenses or preventive maintenance due this month.</span>
+  </div>
+}

@@ -1,0 +1,122 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>{{ workOrder?.vehicles?.plate_number || 'Work Order' }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (workOrder) {
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>Overview</h3>
+          <dl>
+            <dt>Type</dt>
+            <dd>{{ workOrder.maintenance_type || '—' }}</dd>
+            <dt>Opened</dt>
+            <dd>{{ workOrder.opened_at | date : 'mediumDate' }}</dd>
+            <dt>Closed</dt>
+            <dd>
+              @if (isClosed) {
+                {{ workOrder.closed_at | date : 'mediumDate' }}
+              } @else {
+                <span class="badge badge--warn">Open</span>
+              }
+            </dd>
+            <dt>Odometer at Service</dt>
+            <dd class="mono">{{ workOrder.odometer_km_at_service ?? '—' }}</dd>
+            <dt>Total Cost</dt>
+            <dd class="mono">{{ workOrder.total_cost | number : '1.2-2' }}</dd>
+            <dt>Under Warranty</dt>
+            <dd>{{ workOrder.is_under_warranty ? 'Yes' : 'No' }}</dd>
+            <dt>Premature Failure</dt>
+            <dd>{{ workOrder.is_premature_failure ? 'Yes' : 'No' }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>Description</h3>
+          <p class="notes-text">{{ workOrder.description }}</p>
+        </section>
+
+        @if (workOrder.repair_types?.length) {
+          <section class="profile-section">
+            <h3>Repair Types</h3>
+            <div class="chip-row">
+              @for (t of workOrder.repair_types; track t) {
+                <span class="chip">{{ t }}</span>
+              }
+            </div>
+          </section>
+        }
+
+        @if (workOrder.maintenance_categories?.length) {
+          <section class="profile-section">
+            <h3>Categories</h3>
+            <div class="chip-row">
+              @for (c of workOrder.maintenance_categories; track c) {
+                <span class="chip">{{ c }}</span>
+              }
+            </div>
+          </section>
+        }
+
+        <section class="profile-section">
+          <h3>Technicians</h3>
+          @if (workOrder.work_order_technicians?.length) {
+            <ul class="plain-list">
+              @for (wt of workOrder.work_order_technicians; track wt.technicians.full_name) {
+                <li>{{ wt.technicians.full_name }}</li>
+              }
+            </ul>
+          } @else {
+            <p class="muted">No technicians assigned.</p>
+          }
+        </section>
+
+        <section class="profile-section">
+          <h3>Financial Transactions</h3>
+          @if (workOrder.financial_transactions?.length) {
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>Channel</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (ft of workOrder.financial_transactions; track ft.id) {
+                  <tr>
+                    <td>{{ ft.channel }}</td>
+                    <td class="mono">{{ ft.amount | number : '1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="muted">No financial transactions recorded yet.</p>
+          }
+        </section>
+
+        @if (!isClosed) {
+          <section class="profile-section">
+            <h3>Close Work Order</h3>
+            <label class="field">
+              <span>Final Total Cost</span>
+              <input type="number" step="0.01" [(ngModel)]="totalCostInput" />
+            </label>
+
+            @if (closeError) {
+              <p class="state-message state-message--error">{{ closeError }}</p>
+            }
+
+            <button type="button" class="btn btn--primary" [disabled]="closing" (click)="closeWorkOrder()">
+              {{ closing ? 'Closing…' : 'Close Work Order' }}
+            </button>
+          </section>
+        }
+      </div>
+    }
+  </aside>
+}
