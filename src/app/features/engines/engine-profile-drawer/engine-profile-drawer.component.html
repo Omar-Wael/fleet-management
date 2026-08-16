@@ -3,42 +3,42 @@
 
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
-      <h2>{{ engine?.engine_serial_number || 'Engine Profile' }}</h2>
+      <h2>{{ engine?.engine_serial_number || ('engines.profileFallbackTitle' | translate) }}</h2>
       <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
     </header>
 
     @if (loading) {
-      <div class="state-message">Loading engine profile…</div>
+      <div class="state-message">{{ 'engines.loadingProfile' | translate }}</div>
     } @else if (loadError) {
       <div class="state-message state-message--error">{{ loadError }}</div>
     } @else if (profile && engine) {
       <div class="drawer-body">
         <section class="profile-section">
-          <h3>Overview</h3>
+          <h3>{{ 'engines.sectionOverview' | translate }}</h3>
           <dl>
-            <dt>Model</dt>
+            <dt>{{ 'engines.model' | translate }}</dt>
             <dd>{{ engine.model_name || '—' }}</dd>
-            <dt>Manufacturer</dt>
+            <dt>{{ 'engines.manufacturer' | translate }}</dt>
             <dd>{{ engine.manufacturer || '—' }}</dd>
-            <dt>Fuel Type</dt>
+            <dt>{{ 'engines.fuelType' | translate }}</dt>
             <dd>{{ engine.fuel_type || '—' }}</dd>
-            <dt>Horsepower</dt>
+            <dt>{{ 'engines.horsepower' | translate }}</dt>
             <dd class="mono">{{ engine.horsepower ?? '—' }}</dd>
-            <dt>Displacement</dt>
+            <dt>{{ 'engines.displacement' | translate }}</dt>
             <dd class="mono">{{ engine.cc | number }} cc</dd>
-            <dt>Status</dt>
+            <dt>{{ 'common.status' | translate }}</dt>
             <dd>
               @if (engine.is_in_stock) {
-                <span class="badge badge--ok">In stock</span>
+                <span class="badge badge--ok">{{ 'engines.statusInStock' | translate }}</span>
               } @else {
-                <span class="badge badge--warn">Fitted</span>
+                <span class="badge badge--warn">{{ 'engines.statusFitted' | translate }}</span>
               }
             </dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Currently Fitted To</h3>
+          <h3>{{ 'engines.sectionFittedTo' | translate }}</h3>
           @if (profile.fittedVehicles.length) {
             <ul class="plain-list">
               @for (v of profile.fittedVehicles; track v.id) {
@@ -46,12 +46,12 @@
               }
             </ul>
           } @else {
-            <p class="muted">Not currently fitted to any vehicle.</p>
+            <p class="muted">{{ 'engines.noFittedVehicles' | translate }}</p>
           }
         </section>
 
         <section class="profile-section">
-          <h3>Compatible Vehicle Types</h3>
+          <h3>{{ 'engines.compatibleVehicleTypes' | translate }}</h3>
           @if (profile.compatibleTypes.length) {
             <div class="chip-row">
               @for (t of profile.compatibleTypes; track t.id) {
@@ -59,12 +59,12 @@
               }
             </div>
           } @else {
-            <p class="muted">No compatible vehicle types set.</p>
+            <p class="muted">{{ 'engines.noCompatibleTypes' | translate }}</p>
           }
         </section>
 
         <section class="profile-section">
-          <h3>Compatible Spare Parts</h3>
+          <h3>{{ 'engines.compatibleSpareParts' | translate }}</h3>
           @if (profile.compatibleParts.length) {
             <div class="chip-row">
               @for (p of profile.compatibleParts; track p.id) {
@@ -72,27 +72,27 @@
               }
             </div>
           } @else {
-            <p class="muted">No compatible spare parts set.</p>
+            <p class="muted">{{ 'engines.noCompatibleParts' | translate }}</p>
           }
         </section>
 
         <section class="profile-section">
-          <h3>Swap History</h3>
+          <h3>{{ 'engines.sectionSwapHistory' | translate }}</h3>
           @if (profile.swapHistory.length) {
             <table class="mini-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Role</th>
-                  <th>Odometer</th>
-                  <th>Reason</th>
+                  <th>{{ 'common.date' | translate }}</th>
+                  <th>{{ 'engines.colRole' | translate }}</th>
+                  <th>{{ 'engines.colOdometer' | translate }}</th>
+                  <th>{{ 'engines.colReason' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
                 @for (s of profile.swapHistory; track s.id) {
                   <tr>
                     <td>{{ s.swap_date | date : 'mediumDate' }}</td>
-                    <td>{{ s.new_engine_id === engine.id ? 'Installed' : 'Removed' }}</td>
+                    <td>{{ (s.new_engine_id === engine.id ? 'engines.roleInstalled' : 'engines.roleRemoved') | translate }}</td>
                     <td class="mono">{{ s.odometer_km_at_swap ?? '—' }}</td>
                     <td>{{ s.reason || '—' }}</td>
                   </tr>
@@ -100,13 +100,13 @@
               </tbody>
             </table>
           } @else {
-            <p class="muted">No swap events recorded for this engine.</p>
+            <p class="muted">{{ 'engines.noSwapHistory' | translate }}</p>
           }
         </section>
 
         @if (engine.notes) {
           <section class="profile-section">
-            <h3>Notes</h3>
+            <h3>{{ 'common.notes' | translate }}</h3>
             <p class="notes-text">{{ engine.notes }}</p>
           </section>
         }

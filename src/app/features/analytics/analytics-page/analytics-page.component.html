@@ -5,7 +5,7 @@
     [class.tab-btn--active]="activeTab === 'vehicle-cost'"
     (click)="setTab('vehicle-cost')"
   >
-    Cost by Vehicle
+    {{ 'analytics.tabVehicleCost' | translate }}
   </button>
   <button
     type="button"
@@ -13,7 +13,7 @@
     [class.tab-btn--active]="activeTab === 'department-cost'"
     (click)="setTab('department-cost')"
   >
-    Cost by Department
+    {{ 'analytics.tabDepartmentCost' | translate }}
   </button>
   <button
     type="button"
@@ -21,7 +21,7 @@
     [class.tab-btn--active]="activeTab === 'technician-kpis'"
     (click)="setTab('technician-kpis')"
   >
-    Technician KPIs
+    {{ 'analytics.tabTechnicianKpis' | translate }}
   </button>
   <button
     type="button"
@@ -29,7 +29,7 @@
     [class.tab-btn--active]="activeTab === 'vendor-pricing'"
     (click)="setTab('vendor-pricing')"
   >
-    Vendor Price Comparison
+    {{ 'analytics.tabVendorPricing' | translate }}
   </button>
 </div>
 

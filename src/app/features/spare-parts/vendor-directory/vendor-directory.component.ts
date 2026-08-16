@@ -15,21 +15,23 @@ import {
   VVendorPerformance,
   VendorType,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface VendorRow extends ExternalWorkshop {
   performance?: VVendorPerformance;
 }
 
-const VENDOR_TYPE_OPTIONS: { value: VendorType; label: string }[] = [
-  { value: 'parts_vendor', label: 'Parts Vendor' },
-  { value: 'machine_shop', label: 'Machine Shop' },
-  { value: 'external_garage', label: 'External Garage' },
+const VENDOR_TYPE_OPTIONS: { value: VendorType; labelKey: string }[] = [
+  { value: 'parts_vendor', labelKey: 'spareParts.vendors.type.partsVendor' },
+  { value: 'machine_shop', labelKey: 'spareParts.vendors.type.machineShop' },
+  { value: 'external_garage', labelKey: 'spareParts.vendors.type.externalGarage' },
 ];
 
 @Component({
   selector: 'app-vendor-directory',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule],
+  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule, TranslatePipe],
   templateUrl: './vendor-directory.component.html',
   styleUrls: ['./vendor-directory.component.scss'],
 })
@@ -50,6 +52,7 @@ export class VendorDirectoryComponent implements OnInit {
     private fb: FormBuilder,
     private sparePartsService: SparePartsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       name: ['', Validators.required],
@@ -81,7 +84,7 @@ export class VendorDirectoryComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load vendors.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('spareParts.vendors.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -115,7 +118,7 @@ export class VendorDirectoryComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : 'Failed to add vendor.';
+        this.saveError = err instanceof Error ? err.message : this.i18n.t('spareParts.vendors.saveError');
       },
     });
   }

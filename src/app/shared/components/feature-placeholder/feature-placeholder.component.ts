@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * Temporary stand-in for any tab not yet built. Routed via `data: { title }`
@@ -10,14 +11,15 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-feature-placeholder',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="placeholder">
-      <p class="placeholder-eyebrow">Coming soon</p>
+      <p class="placeholder-eyebrow">{{ 'shared.featurePlaceholder.eyebrow' | translate }}</p>
       <h2 class="placeholder-title">{{ title }}</h2>
       <p class="placeholder-copy">
-        This tab's UI hasn't been built yet — its backing service
-        (<code>{{ serviceHint || 'see fleet-services/services' }}</code>) is ready to wire up.
+        {{ 'shared.featurePlaceholder.copyPrefix' | translate
+        }}<code>{{ serviceHint || 'see fleet-services/services' }}</code
+        >{{ 'shared.featurePlaceholder.copySuffix' | translate }}
       </p>
     </div>
   `,

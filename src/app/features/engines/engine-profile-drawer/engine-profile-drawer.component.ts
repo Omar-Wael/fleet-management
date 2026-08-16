@@ -4,6 +4,8 @@ import { forkJoin } from 'rxjs';
 
 import { EnginesService } from '../../../core/services/engines.service';
 import { Engine, EngineSwap, SparePart, VehicleType } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface EngineProfile {
   compatibleTypes: VehicleType[];
@@ -15,7 +17,7 @@ interface EngineProfile {
 @Component({
   selector: 'app-engine-profile-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './engine-profile-drawer.component.html',
   styleUrls: ['./engine-profile-drawer.component.scss'],
 })
@@ -29,7 +31,10 @@ export class EngineProfileDrawerComponent implements OnChanges {
   loading = false;
   loadError: string | null = null;
 
-  constructor(private enginesService: EnginesService) {}
+  constructor(
+    private enginesService: EnginesService,
+    readonly i18n: TranslationService,
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -58,7 +63,7 @@ export class EngineProfileDrawerComponent implements OnChanges {
         this.loading = false;
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load engine profile.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
       },
     });

@@ -1,19 +1,19 @@
 <div class="analytics-panel">
   <header class="panel-header">
     <div>
-      <h2>Vendor Price Comparison</h2>
-      <p class="panel-subtitle">{{ allRows.length }} vendor(s) with logged purchases, cheapest first</p>
+      <h2>{{ 'analytics.vendorPriceComparisonTitle' | translate }}</h2>
+      <p class="panel-subtitle">{{ allRows.length }} {{ 'analytics.vendorCount' | translate }}</p>
     </div>
 
     <div class="panel-actions">
       <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!allRows.length">
-        Export Excel
+        {{ 'common.exportExcel' | translate }}
       </button>
     </div>
   </header>
 
   @if (loading) {
-    <div class="state-message">Loading vendor pricing data…</div>
+    <div class="state-message">{{ 'analytics.loadingVendorPricing' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -25,19 +25,19 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Vendor</th>
-            <th>Type</th>
-            <th>Parts Supplied</th>
-            <th>Total Purchases</th>
-            <th>Avg Unit Price</th>
-            <th>Last Purchase</th>
+            <th>{{ 'analytics.vendor' | translate }}</th>
+            <th>{{ 'analytics.type' | translate }}</th>
+            <th>{{ 'analytics.partsSupplied' | translate }}</th>
+            <th>{{ 'analytics.totalPurchases' | translate }}</th>
+            <th>{{ 'analytics.avgUnitPrice' | translate }}</th>
+            <th>{{ 'analytics.lastPurchase' | translate }}</th>
           </tr>
         </thead>
         <tbody>
           @for (r of allRows; track r.vendor_id) {
             <tr>
               <td>{{ r.name }}</td>
-              <td>{{ vendorTypeLabel(r.vendor_type) }}</td>
+              <td>{{ vendorTypeLabelKey(r.vendor_type) | translate }}</td>
               <td class="mono">{{ r.distinct_parts_supplied }}</td>
               <td class="mono">{{ r.total_purchases }}</td>
               <td class="mono">{{ r.avg_unit_price | number : '1.2-2' }}</td>
@@ -45,7 +45,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="empty-row">No vendors have logged purchases yet.</td>
+              <td colspan="6" class="empty-row">{{ 'analytics.noVendorPurchases' | translate }}</td>
             </tr>
           }
         </tbody>

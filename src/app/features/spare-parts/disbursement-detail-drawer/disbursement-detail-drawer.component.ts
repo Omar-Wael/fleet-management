@@ -10,6 +10,8 @@ import {
   DisbursementStatus,
   StockDisbursementStatusHistory,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * Lifecycle: available_in_stock -> issued
@@ -28,21 +30,23 @@ const NEXT_STATUSES: Record<DisbursementStatus, DisbursementStatus[]> = {
   issued_and_installed: [],
 };
 
-const STATUS_LABELS: Record<DisbursementStatus, string> = {
-  requested: 'Requested',
-  available_in_stock: 'Available in Stock',
-  out_of_stock: 'Out of Stock',
-  purchase_committee_received: 'With Purchase Committee',
-  purchased: 'Purchased',
-  supplied: 'Supplied',
-  issued: 'Issued',
-  issued_and_installed: 'Issued & Installed',
+// Translation keys — see spareParts.disbursement.status.* in
+// translations/spare-parts.ts (shared with disbursement-requests.component).
+const STATUS_LABEL_KEYS: Record<DisbursementStatus, string> = {
+  requested: 'spareParts.disbursement.status.requested',
+  available_in_stock: 'spareParts.disbursement.status.availableInStock',
+  out_of_stock: 'spareParts.disbursement.status.outOfStock',
+  purchase_committee_received: 'spareParts.disbursement.status.purchaseCommitteeReceived',
+  purchased: 'spareParts.disbursement.status.purchased',
+  supplied: 'spareParts.disbursement.status.supplied',
+  issued: 'spareParts.disbursement.status.issued',
+  issued_and_installed: 'spareParts.disbursement.status.issuedAndInstalled',
 };
 
 @Component({
   selector: 'app-disbursement-detail-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule],
+  imports: [DatePipe, DecimalPipe, FormsModule, TranslatePipe],
   templateUrl: './disbursement-detail-drawer.component.html',
   styleUrls: ['./disbursement-detail-drawer.component.scss'],
 })
@@ -53,7 +57,7 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
   @Output() closed = new EventEmitter<void>();
   @Output() updated = new EventEmitter<void>();
 
-  readonly statusLabels = STATUS_LABELS;
+  readonly statusLabelKeys = STATUS_LABEL_KEYS;
 
   history: StockDisbursementStatusHistory[] = [];
   loading = false;
@@ -63,7 +67,10 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
   advanceError: string | null = null;
   receiverName = '';
 
-  constructor(private disbursementService: DisbursementService) {}
+  constructor(
+    private disbursementService: DisbursementService,
+    readonly i18n: TranslationService,
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -86,7 +93,7 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
         this.loading = false;
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load status history.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementDrawer.historyLoadError');
         this.loading = false;
       },
     });
@@ -107,7 +114,7 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
     if (!this.request) return;
 
     if (status === 'purchase_committee_received' && !this.receiverName.trim()) {
-      this.advanceError = 'Enter the purchase committee receiver name before continuing.';
+      this.advanceError = this.i18n.t('spareParts.disbursementDrawer.receiverNameRequired');
       return;
     }
 
@@ -127,7 +134,7 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
         },
         error: (err) => {
           this.advancing = false;
-          this.advanceError = err instanceof Error ? err.message : 'Failed to update status.';
+          this.advanceError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementDrawer.updateStatusError');
         },
       });
   }

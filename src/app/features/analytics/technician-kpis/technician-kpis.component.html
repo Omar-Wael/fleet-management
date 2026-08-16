@@ -1,19 +1,19 @@
 <div class="analytics-panel">
   <header class="panel-header">
     <div>
-      <h2>Technician KPIs</h2>
-      <p class="panel-subtitle">{{ rows.length }} technician(s), sorted by lowest bounce rate</p>
+      <h2>{{ 'analytics.technicianKpisTitle' | translate }}</h2>
+      <p class="panel-subtitle">{{ rows.length }} {{ 'analytics.technicianCount' | translate }}</p>
     </div>
 
     <div class="panel-actions">
       <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!rows.length">
-        Export Excel
+        {{ 'common.exportExcel' | translate }}
       </button>
     </div>
   </header>
 
   @if (loading) {
-    <div class="state-message">Loading technician KPIs…</div>
+    <div class="state-message">{{ 'analytics.loadingTechnicianKpis' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -21,12 +21,12 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Technician</th>
-            <th>Work Orders</th>
-            <th>Bounces</th>
-            <th>Bounce Rate</th>
-            <th>Disbursement Requests</th>
-            <th>Overhaul Stages</th>
+            <th>{{ 'analytics.technician' | translate }}</th>
+            <th>{{ 'analytics.workOrders' | translate }}</th>
+            <th>{{ 'analytics.bounces' | translate }}</th>
+            <th>{{ 'analytics.bounceRate' | translate }}</th>
+            <th>{{ 'analytics.disbursementRequests' | translate }}</th>
+            <th>{{ 'analytics.overhaulStages' | translate }}</th>
             <th></th>
           </tr>
         </thead>
@@ -50,19 +50,19 @@
               <tr class="expanded-row">
                 <td colspan="7">
                   @if (bouncesLoading) {
-                    <div class="state-message state-message--inline">Loading bounce history…</div>
+                    <div class="state-message state-message--inline">{{ 'analytics.loadingBounceHistory' | translate }}</div>
                   } @else if (bouncesError) {
                     <div class="state-message state-message--error">{{ bouncesError }}</div>
                   } @else if (!bounces.length) {
-                    <div class="state-message state-message--inline">No repair bounces recorded.</div>
+                    <div class="state-message state-message--inline">{{ 'analytics.noBouncesRecorded' | translate }}</div>
                   } @else {
                     <table class="sub-table">
                       <thead>
                         <tr>
-                          <th>Date</th>
-                          <th>Reason</th>
-                          <th>Days Between</th>
-                          <th>Notes</th>
+                          <th>{{ 'common.date' | translate }}</th>
+                          <th>{{ 'analytics.reason' | translate }}</th>
+                          <th>{{ 'analytics.daysBetween' | translate }}</th>
+                          <th>{{ 'common.notes' | translate }}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -82,7 +82,7 @@
             }
           } @empty {
             <tr>
-              <td colspan="7" class="empty-row">No technician KPI data yet.</td>
+              <td colspan="7" class="empty-row">{{ 'analytics.noTechnicianKpiData' | translate }}</td>
             </tr>
           }
         </tbody>

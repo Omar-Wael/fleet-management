@@ -5,6 +5,8 @@ import {
   FinancialTransactionsService,
   CheckGridRow,
 } from '../../../core/services/financial-transactions.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 type ApprovalStep =
   | 'cost_dept_reviewed_at'
@@ -12,17 +14,17 @@ type ApprovalStep =
   | 'approved_at'
   | 'disbursed_at';
 
-const APPROVAL_STEPS: { key: ApprovalStep; label: string }[] = [
-  { key: 'cost_dept_reviewed_at', label: 'Cost Dept Reviewed' },
-  { key: 'audit_dept_reviewed_at', label: 'Audit Dept Reviewed' },
-  { key: 'approved_at', label: 'Approved' },
-  { key: 'disbursed_at', label: 'Disbursed' },
+const APPROVAL_STEPS: { key: ApprovalStep; labelKey: string }[] = [
+  { key: 'cost_dept_reviewed_at', labelKey: 'checks.stepCostDept' },
+  { key: 'audit_dept_reviewed_at', labelKey: 'checks.stepAuditDept' },
+  { key: 'approved_at', labelKey: 'checks.stepApproved' },
+  { key: 'disbursed_at', labelKey: 'checks.stepDisbursed' },
 ];
 
 @Component({
   selector: 'app-check-detail-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './check-detail-drawer.component.html',
   styleUrls: ['./check-detail-drawer.component.scss'],
 })
@@ -38,7 +40,10 @@ export class CheckDetailDrawerComponent {
   advancing = false;
   advanceError: string | null = null;
 
-  constructor(private financialTransactionsService: FinancialTransactionsService) {}
+  constructor(
+    private financialTransactionsService: FinancialTransactionsService,
+    readonly i18n: TranslationService,
+  ) {}
 
   get linkedVehiclePlate(): string | null {
     return (
@@ -49,7 +54,7 @@ export class CheckDetailDrawerComponent {
   }
 
   /** First approval step not yet timestamped, i.e. the one the "Advance" button should trigger next. */
-  get nextStep(): { key: ApprovalStep; label: string } | null {
+  get nextStep(): { key: ApprovalStep; labelKey: string } | null {
     if (!this.check) return null;
     return this.approvalSteps.find((step) => !this.check![step.key]) ?? null;
   }
@@ -79,7 +84,7 @@ export class CheckDetailDrawerComponent {
       error: (err) => {
         this.advancing = false;
         this.advanceError =
-          err instanceof Error ? err.message : 'Failed to update approval status.';
+          err instanceof Error ? err.message : this.i18n.t('checks.failedUpdateApproval');
       },
     });
   }

@@ -3,11 +3,13 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { FormsModule } from '@angular/forms';
 
 import { MaintenanceService, WorkOrderGridRow } from '../../../core/services/maintenance.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-work-order-detail-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule],
+  imports: [DatePipe, DecimalPipe, FormsModule, TranslatePipe],
   templateUrl: './work-order-detail-drawer.component.html',
   styleUrls: ['./work-order-detail-drawer.component.scss'],
 })
@@ -22,7 +24,10 @@ export class WorkOrderDetailDrawerComponent implements OnChanges {
   closeError: string | null = null;
   totalCostInput: number | null = null;
 
-  constructor(private maintenanceService: MaintenanceService) {}
+  constructor(
+    private maintenanceService: MaintenanceService,
+    readonly i18n: TranslationService,
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['workOrder'] && this.workOrder) {
@@ -49,7 +54,7 @@ export class WorkOrderDetailDrawerComponent implements OnChanges {
       },
       error: (err) => {
         this.closing = false;
-        this.closeError = err instanceof Error ? err.message : 'Failed to close work order.';
+        this.closeError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedCloseWorkOrder');
       },
     });
   }

@@ -29,6 +29,8 @@ import {
   VehicleWithLookups,
   WorkOrder,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface DraftItem {
   spare_part_id: string;
@@ -40,7 +42,7 @@ interface DraftItem {
 @Component({
   selector: 'app-disbursement-form',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, SlicePipe],
+  imports: [ReactiveFormsModule, FormsModule, SlicePipe, TranslatePipe],
   templateUrl: './disbursement-form.component.html',
   styleUrls: ['./disbursement-form.component.scss'],
 })
@@ -72,6 +74,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     private vehiclesService: VehiclesService,
     private techniciansService: TechniciansService,
     private maintenanceService: MaintenanceService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       vehicle_id: ['', Validators.required],
@@ -115,7 +118,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementForm.lookupsError');
         this.lookupsLoading = false;
       },
     });
@@ -160,7 +163,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
       next: (last) => {
         row.loadingNote = false;
         row.lastDisbursementNote = last
-          ? `Last issued ${new Date(last.requested_at).toLocaleDateString()} at ${last.odometer_at_lookup_time ?? '—'} km`
+          ? `${this.i18n.t('spareParts.disbursementForm.lastIssuedLabel')} ${new Date(last.requested_at).toLocaleDateString()} — ${last.odometer_at_lookup_time ?? '—'} ${this.i18n.t('spareParts.disbursementForm.kmUnit')}`
           : null;
       },
       error: () => {
@@ -177,7 +180,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     if (this.form.invalid || this.validItems.length === 0) {
       this.form.markAllAsTouched();
       if (this.validItems.length === 0) {
-        this.saveError = 'Add at least one spare part line with a quantity greater than zero.';
+        this.saveError = this.i18n.t('spareParts.disbursementForm.needItemsError');
       }
       return;
     }
@@ -198,7 +201,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
         error: (err) => {
           this.saving = false;
           this.saveError =
-            err instanceof Error ? err.message : 'Failed to create disbursement request.';
+            err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementForm.createError');
         },
       });
   }
@@ -220,10 +223,8 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError =
-          err instanceof Error
-            ? `Request created, but adding items failed: ${err.message}`
-            : 'Request created, but adding items failed.';
+        const prefix = this.i18n.t('spareParts.disbursementForm.itemsFailedPrefix');
+        this.saveError = err instanceof Error ? `${prefix}: ${err.message}` : `${prefix}.`;
       },
     });
   }

@@ -20,11 +20,13 @@ import {
   GARAGE_LODGING_IMPORT_TEMPLATE_HEADERS,
   resolveGarageLodgingForeignKeys,
 } from '../../../shared/utils/import-column-maps';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-garage-lodging-list',
   standalone: true,
-  imports: [DatePipe, FormsModule, GarageLodgingFormComponent],
+  imports: [DatePipe, FormsModule, TranslatePipe, GarageLodgingFormComponent],
   templateUrl: './garage-lodging-list.component.html',
   styleUrls: ['./garage-lodging-list.component.scss'],
 })
@@ -57,6 +59,7 @@ export class GarageLodgingListComponent implements OnInit {
     private vehiclesService: VehiclesService,
     private lookupsService: LookupsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -79,7 +82,7 @@ export class GarageLodgingListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load garage lodgings.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -136,7 +139,7 @@ export class GarageLodgingListComponent implements OnInit {
 
   checkOut(lodging: GarageLodgingGridRow): void {
     const confirmed = window.confirm(
-      `Check out "${lodging.vehicles?.plate_number}" from the garage today?`,
+      `${this.i18n.t('garageLodging.checkOutConfirmPrefix')} "${lodging.vehicles?.plate_number}" ${this.i18n.t('garageLodging.checkOutConfirmSuffix')}`,
     );
     if (!confirmed) return;
 
@@ -150,7 +153,7 @@ export class GarageLodgingListComponent implements OnInit {
       },
       error: (err) => {
         this.checkingOutId = null;
-        this.checkOutError = err instanceof Error ? err.message : 'Failed to check out vehicle.';
+        this.checkOutError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -191,7 +194,7 @@ export class GarageLodgingListComponent implements OnInit {
 
         if (resolved.length === 0) {
           this.importing = false;
-          this.importError = 'No rows could be imported. Check that the plate number matches an existing vehicle.';
+          this.importError = this.i18n.t('garageLodging.importNoRows');
           return;
         }
 
@@ -203,13 +206,13 @@ export class GarageLodgingListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : 'Import failed.';
+            this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       });
   }
 

@@ -2,11 +2,13 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { VehicleFullProfile, VehiclesService } from '../../../core/services/vehicles.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-vehicle-profile-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './vehicle-profile-drawer.component.html',
   styleUrls: ['./vehicle-profile-drawer.component.scss'],
 })
@@ -20,7 +22,10 @@ export class VehicleProfileDrawerComponent implements OnChanges {
   loading = false;
   loadError: string | null = null;
 
-  constructor(private vehiclesService: VehiclesService) {}
+  constructor(
+    private vehiclesService: VehiclesService,
+    readonly i18n: TranslationService,
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -42,7 +47,7 @@ export class VehicleProfileDrawerComponent implements OnChanges {
         this.loading = false;
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load vehicle profile.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
       },
     });

@@ -3,26 +3,26 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>{{ isEditMode ? 'Edit Vehicle' : 'Add Vehicle' }}</h2>
+      <h2>{{ (isEditMode ? 'vehicles.editTitle' : 'vehicles.addTitle') | translate }}</h2>
       <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
     </header>
 
     @if (lookupsLoading) {
-      <div class="state-message">Loading form options…</div>
+      <div class="state-message">{{ 'vehicles.loadingFormOptions' | translate }}</div>
     } @else if (lookupsError) {
       <div class="state-message state-message--error">{{ lookupsError }}</div>
     } @else {
       <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
         <div class="field-grid">
           <label class="field">
-            <span>Plate Number *</span>
+            <span>{{ 'vehicles.plateNumber' | translate }} *</span>
             <input type="text" formControlName="plate_number" />
           </label>
 
           <label class="field">
-            <span>Vehicle Type *</span>
+            <span>{{ 'vehicles.vehicleType' | translate }} *</span>
             <select formControlName="vehicle_type_id">
-              <option [ngValue]="''" disabled>Select type…</option>
+              <option [ngValue]="''" disabled>{{ 'vehicles.selectType' | translate }}</option>
               @for (t of vehicleTypes; track t.id) {
                 <option [ngValue]="t.id">{{ t.name_en || t.name_ar }}</option>
               }
@@ -30,7 +30,7 @@
           </label>
 
           <label class="field">
-            <span>Operating Dept</span>
+            <span>{{ 'vehicles.operatingDept' | translate }}</span>
             <select formControlName="operating_department_id">
               <option [ngValue]="null">—</option>
               @for (d of departments; track d.id) {
@@ -40,9 +40,9 @@
           </label>
 
           <label class="field">
-            <span>Repair Dept (Workshop) *</span>
+            <span>{{ 'vehicles.repairDeptWorkshop' | translate }} *</span>
             <select formControlName="maintenance_workshop_id">
-              <option [ngValue]="''" disabled>Select workshop…</option>
+              <option [ngValue]="''" disabled>{{ 'vehicles.selectWorkshop' | translate }}</option>
               @for (w of workshops; track w.id) {
                 <option [ngValue]="w.id">{{ w.name_en || w.name_ar }} ({{ w.workshop_type }})</option>
               }
@@ -50,77 +50,77 @@
           </label>
 
           <label class="field">
-            <span>Current Engine</span>
+            <span>{{ 'vehicles.currentEngine' | translate }}</span>
             <select formControlName="current_engine_id">
-              <option [ngValue]="null">— None —</option>
+              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
               @for (e of engines; track e.id) {
-                <option [ngValue]="e.id">{{ e.engine_serial_number }} — {{ e.model_name || 'Unknown model' }}</option>
+                <option [ngValue]="e.id">{{ e.engine_serial_number }} — {{ e.model_name || ('vehicles.unknownModel' | translate) }}</option>
               }
             </select>
           </label>
 
           <label class="field">
-            <span>Status *</span>
+            <span>{{ 'common.status' | translate }} *</span>
             <select formControlName="status">
               @for (s of statusOptions; track s.value) {
-                <option [ngValue]="s.value">{{ s.label }}</option>
+                <option [ngValue]="s.value">{{ s.labelKey | translate }}</option>
               }
             </select>
           </label>
 
           <label class="field">
-            <span>Make</span>
+            <span>{{ 'vehicles.make' | translate }}</span>
             <input type="text" formControlName="make" />
           </label>
 
           <label class="field">
-            <span>Model</span>
+            <span>{{ 'vehicles.model' | translate }}</span>
             <input type="text" formControlName="model" />
           </label>
 
           <label class="field">
-            <span>Manufacture Year</span>
+            <span>{{ 'vehicles.manufactureYear' | translate }}</span>
             <input type="number" formControlName="manufacture_year" />
           </label>
 
           <label class="field">
-            <span>Chassis No.</span>
+            <span>{{ 'vehicles.chassisNumber' | translate }}</span>
             <input type="text" formControlName="chassis_number" />
           </label>
 
           <label class="field">
-            <span>Color</span>
+            <span>{{ 'vehicles.color' | translate }}</span>
             <input type="text" formControlName="color" />
           </label>
 
           <label class="field">
-            <span>Odometer Reading</span>
+            <span>{{ 'vehicles.odometerReading' | translate }}</span>
             <input type="number" formControlName="odometer_km" />
           </label>
 
           <label class="field">
-            <span>Odometer Unit</span>
+            <span>{{ 'vehicles.odometerUnit' | translate }}</span>
             <select formControlName="odometer_unit">
-              <option value="km">km</option>
-              <option value="hours">hours</option>
-              <option value="other">other</option>
+              <option value="km">{{ 'vehicles.unitKm' | translate }}</option>
+              <option value="hours">{{ 'vehicles.unitHours' | translate }}</option>
+              <option value="other">{{ 'vehicles.unitOther' | translate }}</option>
             </select>
           </label>
 
           <label class="field field--checkbox">
             <input type="checkbox" formControlName="odometer_working" />
-            <span>Odometer working</span>
+            <span>{{ 'vehicles.odometerWorking' | translate }}</span>
           </label>
 
           <label class="field">
-            <span>Last Odometer Reading Date</span>
+            <span>{{ 'vehicles.lastOdometerReadingDate' | translate }}</span>
             <input type="date" formControlName="last_odometer_reading_date" />
           </label>
 
           <label class="field">
-            <span>Garage Location (if lodged)</span>
+            <span>{{ 'vehicles.garageLocation' | translate }}</span>
             <select formControlName="current_garage_location_id">
-              <option [ngValue]="null">— Not lodged —</option>
+              <option [ngValue]="null">{{ 'vehicles.notLodged' | translate }}</option>
               @for (g of garageLocations; track g.id) {
                 <option [ngValue]="g.id">{{ g.garage_name }}</option>
               }
@@ -128,17 +128,17 @@
           </label>
 
           <label class="field">
-            <span>Custodian Name</span>
+            <span>{{ 'vehicles.custodianName' | translate }}</span>
             <input type="text" formControlName="custodian_name" />
           </label>
 
           <label class="field">
-            <span>Custodian Phone</span>
+            <span>{{ 'vehicles.custodianPhone' | translate }}</span>
             <input type="text" formControlName="custodian_phone" />
           </label>
 
           <label class="field field--wide">
-            <span>Notes</span>
+            <span>{{ 'common.notes' | translate }}</span>
             <textarea formControlName="notes" rows="3"></textarea>
           </label>
         </div>
@@ -148,9 +148,11 @@
         }
 
         <footer class="slide-over-footer">
-          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ saving ? 'Saving…' : (isEditMode ? 'Save Changes' : 'Add Vehicle') }}
+            {{ (saving ? 'common.saving' : (isEditMode ? 'common.saveChanges' : 'vehicles.addButton')) | translate }}
           </button>
         </footer>
       </form>

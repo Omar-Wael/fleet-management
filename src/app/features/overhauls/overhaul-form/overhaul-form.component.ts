@@ -14,11 +14,13 @@ import { OverhaulsService } from '../../../core/services/overhauls.service';
 import { VehiclesService } from '../../../core/services/vehicles.service';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { ExternalWorkshop, Overhaul, VehicleWithLookups } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-overhaul-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './overhaul-form.component.html',
   styleUrls: ['./overhaul-form.component.scss'],
 })
@@ -44,6 +46,7 @@ export class OverhaulFormComponent implements OnInit, OnChanges {
     private overhaulsService: OverhaulsService,
     private vehiclesService: VehiclesService,
     private sparePartsService: SparePartsService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       vehicle_id: ['', Validators.required],
@@ -78,7 +81,7 @@ export class OverhaulFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedLoadFormOptions');
         this.lookupsLoading = false;
       },
     });
@@ -101,7 +104,7 @@ export class OverhaulFormComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : 'Failed to create overhaul.';
+        this.saveError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedCreate');
       },
     });
   }

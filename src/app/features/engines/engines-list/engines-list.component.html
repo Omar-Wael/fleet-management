@@ -1,8 +1,11 @@
 <div class="engines-page">
   <header class="page-header">
     <div>
-      <h1>Engines</h1>
-      <p class="page-subtitle">{{ filteredEngines.length }} of {{ engines.length }} engines</p>
+      <h1>{{ 'engines.title' | translate }}</h1>
+      <p class="page-subtitle">
+        {{ filteredEngines.length }}/{{ engines.length }}
+        {{ 'engines.shown' | translate }}
+      </p>
     </div>
 
     <div class="page-actions">
@@ -13,13 +16,13 @@
         hidden
         (change)="onFileSelected($event)"
       />
-      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">Download Template</button>
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">{{ 'common.downloadTemplate' | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
-        {{ importing ? 'Importing…' : 'Import' }}
+        {{ (importing ? 'common.importing' : 'common.import') | translate }}
       </button>
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
-      <button type="button" class="btn btn--primary" (click)="openAddForm()">+ Add Engine</button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
+      <button type="button" class="btn btn--primary" (click)="openAddForm()">{{ 'engines.addButton' | translate }}</button>
     </div>
   </header>
 
@@ -29,9 +32,10 @@
 
   @if (importSummary) {
     <div class="state-message state-message--ok">
-      Imported {{ importSummary.savedCount }} engine(s).
+      {{ 'engines.importedCount' | translate }} {{ importSummary.savedCount }}
+      {{ 'engines.importedUnit' | translate }}
       @if (importSummary.unresolvedCount) {
-        {{ importSummary.unresolvedCount }} row(s) skipped.
+        {{ importSummary.unresolvedCount }} {{ 'engines.skippedRows' | translate }}
       }
     </div>
   }
@@ -41,18 +45,18 @@
     <input
       type="text"
       class="filters-search"
-      placeholder="Search serial no., model, manufacturer, fuel type…"
+      [placeholder]="'engines.searchPlaceholder' | translate"
       [(ngModel)]="searchTerm"
     />
 
     <label class="filter-checkbox">
       <input type="checkbox" [(ngModel)]="inStockOnly" (change)="loadEngines()" />
-      In stock only
+      {{ 'engines.inStockOnly' | translate }}
     </label>
   </div>
 
   @if (loading) {
-    <div class="state-message">Loading engines…</div>
+    <div class="state-message">{{ 'engines.loadingList' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -60,16 +64,16 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Serial No.</th>
-            <th>Model</th>
-            <th>Manufacturer</th>
-            <th>HP</th>
-            <th>CC</th>
-            <th>Fuel Type</th>
-            <th>Compatible Types</th>
-            <th>Status</th>
-            <th>Notes</th>
-            <th>Actions</th>
+            <th>{{ 'engines.serialNumber' | translate }}</th>
+            <th>{{ 'engines.model' | translate }}</th>
+            <th>{{ 'engines.manufacturer' | translate }}</th>
+            <th>{{ 'engines.hp' | translate }}</th>
+            <th>{{ 'engines.cc' | translate }}</th>
+            <th>{{ 'engines.fuelType' | translate }}</th>
+            <th>{{ 'engines.colCompatibleTypes' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'common.notes' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -84,21 +88,21 @@
               <td class="compat-cell" [title]="compatibleTypeNames(e)">{{ compatibleTypeNames(e) }}</td>
               <td>
                 @if (e.is_in_stock) {
-                  <span class="badge badge--ok">In stock</span>
+                  <span class="badge badge--ok">{{ 'engines.statusInStock' | translate }}</span>
                 } @else {
-                  <span class="badge badge--warn">Fitted</span>
+                  <span class="badge badge--warn">{{ 'engines.statusFitted' | translate }}</span>
                 }
               </td>
               <td class="notes-cell" [title]="e.notes || ''">{{ e.notes || '—' }}</td>
               <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openProfile(e)">View</button>
-                <button type="button" class="link-btn" (click)="openEditForm(e)">Edit</button>
-                <button type="button" class="link-btn link-btn--danger" (click)="deleteEngine(e)">Delete</button>
+                <button type="button" class="link-btn" (click)="openProfile(e)">{{ 'common.view' | translate }}</button>
+                <button type="button" class="link-btn" (click)="openEditForm(e)">{{ 'common.edit' | translate }}</button>
+                <button type="button" class="link-btn link-btn--danger" (click)="deleteEngine(e)">{{ 'common.delete' | translate }}</button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="10" class="empty-row">No engines match the current filters.</td>
+              <td colspan="10" class="empty-row">{{ 'engines.noResults' | translate }}</td>
             </tr>
           }
         </tbody>

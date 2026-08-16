@@ -3,44 +3,44 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>{{ isEditMode ? 'Edit Spare Part' : 'Add Spare Part' }}</h2>
-      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+      <h2>{{ (isEditMode ? 'spareParts.partForm.editTitle' : 'spareParts.partForm.addTitle') | translate }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
     </header>
 
     <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
       <div class="field-grid">
         <label class="field">
-          <span>Part Code</span>
+          <span>{{ 'spareParts.catalog.colPartCode' | translate }}</span>
           <input type="text" formControlName="part_code" />
         </label>
 
         <label class="field">
-          <span>Name (Arabic) *</span>
+          <span>{{ 'spareParts.partForm.fieldNameAr' | translate }}</span>
           <input type="text" formControlName="name_ar" />
         </label>
 
         <label class="field">
-          <span>Name (English)</span>
+          <span>{{ 'spareParts.catalog.colNameEn' | translate }}</span>
           <input type="text" formControlName="name_en" />
         </label>
 
         <label class="field">
-          <span>Unit</span>
-          <input type="text" formControlName="unit" placeholder="e.g. piece, liter, set" />
+          <span>{{ 'spareParts.catalog.colUnit' | translate }}</span>
+          <input type="text" formControlName="unit" [placeholder]="'spareParts.partForm.unitPlaceholder' | translate" />
         </label>
 
         <label class="field">
-          <span>Unit Cost</span>
+          <span>{{ 'spareParts.catalog.colUnitCost' | translate }}</span>
           <input type="number" step="0.01" formControlName="unit_cost" />
         </label>
 
         <label class="field">
-          <span>Current Stock Qty *</span>
+          <span>{{ 'spareParts.partForm.fieldStockQty' | translate }}</span>
           <input type="number" formControlName="current_stock_qty" />
         </label>
 
         <label class="field">
-          <span>Reorder Threshold</span>
+          <span>{{ 'spareParts.partForm.fieldReorderThreshold' | translate }}</span>
           <input type="number" formControlName="reorder_threshold" />
         </label>
       </div>
@@ -50,9 +50,9 @@
       }
 
       <footer class="slide-over-footer">
-        <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+        <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
         <button type="submit" class="btn btn--primary" [disabled]="saving">
-          {{ saving ? 'Saving…' : (isEditMode ? 'Save Changes' : 'Add Part') }}
+          {{ (saving ? 'common.saving' : (isEditMode ? 'common.saveChanges' : 'spareParts.partForm.addSubmit')) | translate }}
         </button>
       </footer>
     </form>

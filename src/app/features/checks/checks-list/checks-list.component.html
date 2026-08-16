@@ -1,14 +1,23 @@
 <div class="checks-page">
   <header class="page-header">
     <div>
-      <h1>Checks</h1>
-      <p class="page-subtitle">{{ filteredChecks.length }} of {{ checks.length }} checks</p>
+      <h1>{{ 'checks.title' | translate }}</h1>
+      <p class="page-subtitle">
+        {{ filteredChecks.length }}/{{ checks.length }}
+        {{ 'checks.shown' | translate }}
+      </p>
     </div>
 
     <div class="page-actions">
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
-      <button type="button" class="btn btn--primary" (click)="openCreateForm()">+ New Check</button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">
+        {{ 'common.exportExcel' | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">
+        {{ 'common.exportPdf' | translate }}
+      </button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">
+        {{ 'checks.addButton' | translate }}
+      </button>
     </div>
   </header>
 
@@ -16,17 +25,17 @@
     <input
       type="text"
       class="filters-search"
-      placeholder="Search check no., recipient, vehicle…"
+      [placeholder]="'checks.searchPlaceholder' | translate"
       [(ngModel)]="searchTerm"
     />
     <label class="filter-checkbox">
       <input type="checkbox" [(ngModel)]="pendingOnly" />
-      Not yet disbursed
+      {{ 'checks.notYetDisbursed' | translate }}
     </label>
   </div>
 
   @if (loading) {
-    <div class="state-message">Loading checks…</div>
+    <div class="state-message">{{ 'checks.loadingList' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -34,13 +43,13 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Check No.</th>
-            <th>Recipient</th>
-            <th>Amount</th>
-            <th>Stage</th>
-            <th>Vehicle</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>{{ 'checks.checkNumber' | translate }}</th>
+            <th>{{ 'checks.recipient' | translate }}</th>
+            <th>{{ 'checks.amount' | translate }}</th>
+            <th>{{ 'checks.stage' | translate }}</th>
+            <th>{{ 'checks.vehicle' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -53,18 +62,20 @@
               <td class="mono">{{ linkedVehiclePlate(c) || '—' }}</td>
               <td>
                 @if (c.disbursed_at) {
-                  <span class="badge badge--ok">Disbursed</span>
+                  <span class="badge badge--ok">{{ 'checks.stepDisbursed' | translate }}</span>
                 } @else {
-                  <span class="badge badge--warn">Pending</span>
+                  <span class="badge badge--warn">{{ 'checks.pending' | translate }}</span>
                 }
               </td>
               <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openDetail(c)">View</button>
+                <button type="button" class="link-btn" (click)="openDetail(c)">
+                  {{ 'common.view' | translate }}
+                </button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="empty-row">No checks match the current filters.</td>
+              <td colspan="7" class="empty-row">{{ 'checks.noResults' | translate }}</td>
             </tr>
           }
         </tbody>

@@ -3,38 +3,38 @@
 
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
-      <h2>{{ request?.vehicles?.plate_number || 'Disbursement Request' }}</h2>
-      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+      <h2>{{ request?.vehicles?.plate_number || ('spareParts.disbursementDrawer.fallbackTitle' | translate) }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
     </header>
 
     @if (request) {
       <div class="drawer-body">
         <section class="profile-section">
-          <h3>Overview</h3>
+          <h3>{{ 'spareParts.disbursementDrawer.overview' | translate }}</h3>
           <dl>
-            <dt>Status</dt>
-            <dd><span class="badge">{{ statusLabels[request.status] }}</span></dd>
-            <dt>Requested By</dt>
+            <dt>{{ 'common.status' | translate }}</dt>
+            <dd><span class="badge">{{ statusLabelKeys[request.status] | translate }}</span></dd>
+            <dt>{{ 'spareParts.disbursement.colRequestedBy' | translate }}</dt>
             <dd>{{ request.technicians?.full_name || '—' }}</dd>
-            <dt>Requested At</dt>
+            <dt>{{ 'spareParts.disbursement.colRequestedAt' | translate }}</dt>
             <dd>{{ request.requested_at | date : 'medium' }}</dd>
-            <dt>Issued At</dt>
+            <dt>{{ 'spareParts.disbursementDrawer.issuedAt' | translate }}</dt>
             <dd>{{ request.issued_at ? (request.issued_at | date : 'medium') : '—' }}</dd>
             @if (request.purchase_committee_receiver_name) {
-              <dt>Committee Receiver</dt>
+              <dt>{{ 'spareParts.disbursementDrawer.committeeReceiver' | translate }}</dt>
               <dd>{{ request.purchase_committee_receiver_name }}</dd>
             }
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Parts</h3>
+          <h3>{{ 'spareParts.disbursement.colParts' | translate }}</h3>
           <table class="mini-table">
             <thead>
               <tr>
-                <th>Part</th>
-                <th>Qty</th>
-                <th>Unit Cost</th>
+                <th>{{ 'spareParts.disbursementDrawer.colPart' | translate }}</th>
+                <th>{{ 'spareParts.disbursementDrawer.colQty' | translate }}</th>
+                <th>{{ 'spareParts.catalog.colUnitCost' | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -46,61 +46,61 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="3" class="muted">No items recorded.</td>
+                  <td colspan="3" class="muted">{{ 'spareParts.disbursementDrawer.noItems' | translate }}</td>
                 </tr>
               }
             </tbody>
           </table>
           @if (itemsTotal > 0) {
-            <p class="items-total">Total: <span class="mono">{{ itemsTotal | number : '1.2-2' }}</span></p>
+            <p class="items-total">{{ 'spareParts.disbursementDrawer.total' | translate }} <span class="mono">{{ itemsTotal | number : '1.2-2' }}</span></p>
           }
         </section>
 
         @if (request.notes) {
           <section class="profile-section">
-            <h3>Notes</h3>
+            <h3>{{ 'common.notes' | translate }}</h3>
             <p class="notes-text">{{ request.notes }}</p>
           </section>
         }
 
         <section class="profile-section">
-          <h3>Status History</h3>
+          <h3>{{ 'spareParts.disbursementDrawer.statusHistory' | translate }}</h3>
           @if (loading) {
-            <p class="muted">Loading…</p>
+            <p class="muted">{{ 'common.loading' | translate }}</p>
           } @else if (loadError) {
             <p class="state-message state-message--error">{{ loadError }}</p>
           } @else if (history.length) {
             <table class="mini-table">
               <thead>
                 <tr>
-                  <th>When</th>
-                  <th>Status</th>
-                  <th>Note</th>
+                  <th>{{ 'spareParts.disbursementDrawer.colWhen' | translate }}</th>
+                  <th>{{ 'common.status' | translate }}</th>
+                  <th>{{ 'spareParts.disbursementDrawer.colNote' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
                 @for (h of history; track h.id) {
                   <tr>
                     <td>{{ h.changed_at | date : 'medium' }}</td>
-                    <td>{{ statusLabels[h.status] }}</td>
+                    <td>{{ statusLabelKeys[h.status] | translate }}</td>
                     <td>{{ h.changed_note || '—' }}</td>
                   </tr>
                 }
               </tbody>
             </table>
           } @else {
-            <p class="muted">No status changes recorded yet.</p>
+            <p class="muted">{{ 'spareParts.disbursementDrawer.noHistory' | translate }}</p>
           }
         </section>
 
         @if (nextStatuses.length) {
           <section class="profile-section">
-            <h3>Advance Status</h3>
+            <h3>{{ 'spareParts.disbursementDrawer.advanceStatus' | translate }}</h3>
 
             @if (nextStatuses.includes('purchase_committee_received')) {
               <label class="field">
-                <span>Purchase Committee Receiver Name</span>
-                <input type="text" [(ngModel)]="receiverName" placeholder="Required for this transition" />
+                <span>{{ 'spareParts.disbursementDrawer.receiverNameLabel' | translate }}</span>
+                <input type="text" [(ngModel)]="receiverName" [placeholder]="'spareParts.disbursementDrawer.receiverNamePlaceholder' | translate" />
               </label>
             }
 
@@ -111,7 +111,7 @@
             <div class="advance-actions">
               @for (status of nextStatuses; track status) {
                 <button type="button" class="btn btn--primary" [disabled]="advancing" (click)="advanceTo(status)">
-                  {{ advancing ? 'Updating…' : 'Mark as ' + statusLabels[status] }}
+                  {{ advancing ? ('spareParts.disbursementDrawer.updating' | translate) : (('spareParts.disbursementDrawer.markAs' | translate) + ' ' + (statusLabelKeys[status] | translate)) }}
                 </button>
               }
             </div>

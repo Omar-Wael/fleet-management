@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VAlertLicenseDue, VAlertMaintenanceDue } from '../../../core/models/fleet.models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export type AlertSeverity = 'warning' | 'critical';
 
 @Component({
   selector: 'app-alert-banner',
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './alert-banner.html',
   styleUrl: './alert-banner.scss',
 })

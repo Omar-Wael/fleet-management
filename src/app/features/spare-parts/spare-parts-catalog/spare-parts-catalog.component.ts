@@ -14,11 +14,13 @@ import {
   SPARE_PART_IMPORT_TEMPLATE_HEADERS,
   prepareSparePartRowsForImport,
 } from '../../../shared/utils/import-column-maps';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-spare-parts-catalog',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, SparePartFormComponent],
+  imports: [DecimalPipe, FormsModule, TranslatePipe, SparePartFormComponent],
   templateUrl: './spare-parts-catalog.component.html',
   styleUrls: ['./spare-parts-catalog.component.scss'],
 })
@@ -41,6 +43,7 @@ export class SparePartsCatalogComponent implements OnInit {
   constructor(
     private sparePartsService: SparePartsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -58,7 +61,7 @@ export class SparePartsCatalogComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load spare parts.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -124,7 +127,7 @@ export class SparePartsCatalogComponent implements OnInit {
 
         if (resolved.length === 0) {
           this.importing = false;
-          this.importError = 'No rows could be imported. Check that "Name (Arabic)" is filled in for every row.';
+          this.importError = this.i18n.t('spareParts.catalog.importNoRows');
           return;
         }
 
@@ -136,13 +139,13 @@ export class SparePartsCatalogComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : 'Import upsert failed.';
+            this.importError = err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.importUpsertFailed');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.importError = err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.importParseFailed');
       });
   }
 

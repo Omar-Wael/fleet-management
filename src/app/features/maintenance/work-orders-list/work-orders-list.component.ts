@@ -16,6 +16,8 @@ import {
 import { importFileWithMapping } from '../../../shared/utils/document-import.util';
 import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-work-orders-list',
@@ -24,6 +26,7 @@ import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pd
     DatePipe,
     DecimalPipe,
     FormsModule,
+    TranslatePipe,
     WorkOrderFormComponent,
     WorkOrderDetailDrawerComponent,
   ],
@@ -53,6 +56,7 @@ export class WorkOrdersListComponent implements OnInit {
     private maintenanceService: MaintenanceService,
     private vehiclesService: VehiclesService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -76,7 +80,7 @@ export class WorkOrdersListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load work orders.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadWorkOrders');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -87,7 +91,7 @@ export class WorkOrdersListComponent implements OnInit {
     this.maintenanceService.list().subscribe({
       next: (workOrders) => (this.workOrders = workOrders),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to reload work orders.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedReloadWorkOrders');
       },
     });
   }
@@ -165,8 +169,7 @@ export class WorkOrdersListComponent implements OnInit {
 
         if (resolved.length === 0) {
           this.importing = false;
-          this.importError =
-            'No rows could be resolved. Check that plate numbers match existing vehicles.';
+          this.importError = this.i18n.t('maintenance.importNoRowsResolved');
           return;
         }
 
@@ -186,13 +189,13 @@ export class WorkOrdersListComponent implements OnInit {
           error: (err) => {
             this.importing = false;
             this.importError =
-              err instanceof Error ? err.message : 'Import failed partway through.';
+              err instanceof Error ? err.message : this.i18n.t('maintenance.importFailedPartway');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.importError = err instanceof Error ? err.message : this.i18n.t('maintenance.importParseFailed');
       });
   }
 

@@ -1,11 +1,11 @@
 <div class="lookup-panel">
   <header class="panel-header">
     <div>
-      <h2>Vehicle Types</h2>
-      <p class="panel-subtitle">{{ rows.length }} type(s)</p>
+      <h2>{{ 'settings.vehicleTypes.title' | translate }}</h2>
+      <p class="panel-subtitle">{{ rows.length }} {{ 'settings.vehicleTypes.countUnit' | translate }}</p>
     </div>
     <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
-      + Add Type
+      {{ 'settings.vehicleTypes.addButton' | translate }}
     </button>
   </header>
 
@@ -14,7 +14,7 @@
   }
 
   @if (loading) {
-    <div class="state-message">Loading vehicle types…</div>
+    <div class="state-message">{{ 'settings.vehicleTypes.loading' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -22,33 +22,43 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Name (Arabic)</th>
-            <th>Name (English)</th>
-            <th>Default Workshop Type</th>
-            <th>Actions</th>
+            <th>{{ 'settings.vehicleTypes.nameArabic' | translate }}</th>
+            <th>{{ 'settings.vehicleTypes.nameEnglish' | translate }}</th>
+            <th>{{ 'settings.vehicleTypes.colDefaultWorkshopType' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
           @if (addingNew) {
             <tr class="editing-row">
               <td>
-                <input type="text" [(ngModel)]="newDraft.name_ar" placeholder="الاسم بالعربي" />
+                <input
+                  type="text"
+                  [(ngModel)]="newDraft.name_ar"
+                  [placeholder]="'settings.vehicleTypes.nameArabicPlaceholder' | translate"
+                />
               </td>
-              <td><input type="text" [(ngModel)]="newDraft.name_en" placeholder="Name" /></td>
+              <td>
+                <input
+                  type="text"
+                  [(ngModel)]="newDraft.name_en"
+                  [placeholder]="'settings.vehicleTypes.nameEnglishPlaceholder' | translate"
+                />
+              </td>
               <td>
                 <input
                   type="text"
                   [(ngModel)]="newDraft.default_workshop_type"
-                  placeholder="e.g. heavy"
+                  [placeholder]="'settings.vehicleTypes.workshopTypePlaceholder' | translate"
                 />
               </td>
               <td class="actions-cell">
                 <div class="actions-cell-btns">
                   <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
-                    Save
+                    {{ 'common.save' | translate }}
                   </button>
                   <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
-                    Cancel
+                    {{ 'common.cancel' | translate }}
                   </button>
                 </div>
               </td>
@@ -68,7 +78,7 @@
                       (click)="confirmEdit(row)"
                       [disabled]="saving"
                     >
-                      Save
+                      {{ 'common.save' | translate }}
                     </button>
                     <button
                       type="button"
@@ -76,7 +86,7 @@
                       (click)="cancelEdit(row)"
                       [disabled]="saving"
                     >
-                      Cancel
+                      {{ 'common.cancel' | translate }}
                     </button>
                   </div>
                 </td>
@@ -88,14 +98,16 @@
                 <td>{{ row.default_workshop_type }}</td>
                 <td class="actions-cell">
                   <div class="actions-cell-btns">
-                    <button type="button" class="link-btn" (click)="startEdit(row)">Edit</button>
+                    <button type="button" class="link-btn" (click)="startEdit(row)">
+                      {{ 'common.edit' | translate }}
+                    </button>
                   </div>
                 </td>
               </tr>
             }
           } @empty {
             <tr>
-              <td colspan="4" class="empty-row">No vehicle types yet.</td>
+              <td colspan="4" class="empty-row">{{ 'settings.vehicleTypes.empty' | translate }}</td>
             </tr>
           }
         </tbody>

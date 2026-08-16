@@ -18,7 +18,12 @@ import {
   OVERHAUL_IMPORT_TEMPLATE_HEADERS,
   resolveOverhaulForeignKeys,
 } from '../../../shared/utils/import-column-maps';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+// English labels — used only for Excel/PDF export columns (deliberately
+// left untranslated, per repo convention). UI display uses STAGE_LABEL_KEYS
+// below, translated via the `translate` pipe.
 const STAGE_LABELS: Record<OverhaulStageName, string> = {
   price_quotes: 'Price Quotes',
   check_issued: 'Check Issued',
@@ -29,6 +34,16 @@ const STAGE_LABELS: Record<OverhaulStageName, string> = {
   completed: 'Completed',
 };
 
+const STAGE_LABEL_KEYS: Record<OverhaulStageName, string> = {
+  price_quotes: 'overhauls.stagePriceQuotes',
+  check_issued: 'overhauls.stageCheckIssued',
+  delivered_to_machine_shop: 'overhauls.stageDeliveredToMachineShop',
+  installation: 'overhauls.stageInstallation',
+  break_in: 'overhauls.stageBreakIn',
+  engine_replacement: 'overhauls.stageEngineReplacement',
+  completed: 'overhauls.stageCompleted',
+};
+
 @Component({
   selector: 'app-overhauls-list',
   standalone: true,
@@ -36,6 +51,7 @@ const STAGE_LABELS: Record<OverhaulStageName, string> = {
     DatePipe,
     DecimalPipe,
     FormsModule,
+    TranslatePipe,
     OverhaulFormComponent,
     OverhaulPipelineDrawerComponent,
   ],
@@ -48,6 +64,7 @@ export class OverhaulsListComponent implements OnInit {
   loadError: string | null = null;
 
   readonly stageLabels = STAGE_LABELS;
+  readonly stageLabelKeys = STAGE_LABEL_KEYS;
   searchTerm = '';
   openOnly = false;
 
@@ -68,6 +85,7 @@ export class OverhaulsListComponent implements OnInit {
     private vehiclesService: VehiclesService,
     private sparePartsService: SparePartsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -90,7 +108,7 @@ export class OverhaulsListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load overhauls.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedLoad');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -185,7 +203,7 @@ export class OverhaulsListComponent implements OnInit {
 
         if (resolved.length === 0) {
           this.importing = false;
-          this.importError = 'No rows could be imported. Check that the plate number matches an existing vehicle.';
+          this.importError = this.i18n.t('overhauls.importNoRows');
           return;
         }
 
@@ -197,13 +215,13 @@ export class OverhaulsListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : 'Import failed.';
+            this.importError = err instanceof Error ? err.message : this.i18n.t('overhauls.importFailed');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.importError = err instanceof Error ? err.message : this.i18n.t('overhauls.importParseFailed');
       });
   }
 

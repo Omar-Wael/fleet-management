@@ -13,17 +13,28 @@ import Chart from 'chart.js/auto';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { VVendorPerformance } from '../../../core/models/fleet.models';
 import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+// English labels — used only for the Excel export column (deliberately
+// left untranslated, per repo convention). UI display uses
+// VENDOR_TYPE_LABEL_KEYS below, translated via the `translate` pipe.
 const VENDOR_TYPE_LABELS: Record<string, string> = {
   parts_vendor: 'Parts Vendor',
   machine_shop: 'Machine Shop',
   external_garage: 'External Garage',
 };
 
+const VENDOR_TYPE_LABEL_KEYS: Record<string, string> = {
+  parts_vendor: 'analytics.vendorTypePartsVendor',
+  machine_shop: 'analytics.vendorTypeMachineShop',
+  external_garage: 'analytics.vendorTypeExternalGarage',
+};
+
 @Component({
   selector: 'app-vendor-price-comparison',
   standalone: true,
-  imports: [DecimalPipe, DatePipe],
+  imports: [DecimalPipe, DatePipe, TranslatePipe],
   templateUrl: './vendor-price-comparison.component.html',
   styleUrls: ['./vendor-price-comparison.component.scss'],
 })
@@ -38,6 +49,7 @@ export class VendorPriceComparisonComponent implements OnInit, AfterViewInit, On
   constructor(
     private sparePartsService: SparePartsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -70,7 +82,7 @@ export class VendorPriceComparisonComponent implements OnInit, AfterViewInit, On
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load vendor pricing data.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('analytics.failedLoadVendorPricing');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -79,6 +91,11 @@ export class VendorPriceComparisonComponent implements OnInit, AfterViewInit, On
 
   vendorTypeLabel(type: string): string {
     return VENDOR_TYPE_LABELS[type] || type;
+  }
+
+  /** Translation key for a vendor type, for UI display (see vendorTypeLabel() for the English-only export accessor). */
+  vendorTypeLabelKey(type: string): string {
+    return VENDOR_TYPE_LABEL_KEYS[type] || type;
   }
 
   private renderChart(): void {

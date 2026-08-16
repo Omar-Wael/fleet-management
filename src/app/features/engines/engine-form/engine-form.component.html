@@ -3,12 +3,12 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>{{ isEditMode ? 'Edit Engine' : 'Add Engine' }}</h2>
+      <h2>{{ (isEditMode ? 'engines.editTitle' : 'engines.addTitle') | translate }}</h2>
       <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
     </header>
 
     @if (lookupsLoading) {
-      <div class="state-message">Loading form options…</div>
+      <div class="state-message">{{ 'engines.loadingFormOptions' | translate }}</div>
     } @else {
       <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
         @if (lookupsError) {
@@ -17,48 +17,48 @@
 
         <div class="field-grid">
           <label class="field">
-            <span>Engine Serial No. *</span>
+            <span>{{ 'engines.serialNumber' | translate }} *</span>
             <input type="text" formControlName="engine_serial_number" />
           </label>
 
           <label class="field">
-            <span>Model</span>
+            <span>{{ 'engines.model' | translate }}</span>
             <input type="text" formControlName="model_name" />
           </label>
 
           <label class="field">
-            <span>Manufacturer</span>
+            <span>{{ 'engines.manufacturer' | translate }}</span>
             <input type="text" formControlName="manufacturer" />
           </label>
 
           <label class="field">
-            <span>Fuel Type</span>
-            <input type="text" formControlName="fuel_type" placeholder="e.g. diesel, petrol" />
+            <span>{{ 'engines.fuelType' | translate }}</span>
+            <input type="text" formControlName="fuel_type" [placeholder]="'engines.fuelTypePlaceholder' | translate" />
           </label>
 
           <label class="field">
-            <span>Horsepower</span>
+            <span>{{ 'engines.horsepower' | translate }}</span>
             <input type="number" formControlName="horsepower" />
           </label>
 
           <label class="field">
-            <span>Displacement (cc)</span>
+            <span>{{ 'engines.displacement' | translate }}</span>
             <input type="number" formControlName="cc" />
           </label>
 
           <label class="field field--checkbox">
             <input type="checkbox" formControlName="is_in_stock" />
-            <span>In stock (not currently fitted to a vehicle)</span>
+            <span>{{ 'engines.inStockCheckbox' | translate }}</span>
           </label>
 
           <label class="field field--wide">
-            <span>Notes</span>
+            <span>{{ 'common.notes' | translate }}</span>
             <textarea formControlName="notes" rows="3"></textarea>
           </label>
         </div>
 
         <section class="compat-section">
-          <h3>Compatible Vehicle Types</h3>
+          <h3>{{ 'engines.compatibleVehicleTypes' | translate }}</h3>
           <div class="chip-grid">
             @for (t of vehicleTypes; track t.id) {
               <label class="chip" [class.chip--active]="selectedVehicleTypeIds.has(t.id)">
@@ -74,7 +74,7 @@
         </section>
 
         <section class="compat-section">
-          <h3>Compatible Spare Parts</h3>
+          <h3>{{ 'engines.compatibleSpareParts' | translate }}</h3>
           <div class="chip-grid">
             @for (p of spareParts; track p.id) {
               <label class="chip" [class.chip--active]="selectedPartIds.has(p.id)">
@@ -90,9 +90,9 @@
         }
 
         <footer class="slide-over-footer">
-          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ saving ? 'Saving…' : (isEditMode ? 'Save Changes' : 'Add Engine') }}
+            {{ (saving ? 'common.saving' : (isEditMode ? 'common.saveChanges' : 'engines.addButton')) | translate }}
           </button>
         </footer>
       </form>

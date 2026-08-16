@@ -3,152 +3,152 @@
 
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
-      <h2>{{ profile?.vehicle?.plate_number || 'Vehicle Profile' }}</h2>
+      <h2>{{ profile?.vehicle?.plate_number || ('vehicles.profileFallbackTitle' | translate) }}</h2>
       <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
     </header>
 
     @if (loading) {
-      <div class="state-message">Loading vehicle profile…</div>
+      <div class="state-message">{{ 'vehicles.loadingProfile' | translate }}</div>
     } @else if (loadError) {
       <div class="state-message state-message--error">{{ loadError }}</div>
     } @else if (profile) {
       <div class="drawer-body">
         <section class="profile-section">
-          <h3>Overview</h3>
+          <h3>{{ 'vehicles.sectionOverview' | translate }}</h3>
           <dl>
-            <dt>Vehicle Type</dt>
+            <dt>{{ 'vehicles.vehicleType' | translate }}</dt>
             <dd>{{ profile.vehicle.vehicle_types?.name_en || profile.vehicle.vehicle_types?.name_ar || '—' }}</dd>
-            <dt>Make / Model</dt>
+            <dt>{{ 'vehicles.makeModel' | translate }}</dt>
             <dd>{{ profile.vehicle.make || '—' }} {{ profile.vehicle.model || '' }}</dd>
-            <dt>Manufacture Year</dt>
+            <dt>{{ 'vehicles.manufactureYear' | translate }}</dt>
             <dd>{{ profile.vehicle.manufacture_year || '—' }}</dd>
-            <dt>Chassis No.</dt>
+            <dt>{{ 'vehicles.chassisNumber' | translate }}</dt>
             <dd>{{ profile.vehicle.chassis_number || '—' }}</dd>
-            <dt>Color</dt>
+            <dt>{{ 'vehicles.color' | translate }}</dt>
             <dd>{{ profile.vehicle.color || '—' }}</dd>
-            <dt>Status</dt>
+            <dt>{{ 'common.status' | translate }}</dt>
             <dd><span class="badge">{{ profile.vehicle.status }}</span></dd>
-            <dt>Operating Dept</dt>
+            <dt>{{ 'vehicles.operatingDept' | translate }}</dt>
             <dd>{{ profile.vehicle.operating_departments?.name_en || profile.vehicle.operating_departments?.name_ar || '—' }}</dd>
-            <dt>Repair Dept</dt>
+            <dt>{{ 'vehicles.repairDept' | translate }}</dt>
             <dd>{{ profile.vehicle.maintenance_workshops?.name_en || profile.vehicle.maintenance_workshops?.name_ar || '—' }}</dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Engine</h3>
+          <h3>{{ 'vehicles.sectionEngine' | translate }}</h3>
           @if (profile.vehicle.engines) {
             <dl>
-              <dt>Serial No.</dt>
+              <dt>{{ 'vehicles.serialNumber' | translate }}</dt>
               <dd class="mono">{{ profile.vehicle.engines.engine_serial_number }}</dd>
-              <dt>Model</dt>
+              <dt>{{ 'vehicles.model' | translate }}</dt>
               <dd>{{ profile.vehicle.engines.model_name || '—' }}</dd>
-              <dt>Fuel Type</dt>
+              <dt>{{ 'vehicles.fuelType' | translate }}</dt>
               <dd>{{ profile.vehicle.engines.fuel_type || '—' }}</dd>
             </dl>
           } @else {
-            <p class="muted">No engine currently assigned.</p>
+            <p class="muted">{{ 'vehicles.noEngineAssigned' | translate }}</p>
           }
         </section>
 
         <section class="profile-section">
-          <h3>Odometer</h3>
+          <h3>{{ 'vehicles.sectionOdometer' | translate }}</h3>
           <dl>
-            <dt>Reading</dt>
+            <dt>{{ 'vehicles.reading' | translate }}</dt>
             <dd class="mono">{{ profile.vehicle.odometer_km | number }} {{ profile.vehicle.odometer_unit }}</dd>
-            <dt>Working</dt>
+            <dt>{{ 'vehicles.odometerWorking' | translate }}</dt>
             <dd>
               @if (profile.vehicle.odometer_working) {
-                <span class="badge badge--ok">Yes</span>
+                <span class="badge badge--ok">{{ 'vehicles.yes' | translate }}</span>
               } @else {
-                <span class="badge badge--warn">No</span>
+                <span class="badge badge--warn">{{ 'vehicles.no' | translate }}</span>
               }
             </dd>
-            <dt>Last Reading Date</dt>
+            <dt>{{ 'vehicles.lastReadingDate' | translate }}</dt>
             <dd>{{ profile.vehicle.last_odometer_reading_date | date : 'mediumDate' }}</dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Custodian</h3>
+          <h3>{{ 'vehicles.sectionCustodian' | translate }}</h3>
           <dl>
-            <dt>Name</dt>
+            <dt>{{ 'vehicles.name' | translate }}</dt>
             <dd>{{ profile.vehicle.custodian_name || '—' }}</dd>
-            <dt>Phone</dt>
+            <dt>{{ 'common.phone' | translate }}</dt>
             <dd>{{ profile.vehicle.custodian_phone || '—' }}</dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Last Maintenance</h3>
+          <h3>{{ 'vehicles.sectionLastMaintenance' | translate }}</h3>
           @if (profile.lastWorkOrder) {
             <dl>
-              <dt>Opened</dt>
+              <dt>{{ 'vehicles.opened' | translate }}</dt>
               <dd>{{ profile.lastWorkOrder.opened_at | date : 'mediumDate' }}</dd>
-              <dt>Description</dt>
+              <dt>{{ 'vehicles.description' | translate }}</dt>
               <dd>{{ profile.lastWorkOrder.description }}</dd>
-              <dt>Total Cost</dt>
+              <dt>{{ 'vehicles.totalCost' | translate }}</dt>
               <dd class="mono">{{ profile.lastWorkOrder.total_cost | number }}</dd>
             </dl>
           } @else {
-            <p class="muted">No work orders recorded yet.</p>
+            <p class="muted">{{ 'vehicles.noWorkOrders' | translate }}</p>
           }
         </section>
 
         <section class="profile-section">
-          <h3>Oil &amp; Filter</h3>
+          <h3>{{ 'vehicles.sectionOilFilter' | translate }}</h3>
           <dl>
-            <dt>Last Oil Change</dt>
+            <dt>{{ 'vehicles.lastOilChange' | translate }}</dt>
             <dd>{{ profile.lastOilChange?.change_date ? (profile.lastOilChange!.change_date | date : 'mediumDate') : '—' }}</dd>
-            <dt>Last Filter Change</dt>
+            <dt>{{ 'vehicles.lastFilterChange' | translate }}</dt>
             <dd>{{ profile.lastFilterChange?.change_date ? (profile.lastFilterChange!.change_date | date : 'mediumDate') : '—' }}</dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Licensing</h3>
+          <h3>{{ 'vehicles.sectionLicensing' | translate }}</h3>
           @if (profile.licensing) {
             <dl>
-              <dt>License Expiry</dt>
+              <dt>{{ 'vehicles.licenseExpiry' | translate }}</dt>
               <dd>{{ profile.licensing.license_expiry_date | date : 'mediumDate' }}</dd>
-              <dt>Inspection Due</dt>
+              <dt>{{ 'vehicles.inspectionDue' | translate }}</dt>
               <dd>{{ profile.licensing.inspection_due_date | date : 'mediumDate' }}</dd>
-              <dt>Insurance Expiry</dt>
+              <dt>{{ 'vehicles.insuranceExpiry' | translate }}</dt>
               <dd>{{ profile.licensing.insurance_expiry_date | date : 'mediumDate' }}</dd>
             </dl>
           } @else {
-            <p class="muted">No licensing record on file.</p>
+            <p class="muted">{{ 'vehicles.noLicensingRecord' | translate }}</p>
           }
         </section>
 
         <section class="profile-section">
-          <h3>Clutch Kit</h3>
+          <h3>{{ 'vehicles.sectionClutchKit' | translate }}</h3>
           <dl>
-            <dt>Last Change Date</dt>
+            <dt>{{ 'vehicles.lastChangeDate' | translate }}</dt>
             <dd>{{ profile.vehicle.clutch_kit_last_change_date | date : 'mediumDate' }}</dd>
-            <dt>Last Change Odometer</dt>
+            <dt>{{ 'vehicles.lastChangeOdometer' | translate }}</dt>
             <dd class="mono">{{ profile.vehicle.clutch_kit_last_change_odometer | number }}</dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Status Flags</h3>
+          <h3>{{ 'vehicles.sectionStatusFlags' | translate }}</h3>
           <div class="flag-row">
             @if (profile.openOverhaul) {
-              <span class="badge badge--warn">Open Overhaul: {{ profile.openOverhaul.current_stage }}</span>
+              <span class="badge badge--warn">{{ 'vehicles.openOverhaul' | translate }}: {{ profile.openOverhaul.current_stage }}</span>
             }
             @if (profile.activeLodging) {
-              <span class="badge badge--warn">In Garage Lodging</span>
+              <span class="badge badge--warn">{{ 'vehicles.inGarageLodging' | translate }}</span>
             }
             @if (!profile.openOverhaul && !profile.activeLodging) {
-              <span class="badge badge--ok">No open overhaul or lodging</span>
+              <span class="badge badge--ok">{{ 'vehicles.noOpenOverhaulOrLodging' | translate }}</span>
             }
           </div>
         </section>
 
         @if (profile.vehicle.notes) {
           <section class="profile-section">
-            <h3>Notes</h3>
+            <h3>{{ 'common.notes' | translate }}</h3>
             <p class="notes-text">{{ profile.vehicle.notes }}</p>
           </section>
         }

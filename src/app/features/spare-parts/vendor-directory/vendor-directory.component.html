@@ -1,18 +1,20 @@
 <div class="vendors-page">
   <header class="page-header">
     <div>
-      <h2>Vendor Directory</h2>
-      <p class="page-subtitle">{{ vendors.length }} vendor(s)</p>
+      <h2>{{ 'spareParts.page.tabVendors' | translate }}</h2>
+      <p class="page-subtitle">{{ vendors.length }} {{ 'spareParts.vendors.count' | translate }}</p>
     </div>
 
     <div class="page-actions">
       <select [(ngModel)]="typeFilter" [ngModelOptions]="{ standalone: true }" (change)="loadAll()">
-        <option value="">All Types</option>
+        <option value="">{{ 'spareParts.vendors.allTypes' | translate }}</option>
         @for (t of vendorTypeOptions; track t.value) {
-          <option [value]="t.value">{{ t.label }}</option>
+          <option [value]="t.value">{{ t.labelKey | translate }}</option>
         }
       </select>
-      <button type="button" class="btn btn--primary" (click)="openAddForm()">+ Add Vendor</button>
+      <button type="button" class="btn btn--primary" (click)="openAddForm()">
+        {{ 'spareParts.vendors.addButton' | translate }}
+      </button>
     </div>
   </header>
 
@@ -20,42 +22,42 @@
     <form class="add-form" [formGroup]="form" (ngSubmit)="submit()">
       <div class="field-grid">
         <label class="field">
-          <span>Name *</span>
+          <span>{{ 'spareParts.vendors.fieldName' | translate }}</span>
           <input type="text" formControlName="name" />
         </label>
 
         <label class="field">
-          <span>Vendor Type *</span>
+          <span>{{ 'spareParts.vendors.fieldVendorType' | translate }}</span>
           <select formControlName="vendor_type">
             @for (t of vendorTypeOptions; track t.value) {
-              <option [value]="t.value">{{ t.label }}</option>
+              <option [value]="t.value">{{ t.labelKey | translate }}</option>
             }
           </select>
         </label>
 
         <label class="field">
-          <span>Contact Person</span>
+          <span>{{ 'spareParts.vendors.fieldContactPerson' | translate }}</span>
           <input type="text" formControlName="contact_person" />
         </label>
 
         <label class="field">
-          <span>Phone</span>
+          <span>{{ 'common.phone' | translate }}</span>
           <input type="text" formControlName="phone" />
         </label>
 
         <label class="field">
-          <span>Specialty</span>
+          <span>{{ 'spareParts.vendors.fieldSpecialty' | translate }}</span>
           <input type="text" formControlName="specialty" />
         </label>
 
         <label class="field">
-          <span>Address</span>
+          <span>{{ 'spareParts.vendors.fieldAddress' | translate }}</span>
           <input type="text" formControlName="address" />
         </label>
 
         <label class="field field--checkbox">
           <input type="checkbox" formControlName="is_active" />
-          <span>Active</span>
+          <span>{{ 'common.active' | translate }}</span>
         </label>
       </div>
 
@@ -64,16 +66,16 @@
       }
 
       <div class="form-actions">
-        <button type="button" class="btn btn--ghost" (click)="cancelAddForm()" [disabled]="saving">Cancel</button>
+        <button type="button" class="btn btn--ghost" (click)="cancelAddForm()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
         <button type="submit" class="btn btn--primary" [disabled]="saving">
-          {{ saving ? 'Saving…' : 'Add Vendor' }}
+          {{ (saving ? 'common.saving' : 'spareParts.vendors.addSubmit') | translate }}
         </button>
       </div>
     </form>
   }
 
   @if (loading) {
-    <div class="state-message">Loading vendors…</div>
+    <div class="state-message">{{ 'spareParts.vendors.loading' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -81,17 +83,17 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Contact</th>
-            <th>Phone</th>
-            <th>Active</th>
-            <th>Parts Supplied</th>
-            <th>Total Purchases</th>
-            <th>Avg Unit Price</th>
-            <th>Last Purchase</th>
-            <th>External Repairs</th>
-            <th>Avg Repair Cost</th>
+            <th>{{ 'spareParts.vendors.colName' | translate }}</th>
+            <th>{{ 'spareParts.vendors.colType' | translate }}</th>
+            <th>{{ 'spareParts.vendors.colContact' | translate }}</th>
+            <th>{{ 'common.phone' | translate }}</th>
+            <th>{{ 'common.active' | translate }}</th>
+            <th>{{ 'spareParts.vendors.colPartsSupplied' | translate }}</th>
+            <th>{{ 'spareParts.vendors.colTotalPurchases' | translate }}</th>
+            <th>{{ 'spareParts.vendors.colAvgUnitPrice' | translate }}</th>
+            <th>{{ 'spareParts.vendors.colLastPurchase' | translate }}</th>
+            <th>{{ 'spareParts.vendors.colExternalRepairs' | translate }}</th>
+            <th>{{ 'spareParts.vendors.colAvgRepairCost' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -103,9 +105,9 @@
               <td>{{ v.phone || '—' }}</td>
               <td>
                 @if (v.is_active) {
-                  <span class="badge badge--ok">Active</span>
+                  <span class="badge badge--ok">{{ 'common.active' | translate }}</span>
                 } @else {
-                  <span class="badge badge--muted">Inactive</span>
+                  <span class="badge badge--muted">{{ 'common.inactive' | translate }}</span>
                 }
               </td>
               <td class="mono">{{ v.performance?.distinct_parts_supplied ?? '—' }}</td>
@@ -121,7 +123,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="11" class="empty-row">No vendors match the current filter.</td>
+              <td colspan="11" class="empty-row">{{ 'spareParts.vendors.noResults' | translate }}</td>
             </tr>
           }
         </tbody>

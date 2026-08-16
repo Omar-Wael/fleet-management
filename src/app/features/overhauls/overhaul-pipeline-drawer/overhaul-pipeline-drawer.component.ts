@@ -3,6 +3,8 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 
 import { OverhaulsService, OverhaulGridRow } from '../../../core/services/overhauls.service';
 import { OverhaulStage, OverhaulStageName } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 const STAGE_ORDER: OverhaulStageName[] = [
   'price_quotes',
@@ -14,20 +16,22 @@ const STAGE_ORDER: OverhaulStageName[] = [
   'completed',
 ];
 
-const STAGE_LABELS: Record<OverhaulStageName, string> = {
-  price_quotes: 'Price Quotes',
-  check_issued: 'Check Issued',
-  delivered_to_machine_shop: 'Delivered to Machine Shop',
-  installation: 'Installation',
-  break_in: 'Break-In',
-  engine_replacement: 'Engine Replacement',
-  completed: 'Completed',
+// Translation keys — display label for each stage is resolved via the
+// `translate` pipe in the template.
+const STAGE_LABEL_KEYS: Record<OverhaulStageName, string> = {
+  price_quotes: 'overhauls.stagePriceQuotes',
+  check_issued: 'overhauls.stageCheckIssued',
+  delivered_to_machine_shop: 'overhauls.stageDeliveredToMachineShop',
+  installation: 'overhauls.stageInstallation',
+  break_in: 'overhauls.stageBreakIn',
+  engine_replacement: 'overhauls.stageEngineReplacement',
+  completed: 'overhauls.stageCompleted',
 };
 
 @Component({
   selector: 'app-overhaul-pipeline-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './overhaul-pipeline-drawer.component.html',
   styleUrls: ['./overhaul-pipeline-drawer.component.scss'],
 })
@@ -39,7 +43,7 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
   @Output() updated = new EventEmitter<void>();
 
   readonly stageOrder = STAGE_ORDER;
-  readonly stageLabels = STAGE_LABELS;
+  readonly stageLabels = STAGE_LABEL_KEYS;
 
   stageHistory: OverhaulStage[] = [];
   loading = false;
@@ -48,7 +52,10 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
   advancing = false;
   advanceError: string | null = null;
 
-  constructor(private overhaulsService: OverhaulsService) {}
+  constructor(
+    private overhaulsService: OverhaulsService,
+    readonly i18n: TranslationService,
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -70,7 +77,7 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
         this.loading = false;
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load stage history.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedLoadStageHistory');
         this.loading = false;
       },
     });
@@ -114,7 +121,7 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
       },
       error: (err) => {
         this.advancing = false;
-        this.advanceError = err instanceof Error ? err.message : 'Failed to advance stage.';
+        this.advanceError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedAdvanceStage');
       },
     });
   }

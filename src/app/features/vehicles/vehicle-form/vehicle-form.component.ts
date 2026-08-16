@@ -22,22 +22,24 @@ import {
   VehicleType,
   VehicleWithLookups,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * `vehicle_status` labels aren't confirmed against the live DB yet (see
  * CLAUDE.md) — 'active' is the one value the rest of the app already
  * assumes exists. Adjust this list once the real enum is confirmed.
  */
-const VEHICLE_STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'maintenance', label: 'In Maintenance' },
-  { value: 'out_of_service', label: 'Out of Service' },
+const VEHICLE_STATUS_OPTIONS: { value: string; labelKey: string }[] = [
+  { value: 'active', labelKey: 'common.active' },
+  { value: 'maintenance', labelKey: 'vehicles.statusMaintenance' },
+  { value: 'out_of_service', labelKey: 'vehicles.statusOutOfService' },
 ];
 
 @Component({
   selector: 'app-vehicle-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './vehicle-form.component.html',
   styleUrls: ['./vehicle-form.component.scss'],
 })
@@ -70,6 +72,7 @@ export class VehicleFormComponent implements OnInit, OnChanges {
     private vehiclesService: VehiclesService,
     private lookupsService: LookupsService,
     private enginesService: EnginesService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.buildForm();
   }
@@ -168,7 +171,7 @@ export class VehicleFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
       },
     });
@@ -196,7 +199,7 @@ export class VehicleFormComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : 'Failed to save vehicle.';
+        this.saveError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

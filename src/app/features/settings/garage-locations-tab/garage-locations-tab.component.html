@@ -1,11 +1,11 @@
 <div class="lookup-panel">
   <header class="panel-header">
     <div>
-      <h2>Garage Locations</h2>
-      <p class="panel-subtitle">{{ rows.length }} location(s)</p>
+      <h2>{{ 'settings.garageLocations.title' | translate }}</h2>
+      <p class="panel-subtitle">{{ rows.length }} {{ 'settings.garageLocations.countUnit' | translate }}</p>
     </div>
     <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
-      + Add Location
+      {{ 'settings.garageLocations.addButton' | translate }}
     </button>
   </header>
 
@@ -14,7 +14,7 @@
   }
 
   @if (loading) {
-    <div class="state-message">Loading garage locations…</div>
+    <div class="state-message">{{ 'settings.garageLocations.loading' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -22,11 +22,11 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Garage Name</th>
-            <th>Workshop</th>
-            <th>Zone Label</th>
-            <th>Notes</th>
-            <th>Actions</th>
+            <th>{{ 'settings.garageLocations.colGarageName' | translate }}</th>
+            <th>{{ 'settings.garageLocations.colWorkshop' | translate }}</th>
+            <th>{{ 'settings.garageLocations.colZoneLabel' | translate }}</th>
+            <th>{{ 'common.notes' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -35,7 +35,7 @@
               <td><input type="text" [(ngModel)]="newDraft.garage_name" /></td>
               <td>
                 <select [(ngModel)]="newDraft.workshop_id">
-                  <option [ngValue]="null">— None —</option>
+                  <option [ngValue]="null">{{ 'common.none' | translate }}</option>
                   @for (w of workshops; track w.id) {
                     <option [ngValue]="w.id">{{ w.name_en || w.name_ar }}</option>
                   }
@@ -45,17 +45,17 @@
                 <input
                   type="text"
                   [(ngModel)]="newDraft.zone_label"
-                  placeholder="e.g. North Yard"
+                  [placeholder]="'settings.garageLocations.zoneLabelPlaceholder' | translate"
                 />
               </td>
               <td><input type="text" [(ngModel)]="newDraft.notes" /></td>
               <td class="actions-cell">
                 <div class="actions-cell-btns">
                   <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
-                    Save
+                    {{ 'common.save' | translate }}
                   </button>
                   <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
-                    Cancel
+                    {{ 'common.cancel' | translate }}
                   </button>
                 </div>
               </td>
@@ -67,7 +67,7 @@
                 <td><input type="text" [(ngModel)]="row._draft.garage_name" /></td>
                 <td>
                   <select [(ngModel)]="row._draft.workshop_id">
-                    <option [ngValue]="null">— None —</option>
+                    <option [ngValue]="null">{{ 'common.none' | translate }}</option>
                     @for (w of workshops; track w.id) {
                       <option [ngValue]="w.id">{{ w.name_en || w.name_ar }}</option>
                     }
@@ -83,7 +83,7 @@
                       (click)="confirmEdit(row)"
                       [disabled]="saving"
                     >
-                      Save
+                      {{ 'common.save' | translate }}
                     </button>
                     <button
                       type="button"
@@ -91,7 +91,7 @@
                       (click)="cancelEdit(row)"
                       [disabled]="saving"
                     >
-                      Cancel
+                      {{ 'common.cancel' | translate }}
                     </button>
                   </div>
                 </td>
@@ -104,14 +104,16 @@
                 <td>{{ row.notes || '—' }}</td>
                 <td class="actions-cell">
                   <div class="actions-cell-btns">
-                    <button type="button" class="link-btn" (click)="startEdit(row)">Edit</button>
+                    <button type="button" class="link-btn" (click)="startEdit(row)">
+                      {{ 'common.edit' | translate }}
+                    </button>
                   </div>
                 </td>
               </tr>
             }
           } @empty {
             <tr>
-              <td colspan="5" class="empty-row">No garage locations yet.</td>
+              <td colspan="5" class="empty-row">{{ 'settings.garageLocations.empty' | translate }}</td>
             </tr>
           }
         </tbody>

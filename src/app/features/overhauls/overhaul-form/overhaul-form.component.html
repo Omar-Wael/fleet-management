@@ -3,12 +3,12 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>New Overhaul</h2>
-      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+      <h2>{{ 'overhauls.formTitle' | translate }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
     </header>
 
     @if (lookupsLoading) {
-      <div class="state-message">Loading form options…</div>
+      <div class="state-message">{{ 'overhauls.loadingFormOptions' | translate }}</div>
     } @else {
       <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
         @if (lookupsError) {
@@ -17,9 +17,9 @@
 
         <div class="field-grid">
           <label class="field">
-            <span>Vehicle *</span>
+            <span>{{ 'overhauls.fieldVehicle' | translate }}</span>
             <select formControlName="vehicle_id">
-              <option [ngValue]="''" disabled>Select vehicle…</option>
+              <option [ngValue]="''" disabled>{{ 'overhauls.selectVehicle' | translate }}</option>
               @for (v of vehicles; track v.id) {
                 <option [ngValue]="v.id">{{ v.plate_number }}</option>
               }
@@ -27,9 +27,9 @@
           </label>
 
           <label class="field">
-            <span>Machine Shop</span>
+            <span>{{ 'overhauls.machineShop' | translate }}</span>
             <select formControlName="machine_shop_id">
-              <option [ngValue]="null">— To be determined —</option>
+              <option [ngValue]="null">{{ 'overhauls.tbd' | translate }}</option>
               @for (m of machineShops; track m.id) {
                 <option [ngValue]="m.id">{{ m.name }}</option>
               }
@@ -37,12 +37,12 @@
           </label>
 
           <label class="field">
-            <span>Entry Date *</span>
+            <span>{{ 'overhauls.fieldEntryDate' | translate }}</span>
             <input type="date" formControlName="entry_date" />
           </label>
 
           <label class="field field--wide">
-            <span>Scope Description *</span>
+            <span>{{ 'overhauls.fieldScopeDescription' | translate }}</span>
             <textarea formControlName="scope_description" rows="4"></textarea>
           </label>
         </div>
@@ -52,9 +52,11 @@
         }
 
         <footer class="slide-over-footer">
-          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ saving ? 'Saving…' : 'Create Overhaul' }}
+            {{ (saving ? 'common.saving' : 'overhauls.createOverhaul') | translate }}
           </button>
         </footer>
       </form>

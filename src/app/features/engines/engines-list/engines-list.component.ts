@@ -15,11 +15,13 @@ import {
   ENGINE_IMPORT_TEMPLATE_HEADERS,
   prepareEngineRowsForImport,
 } from '../../../shared/utils/import-column-maps';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-engines-list',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, EngineFormComponent, EngineProfileDrawerComponent],
+  imports: [DecimalPipe, FormsModule, TranslatePipe, EngineFormComponent, EngineProfileDrawerComponent],
   templateUrl: './engines-list.component.html',
   styleUrls: ['./engines-list.component.scss'],
 })
@@ -45,6 +47,7 @@ export class EnginesListComponent implements OnInit {
   constructor(
     private enginesService: EnginesService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -62,7 +65,7 @@ export class EnginesListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load engines.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -131,14 +134,14 @@ export class EnginesListComponent implements OnInit {
 
   deleteEngine(engine: EngineGridRow): void {
     const confirmed = window.confirm(
-      `Delete engine "${engine.engine_serial_number}"? This can't be undone.`,
+      `${this.i18n.t('engines.deleteConfirmPrefix')} "${engine.engine_serial_number}"? ${this.i18n.t('engines.deleteConfirmSuffix')}`,
     );
     if (!confirmed) return;
 
     this.enginesService.delete(engine.id).subscribe({
       next: () => this.loadEngines(),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to delete engine.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -168,7 +171,7 @@ export class EnginesListComponent implements OnInit {
 
         if (resolved.length === 0) {
           this.importing = false;
-          this.importError = 'No rows could be imported. Check that "Serial No." is filled in for every row.';
+          this.importError = this.i18n.t('engines.importNoRows');
           return;
         }
 
@@ -180,13 +183,13 @@ export class EnginesListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : 'Import upsert failed.';
+            this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       });
   }
 

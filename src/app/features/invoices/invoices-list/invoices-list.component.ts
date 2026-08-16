@@ -17,11 +17,20 @@ import {
   INVOICE_IMPORT_TEMPLATE_HEADERS,
   resolveInvoiceForeignKeys,
 } from '../../../shared/utils/import-column-maps';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-invoices-list',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, InvoiceFormComponent, InvoiceDetailDrawerComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    FormsModule,
+    TranslatePipe,
+    InvoiceFormComponent,
+    InvoiceDetailDrawerComponent,
+  ],
   templateUrl: './invoices-list.component.html',
   styleUrls: ['./invoices-list.component.scss'],
 })
@@ -48,6 +57,7 @@ export class InvoicesListComponent implements OnInit {
     private invoicesService: InvoicesService,
     private sparePartsService: SparePartsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -69,7 +79,7 @@ export class InvoicesListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load invoices.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('invoices.failedLoadInvoices');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -150,7 +160,7 @@ export class InvoicesListComponent implements OnInit {
 
         if (resolved.length === 0) {
           this.importing = false;
-          this.importError = 'No rows could be imported. Check that "Invoice No." is filled in for every row.';
+          this.importError = this.i18n.t('invoices.importNoRows');
           return;
         }
 
@@ -162,13 +172,13 @@ export class InvoicesListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : 'Import upsert failed.';
+            this.importError = err instanceof Error ? err.message : this.i18n.t('invoices.importUpsertFailed');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.importError = err instanceof Error ? err.message : this.i18n.t('invoices.importParseFailed');
       });
   }
 

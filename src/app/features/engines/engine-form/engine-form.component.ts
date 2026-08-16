@@ -14,11 +14,13 @@ import { EnginesService, EngineGridRow } from '../../../core/services/engines.se
 import { LookupsService } from '../../../core/services/lookups.service';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { Engine, SparePart, VehicleType } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-engine-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './engine-form.component.html',
   styleUrls: ['./engine-form.component.scss'],
 })
@@ -51,6 +53,7 @@ export class EngineFormComponent implements OnInit, OnChanges {
     private enginesService: EnginesService,
     private lookupsService: LookupsService,
     private sparePartsService: SparePartsService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.buildForm();
   }
@@ -115,7 +118,7 @@ export class EngineFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
       },
     });
@@ -142,7 +145,7 @@ export class EngineFormComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         this.lookupsError =
-          err instanceof Error ? err.message : 'Failed to load compatibility data.';
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -175,7 +178,7 @@ export class EngineFormComponent implements OnInit, OnChanges {
       next: (savedEngine) => this.syncCompatibility(savedEngine),
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : 'Failed to save engine.';
+        this.saveError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -212,8 +215,8 @@ export class EngineFormComponent implements OnInit, OnChanges {
         this.saving = false;
         this.saveError =
           err instanceof Error
-            ? `Engine saved, but updating compatibility failed: ${err.message}`
-            : 'Engine saved, but updating compatibility failed.';
+            ? `${this.i18n.t('engines.savedButCompatFailed')}: ${err.message}`
+            : this.i18n.t('engines.savedButCompatFailed');
       },
     });
   }

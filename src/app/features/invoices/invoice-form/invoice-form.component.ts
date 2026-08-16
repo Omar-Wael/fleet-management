@@ -24,6 +24,8 @@ import {
   InvoiceItem,
   SparePart,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface DraftItem {
   spare_part_id: string | null;
@@ -35,7 +37,7 @@ interface DraftItem {
 @Component({
   selector: 'app-invoice-form',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, DecimalPipe],
+  imports: [ReactiveFormsModule, FormsModule, DecimalPipe, TranslatePipe],
   templateUrl: './invoice-form.component.html',
   styleUrls: ['./invoice-form.component.scss'],
 })
@@ -63,6 +65,7 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
     private fb: FormBuilder,
     private invoicesService: InvoicesService,
     private sparePartsService: SparePartsService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       invoice_no: ['', Validators.required],
@@ -122,7 +125,7 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load spare parts.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('invoices.failedLoadSpareParts');
         this.lookupsLoading = false;
       },
     });
@@ -166,8 +169,7 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
     if (this.form.invalid || (!this.isEditMode && this.validItems.length === 0)) {
       this.form.markAllAsTouched();
       if (!this.isEditMode && this.validItems.length === 0) {
-        this.saveError =
-          'Add at least one line item with a description and quantity greater than zero.';
+        this.saveError = this.i18n.t('invoices.addLineItemRequired');
       }
       return;
     }
@@ -203,7 +205,7 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
           },
           error: (err) => {
             this.saving = false;
-            this.saveError = err instanceof Error ? err.message : 'Failed to update invoice.';
+            this.saveError = err instanceof Error ? err.message : this.i18n.t('invoices.failedUpdateInvoice');
           },
         });
       return;
@@ -235,7 +237,7 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : 'Failed to create invoice.';
+        this.saveError = err instanceof Error ? err.message : this.i18n.t('invoices.failedCreateInvoice');
       },
     });
   }

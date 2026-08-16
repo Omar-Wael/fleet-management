@@ -4,11 +4,13 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { TechniciansService } from '../../../core/services/technicians.service';
 import { RepairBounce, VTechnicianKpiRollup } from '../../../core/models/fleet.models';
 import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-technician-kpis',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, TranslatePipe],
   templateUrl: './technician-kpis.component.html',
   styleUrls: ['./technician-kpis.component.scss'],
 })
@@ -25,6 +27,7 @@ export class TechnicianKpisComponent implements OnInit {
   constructor(
     private techniciansService: TechniciansService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -42,7 +45,7 @@ export class TechnicianKpisComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load technician KPIs.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('analytics.failedLoadTechnicianKpis');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -66,7 +69,7 @@ export class TechnicianKpisComponent implements OnInit {
         this.bouncesLoading = false;
       },
       error: (err) => {
-        this.bouncesError = err instanceof Error ? err.message : 'Failed to load bounce history.';
+        this.bouncesError = err instanceof Error ? err.message : this.i18n.t('analytics.failedLoadBounceHistory');
         this.bouncesLoading = false;
       },
     });

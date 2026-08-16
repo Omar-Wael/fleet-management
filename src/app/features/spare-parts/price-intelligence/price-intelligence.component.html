@@ -1,18 +1,18 @@
 <div class="price-page">
   <header class="page-header">
-    <h2>Price Intelligence</h2>
+    <h2>{{ 'spareParts.page.tabPriceIntelligence' | translate }}</h2>
   </header>
 
   @if (lookupsLoading) {
-    <div class="state-message">Loading parts…</div>
+    <div class="state-message">{{ 'spareParts.catalog.loadingParts' | translate }}</div>
   } @else if (lookupsError) {
     <div class="state-message state-message--error">{{ lookupsError }}</div>
   } @else {
     <div class="part-picker">
       <label class="field">
-        <span>Spare Part</span>
+        <span>{{ 'spareParts.priceIntelligence.fieldSparePart' | translate }}</span>
         <select [(ngModel)]="selectedPartId" [ngModelOptions]="{ standalone: true }" (change)="onPartChange()">
-          <option value="" disabled>Select a part…</option>
+          <option value="" disabled>{{ 'spareParts.priceIntelligence.selectPartPlaceholder' | translate }}</option>
           @for (p of parts; track p.id) {
             <option [value]="p.id">{{ p.name_en || p.name_ar }}</option>
           }
@@ -20,7 +20,9 @@
       </label>
 
       @if (selectedPartId) {
-        <button type="button" class="btn btn--primary" (click)="openLogForm()">+ Log Price Point</button>
+        <button type="button" class="btn btn--primary" (click)="openLogForm()">
+          {{ 'spareParts.priceIntelligence.logPriceButton' | translate }}
+        </button>
       }
     </div>
 
@@ -28,9 +30,9 @@
       <form class="log-form" [formGroup]="form" (ngSubmit)="submit()">
         <div class="field-grid">
           <label class="field">
-            <span>Vendor</span>
+            <span>{{ 'spareParts.priceIntelligence.fieldVendor' | translate }}</span>
             <select formControlName="vendor_id">
-              <option [ngValue]="null">— None —</option>
+              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
               @for (v of vendors; track v.id) {
                 <option [ngValue]="v.id">{{ v.name }}</option>
               }
@@ -38,22 +40,22 @@
           </label>
 
           <label class="field">
-            <span>Unit Price *</span>
+            <span>{{ 'spareParts.priceIntelligence.fieldUnitPrice' | translate }}</span>
             <input type="number" step="0.01" formControlName="unit_price" />
           </label>
 
           <label class="field">
-            <span>Quantity</span>
+            <span>{{ 'spareParts.priceIntelligence.fieldQuantity' | translate }}</span>
             <input type="number" formControlName="quantity" />
           </label>
 
           <label class="field">
-            <span>Purchase Date</span>
+            <span>{{ 'spareParts.priceIntelligence.fieldPurchaseDate' | translate }}</span>
             <input type="date" formControlName="purchase_date" />
           </label>
 
           <label class="field field--wide">
-            <span>Notes</span>
+            <span>{{ 'common.notes' | translate }}</span>
             <textarea formControlName="notes" rows="2"></textarea>
           </label>
         </div>
@@ -63,9 +65,9 @@
         }
 
         <div class="form-actions">
-          <button type="button" class="btn btn--ghost" (click)="cancelLogForm()" [disabled]="saving">Cancel</button>
+          <button type="button" class="btn btn--ghost" (click)="cancelLogForm()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ saving ? 'Saving…' : 'Log Price' }}
+            {{ (saving ? 'common.saving' : 'spareParts.priceIntelligence.logPriceSubmit') | translate }}
           </button>
         </div>
       </form>
@@ -73,21 +75,21 @@
 
     @if (selectedPartId) {
       @if (detailLoading) {
-        <div class="state-message">Loading price data…</div>
+        <div class="state-message">{{ 'spareParts.priceIntelligence.loadingPriceData' | translate }}</div>
       } @else if (detailError) {
         <div class="state-message state-message--error">{{ detailError }}</div>
       } @else {
         <section class="detail-section">
-          <h3>Recent Purchases (last 10)</h3>
+          <h3>{{ 'spareParts.priceIntelligence.recentPurchases' | translate }}</h3>
           <div class="grid-wrapper">
             <table class="grid-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Vendor</th>
-                  <th>Unit Price</th>
-                  <th>Qty</th>
-                  <th>Notes</th>
+                  <th>{{ 'common.date' | translate }}</th>
+                  <th>{{ 'spareParts.priceIntelligence.fieldVendor' | translate }}</th>
+                  <th>{{ 'spareParts.priceIntelligence.colUnitPrice' | translate }}</th>
+                  <th>{{ 'spareParts.disbursementDrawer.colQty' | translate }}</th>
+                  <th>{{ 'common.notes' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -101,23 +103,23 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5" class="empty-row">No purchase history for this part yet.</td>
+                    <td colspan="5" class="empty-row">{{ 'spareParts.priceIntelligence.noPurchaseHistory' | translate }}</td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
 
-          <h3>Monthly Trend</h3>
+          <h3>{{ 'spareParts.priceIntelligence.monthlyTrend' | translate }}</h3>
           <div class="grid-wrapper">
             <table class="grid-table">
               <thead>
                 <tr>
-                  <th>Month</th>
-                  <th>Avg Price</th>
-                  <th>Min</th>
-                  <th>Max</th>
-                  <th>Purchases</th>
+                  <th>{{ 'spareParts.priceIntelligence.colMonth' | translate }}</th>
+                  <th>{{ 'spareParts.priceIntelligence.colAvgPrice' | translate }}</th>
+                  <th>{{ 'spareParts.priceIntelligence.colMin' | translate }}</th>
+                  <th>{{ 'spareParts.priceIntelligence.colMax' | translate }}</th>
+                  <th>{{ 'spareParts.priceIntelligence.colPurchases' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -131,7 +133,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5" class="empty-row">Not enough data for a trend yet.</td>
+                    <td colspan="5" class="empty-row">{{ 'spareParts.priceIntelligence.noTrendData' | translate }}</td>
                   </tr>
                 }
               </tbody>

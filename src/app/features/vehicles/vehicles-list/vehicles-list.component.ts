@@ -31,6 +31,8 @@ import {
   ExcelExportColumn,
 } from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-vehicles-list',
@@ -38,6 +40,7 @@ import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pd
   imports: [
     DecimalPipe,
     FormsModule,
+    TranslatePipe,
     AlertBanner,
     VehicleFormComponent,
     VehicleProfileDrawerComponent,
@@ -89,6 +92,7 @@ export class VehiclesListComponent implements OnInit {
   private readonly lookupsService = inject(LookupsService);
   private readonly enginesService = inject(EnginesService);
   private readonly cdr = inject(ChangeDetectorRef);
+  readonly i18n = inject(TranslationService);
   constructor() {}
 
   ngOnInit(): void {
@@ -138,7 +142,7 @@ export class VehiclesListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load vehicles.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -149,9 +153,22 @@ export class VehiclesListComponent implements OnInit {
     this.vehiclesService.list().subscribe({
       next: (vehicles) => (this.vehicles = vehicles),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to reload vehicles.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
+  }
+
+  statusLabelKey(value: string): string {
+    switch (value) {
+      case 'active':
+        return 'common.active';
+      case 'maintenance':
+        return 'vehicles.statusMaintenance';
+      case 'out_of_service':
+        return 'vehicles.statusOutOfService';
+      default:
+        return value;
+    }
   }
 
   get filteredVehicles(): VehicleWithLookups[] {
@@ -241,14 +258,14 @@ export class VehiclesListComponent implements OnInit {
 
   deleteVehicle(vehicle: VehicleWithLookups): void {
     const confirmed = window.confirm(
-      `Delete vehicle "${vehicle.plate_number}"? This can't be undone.`,
+      `${this.i18n.t('vehicles.deleteConfirmPrefix')} "${vehicle.plate_number}"? ${this.i18n.t('vehicles.deleteConfirmSuffix')}`,
     );
     if (!confirmed) return;
 
     this.vehiclesService.delete(vehicle.id).subscribe({
       next: () => this.reloadVehiclesOnly(),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to delete vehicle.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -316,8 +333,7 @@ export class VehiclesListComponent implements OnInit {
 
         if (resolved.length === 0) {
           this.importing = false;
-          this.importError =
-            'No rows could be resolved. Check that vehicle type / department names match existing records.';
+          this.importError = this.i18n.t('vehicles.importUnresolved');
           return;
         }
 
@@ -331,13 +347,13 @@ export class VehiclesListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : 'Import upsert failed.';
+            this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       });
   }
 

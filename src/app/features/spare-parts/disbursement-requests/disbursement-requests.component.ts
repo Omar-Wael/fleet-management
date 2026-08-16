@@ -12,7 +12,12 @@ import {
 import { DisbursementStatus } from '../../../core/models/fleet.models';
 import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+// English-only labels — used for Excel/PDF export accessors, which stay in
+// English regardless of app language (matches the technicians export
+// convention of hardcoding 'Active'/'Inactive' there).
 const STATUS_LABELS: Record<DisbursementStatus, string> = {
   requested: 'Requested',
   available_in_stock: 'Available in Stock',
@@ -24,10 +29,23 @@ const STATUS_LABELS: Record<DisbursementStatus, string> = {
   issued_and_installed: 'Issued & Installed',
 };
 
+// Translation keys for on-screen display (dropdown + grid cell) — see
+// spareParts.disbursement.status.* in translations/spare-parts.ts.
+const STATUS_LABEL_KEYS: Record<DisbursementStatus, string> = {
+  requested: 'spareParts.disbursement.status.requested',
+  available_in_stock: 'spareParts.disbursement.status.availableInStock',
+  out_of_stock: 'spareParts.disbursement.status.outOfStock',
+  purchase_committee_received: 'spareParts.disbursement.status.purchaseCommitteeReceived',
+  purchased: 'spareParts.disbursement.status.purchased',
+  supplied: 'spareParts.disbursement.status.supplied',
+  issued: 'spareParts.disbursement.status.issued',
+  issued_and_installed: 'spareParts.disbursement.status.issuedAndInstalled',
+};
+
 @Component({
   selector: 'app-disbursement-requests',
   standalone: true,
-  imports: [DatePipe, FormsModule, DisbursementFormComponent, DisbursementDetailDrawerComponent],
+  imports: [DatePipe, FormsModule, TranslatePipe, DisbursementFormComponent, DisbursementDetailDrawerComponent],
   templateUrl: './disbursement-requests.component.html',
   styleUrls: ['./disbursement-requests.component.scss'],
 })
@@ -37,6 +55,7 @@ export class DisbursementRequestsComponent implements OnInit {
   loadError: string | null = null;
 
   readonly statusLabels = STATUS_LABELS;
+  readonly statusLabelKeys = STATUS_LABEL_KEYS;
   readonly statusOptions = Object.keys(STATUS_LABELS) as DisbursementStatus[];
   statusFilter: DisbursementStatus | '' = '';
 
@@ -48,6 +67,7 @@ export class DisbursementRequestsComponent implements OnInit {
   constructor(
     private disbursementService: DisbursementService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -66,7 +86,7 @@ export class DisbursementRequestsComponent implements OnInit {
       },
       error: (err) => {
         this.loadError =
-          err instanceof Error ? err.message : 'Failed to load disbursement requests.';
+          err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -76,7 +96,8 @@ export class DisbursementRequestsComponent implements OnInit {
   itemsSummary(request: DisbursementGridRow): string {
     const items = request.stock_disbursement_items ?? [];
     if (!items.length) return '—';
-    return items.map((i) => `${i.spare_parts?.name_ar || 'part'} × ${i.qty}`).join(', ');
+    const partFallback = this.i18n.t('spareParts.disbursement.partFallback');
+    return items.map((i) => `${i.spare_parts?.name_ar || partFallback} × ${i.qty}`).join(', ');
   }
 
   openCreateForm(): void {

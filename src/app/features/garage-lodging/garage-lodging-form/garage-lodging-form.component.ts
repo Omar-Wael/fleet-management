@@ -18,11 +18,13 @@ import {
   GarageLodging,
   VehicleWithLookups,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-garage-lodging-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './garage-lodging-form.component.html',
   styleUrls: ['./garage-lodging-form.component.scss'],
 })
@@ -48,6 +50,7 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
     private garageLodgingService: GarageLodgingService,
     private vehiclesService: VehiclesService,
     private lookupsService: LookupsService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       vehicle_id: ['', Validators.required],
@@ -82,7 +85,7 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
       },
     });
@@ -105,7 +108,7 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : 'Failed to check in vehicle.';
+        this.saveError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

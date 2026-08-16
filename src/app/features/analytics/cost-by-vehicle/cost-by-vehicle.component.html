@@ -1,27 +1,28 @@
 <div class="analytics-panel">
   <header class="panel-header">
     <div>
-      <h2>Cost by Vehicle</h2>
+      <h2>{{ 'analytics.vehicleCostTitle' | translate }}</h2>
       <p class="panel-subtitle">
-        {{ rows.length }} vehicle(s) &middot; total {{ totalCost | number : '1.2-2' }}
+        {{ rows.length }} {{ 'analytics.vehicleCount' | translate }} &middot;
+        {{ 'analytics.total' | translate }} {{ totalCost | number : '1.2-2' }}
       </p>
     </div>
 
     <div class="panel-actions">
       <select [(ngModel)]="departmentFilter" [ngModelOptions]="{ standalone: true }" (change)="onDepartmentChange()">
-        <option value="">All Departments</option>
+        <option value="">{{ 'analytics.allDepartments' | translate }}</option>
         @for (d of departments; track d.id) {
           <option [value]="d.id">{{ d.name_en || d.name_ar }}</option>
         }
       </select>
       <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!rows.length">
-        Export Excel
+        {{ 'common.exportExcel' | translate }}
       </button>
     </div>
   </header>
 <!-- <div>{{loading}}</div> -->
   @if (loading) {
-    <div class="state-message">Loading vehicle cost data…</div>
+    <div class="state-message">{{ 'analytics.loadingVehicleCost' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -33,9 +34,9 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Plate Number</th>
-            <th>Department</th>
-            <th>Total Cost</th>
+            <th>{{ 'analytics.plateNumber' | translate }}</th>
+            <th>{{ 'analytics.department' | translate }}</th>
+            <th>{{ 'analytics.totalCost' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -47,7 +48,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="3" class="empty-row">No cost data for the current filter.</td>
+              <td colspan="3" class="empty-row">{{ 'analytics.noVehicleCostData' | translate }}</td>
             </tr>
           }
         </tbody>

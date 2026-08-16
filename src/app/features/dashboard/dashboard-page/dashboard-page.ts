@@ -19,6 +19,8 @@ import { VehiclesService } from '../../../core/services/vehicles.service';
 import { OverhaulsService } from '../../../core/services/overhauls.service';
 import { TechniciansService } from '../../../core/services/technicians.service';
 import { VTechnicianKpiRollup } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface DepartmentCostChartRow {
   name: string;
@@ -37,7 +39,7 @@ const CHART_COLORS = ['#1e3a5f', '#2f547f', '#5b7ca0', '#8fa8c2', '#c3d2e0'];
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [CommonModule, AlertBanner, FleetGauge],
+  imports: [CommonModule, AlertBanner, FleetGauge, TranslatePipe],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
 })
@@ -68,6 +70,7 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
     private overhaulsService: OverhaulsService,
     private techniciansService: TechniciansService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -121,7 +124,7 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load dashboard data.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('dashboard.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -143,7 +146,12 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
         data: {
           labels,
           datasets: [
-            { label: 'Total cost', data: values, backgroundColor: colors, borderRadius: 4 },
+            {
+              label: this.i18n.t('dashboard.chartTotalCostLabel'),
+              data: values,
+              backgroundColor: colors,
+              borderRadius: 4,
+            },
           ],
         },
         options: {

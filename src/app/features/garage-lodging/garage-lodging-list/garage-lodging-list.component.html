@@ -1,8 +1,11 @@
 <div class="lodging-page">
   <header class="page-header">
     <div>
-      <h1>Garage Lodging</h1>
-      <p class="page-subtitle">{{ filteredLodgings.length }} of {{ lodgings.length }} lodging record(s)</p>
+      <h1>{{ 'garageLodging.title' | translate }}</h1>
+      <p class="page-subtitle">
+        {{ filteredLodgings.length }}/{{ lodgings.length }}
+        {{ 'garageLodging.shown' | translate }}
+      </p>
     </div>
 
     <div class="page-actions">
@@ -13,13 +16,13 @@
         hidden
         (change)="onFileSelected($event)"
       />
-      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">Download Template</button>
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">{{ 'common.downloadTemplate' | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
-        {{ importing ? 'Importing…' : 'Import' }}
+        {{ (importing ? 'common.importing' : 'common.import') | translate }}
       </button>
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
-      <button type="button" class="btn btn--primary" (click)="openCheckInForm()">+ Check In Vehicle</button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
+      <button type="button" class="btn btn--primary" (click)="openCheckInForm()">{{ 'garageLodging.checkInButton' | translate }}</button>
     </div>
   </header>
 
@@ -29,9 +32,10 @@
 
   @if (importSummary) {
     <div class="state-message state-message--ok">
-      Imported {{ importSummary.savedCount }} lodging record(s).
+      {{ 'garageLodging.importedCount' | translate }} {{ importSummary.savedCount }}
+      {{ 'garageLodging.importedUnit' | translate }}
       @if (importSummary.unresolvedCount) {
-        {{ importSummary.unresolvedCount }} row(s) skipped — check plate numbers match existing vehicles.
+        {{ importSummary.unresolvedCount }} {{ 'garageLodging.skippedRows' | translate }}
       }
     </div>
   }
@@ -40,12 +44,12 @@
     <input
       type="text"
       class="filters-search"
-      placeholder="Search vehicle, garage, reason…"
+      [placeholder]="'garageLodging.searchPlaceholder' | translate"
       [(ngModel)]="searchTerm"
     />
 
     <select [(ngModel)]="vehicleFilter" (change)="onVehicleFilterChange()">
-      <option value="">All Vehicles</option>
+      <option value="">{{ 'garageLodging.allVehicles' | translate }}</option>
       @for (v of vehicles; track v.id) {
         <option [value]="v.id">{{ v.plate_number }}</option>
       }
@@ -53,22 +57,22 @@
 
     <label class="filter-checkbox">
       <input type="checkbox" [(ngModel)]="openOnly" />
-      Currently in garage only
+      {{ 'garageLodging.currentlyInGarageOnly' | translate }}
     </label>
   </div>
 
   @if (vehicleFilter) {
     @if (vehicleStatLoading) {
-      <div class="state-message">Loading vehicle stat…</div>
+      <div class="state-message">{{ 'garageLodging.loadingVehicleStat' | translate }}</div>
     } @else if (vehicleStat) {
       <div class="stat-banner">
-        <span><strong class="mono">{{ vehicleStat.visits_this_year }}</strong> garage visit(s) this year</span>
+        <span><strong class="mono">{{ vehicleStat.visits_this_year }}</strong> {{ 'garageLodging.visitsThisYear' | translate }}</span>
         <span>
-          <strong class="mono">{{ vehicleStat.total_duration_days_this_year ?? 0 }}</strong> total day(s) lodged
+          <strong class="mono">{{ vehicleStat.total_duration_days_this_year ?? 0 }}</strong> {{ 'garageLodging.totalDaysLodged' | translate }}
         </span>
       </div>
     } @else {
-      <div class="stat-banner">No garage visits recorded for this vehicle this year.</div>
+      <div class="stat-banner">{{ 'garageLodging.noVisitsThisYear' | translate }}</div>
     }
   }
 
@@ -77,7 +81,7 @@
   }
 
   @if (loading) {
-    <div class="state-message">Loading garage lodging records…</div>
+    <div class="state-message">{{ 'garageLodging.loadingList' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -85,15 +89,15 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Vehicle</th>
-            <th>Garage</th>
-            <th>Zone</th>
-            <th>Reason</th>
-            <th>Entry Date</th>
-            <th>Exit Date</th>
-            <th>Duration</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>{{ 'garageLodging.vehicle' | translate }}</th>
+            <th>{{ 'garageLodging.garage' | translate }}</th>
+            <th>{{ 'garageLodging.zone' | translate }}</th>
+            <th>{{ 'garageLodging.reason' | translate }}</th>
+            <th>{{ 'garageLodging.entryDate' | translate }}</th>
+            <th>{{ 'garageLodging.exitDate' | translate }}</th>
+            <th>{{ 'garageLodging.duration' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -108,9 +112,9 @@
               <td class="mono">{{ l.duration_days ?? '—' }}</td>
               <td>
                 @if (l.exit_date) {
-                  <span class="badge badge--ok">Closed</span>
+                  <span class="badge badge--ok">{{ 'garageLodging.statusClosed' | translate }}</span>
                 } @else {
-                  <span class="badge badge--warn">In Garage</span>
+                  <span class="badge badge--warn">{{ 'garageLodging.statusInGarage' | translate }}</span>
                 }
               </td>
               <td class="actions-cell">
@@ -121,14 +125,14 @@
                     [disabled]="checkingOutId === l.id"
                     (click)="checkOut(l)"
                   >
-                    {{ checkingOutId === l.id ? 'Checking out…' : 'Check Out' }}
+                    {{ (checkingOutId === l.id ? 'garageLodging.checkingOut' : 'garageLodging.checkOut') | translate }}
                   </button>
                 }
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="9" class="empty-row">No garage lodging records match the current filters.</td>
+              <td colspan="9" class="empty-row">{{ 'garageLodging.noResults' | translate }}</td>
             </tr>
           }
         </tbody>

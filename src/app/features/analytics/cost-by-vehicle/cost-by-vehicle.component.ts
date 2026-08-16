@@ -16,6 +16,8 @@ import { AnalyticsService } from '../../../core/services/analytics.service';
 import { LookupsService } from '../../../core/services/lookups.service';
 import { OperatingDepartment, VVehicleCostSummary } from '../../../core/models/fleet.models';
 import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 // Only the highest-cost vehicles are charted — plotting all of them makes
 // the bar chart unreadable once the fleet grows past a couple dozen rows.
@@ -25,7 +27,7 @@ const CHART_TOP_N = 15;
 @Component({
   selector: 'app-cost-by-vehicle',
   standalone: true,
-  imports: [DecimalPipe, FormsModule],
+  imports: [DecimalPipe, FormsModule, TranslatePipe],
   templateUrl: './cost-by-vehicle.component.html',
   styleUrls: ['./cost-by-vehicle.component.scss'],
 })
@@ -44,6 +46,7 @@ export class CostByVehicleComponent implements OnInit, AfterViewInit, OnDestroy 
     private analyticsService: AnalyticsService,
     private lookupsService: LookupsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -75,7 +78,7 @@ export class CostByVehicleComponent implements OnInit, AfterViewInit, OnDestroy 
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load vehicle cost data.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('analytics.failedLoadVehicleCost');
         this.loading = false;
         this.cdr.markForCheck();
       },

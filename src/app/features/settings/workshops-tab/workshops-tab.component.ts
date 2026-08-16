@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 
 import { LookupsService } from '../../../core/services/lookups.service';
 import { MaintenanceWorkshop } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface Draft {
   workshop_type: string;
@@ -20,7 +22,7 @@ const EMPTY_DRAFT: Draft = { workshop_type: '', name_ar: '', name_en: '', locati
 @Component({
   selector: 'app-workshops-tab',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './workshops-tab.component.html',
   styleUrls: ['./workshops-tab.component.scss'],
 })
@@ -39,6 +41,7 @@ export class WorkshopsTabComponent implements OnInit {
   constructor(
     private lookupsService: LookupsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -56,7 +59,7 @@ export class WorkshopsTabComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load workshops.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('settings.workshops.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -75,7 +78,7 @@ export class WorkshopsTabComponent implements OnInit {
 
   confirmAdd(): void {
     if (!this.newDraft.name_ar.trim() || !this.newDraft.workshop_type.trim()) {
-      this.saveError = 'Arabic name and workshop type are required.';
+      this.saveError = this.i18n.t('settings.workshops.validationError');
       return;
     }
 
@@ -97,7 +100,7 @@ export class WorkshopsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to add workshop.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.workshops.addError');
         },
       });
   }
@@ -119,7 +122,7 @@ export class WorkshopsTabComponent implements OnInit {
   confirmEdit(row: EditableRow): void {
     if (!row._draft) return;
     if (!row._draft.name_ar.trim() || !row._draft.workshop_type.trim()) {
-      this.saveError = 'Arabic name and workshop type are required.';
+      this.saveError = this.i18n.t('settings.workshops.validationError');
       return;
     }
 
@@ -140,7 +143,7 @@ export class WorkshopsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to save changes.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.workshops.saveError');
         },
       });
   }

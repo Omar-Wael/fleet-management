@@ -37,6 +37,7 @@ export class ChecksListComponent implements OnInit {
   constructor(
     private financialTransactionsService: FinancialTransactionsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -54,7 +55,7 @@ export class ChecksListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load checks.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('checks.failedLoad');
         this.loading = false;
         this.cdr.markForCheck();
       },

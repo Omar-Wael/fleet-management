@@ -1,21 +1,22 @@
 <div class="analytics-panel">
   <header class="panel-header">
     <div>
-      <h2>Cost by Department</h2>
+      <h2>{{ 'analytics.departmentCostTitle' | translate }}</h2>
       <p class="panel-subtitle">
-        {{ rows.length }} department(s) &middot; total {{ totalCost | number : '1.2-2' }}
+        {{ rows.length }} {{ 'analytics.departmentCount' | translate }} &middot;
+        {{ 'analytics.total' | translate }} {{ totalCost | number : '1.2-2' }}
       </p>
     </div>
 
     <div class="panel-actions">
       <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!rows.length">
-        Export Excel
+        {{ 'common.exportExcel' | translate }}
       </button>
     </div>
   </header>
 
   @if (loading) {
-    <div class="state-message">Loading department cost data…</div>
+    <div class="state-message">{{ 'analytics.loadingDepartmentCost' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -27,10 +28,10 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Department</th>
-            <th>Vehicles</th>
-            <th>Total Cost</th>
-            <th>Avg Cost / Vehicle</th>
+            <th>{{ 'analytics.department' | translate }}</th>
+            <th>{{ 'analytics.vehicles' | translate }}</th>
+            <th>{{ 'analytics.totalCost' | translate }}</th>
+            <th>{{ 'analytics.avgCostPerVehicle' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -43,7 +44,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="4" class="empty-row">No department cost data yet.</td>
+              <td colspan="4" class="empty-row">{{ 'analytics.noDepartmentCostData' | translate }}</td>
             </tr>
           }
         </tbody>

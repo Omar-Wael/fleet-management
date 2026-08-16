@@ -17,11 +17,13 @@ import {
   Technician,
   VehicleWithLookups,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-oil-filter-tracker',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule],
+  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule, TranslatePipe],
   templateUrl: './oil-filter-tracker.component.html',
   styleUrls: ['./oil-filter-tracker.component.scss'],
 })
@@ -47,6 +49,7 @@ export class OilFilterTrackerComponent implements OnInit {
     private vehiclesService: VehiclesService,
     private techniciansService: TechniciansService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       change_type: ['oil_and_filter', Validators.required],
@@ -73,7 +76,7 @@ export class OilFilterTrackerComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadFormOptions');
         this.lookupsLoading = false;
         this.cdr.detectChanges();
       },
@@ -99,7 +102,7 @@ export class OilFilterTrackerComponent implements OnInit {
         this.changesLoading = false;
       },
       error: (err) => {
-        this.changesError = err instanceof Error ? err.message : 'Failed to load change history.';
+        this.changesError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadChangeHistory');
         this.changesLoading = false;
       },
     });
@@ -138,7 +141,7 @@ export class OilFilterTrackerComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to record change.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedRecordChange');
         },
       });
   }

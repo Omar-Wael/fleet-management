@@ -19,13 +19,15 @@ import {
   VehicleWithLookups,
   WorkOrder,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 const CATEGORY_OPTIONS: MaintenanceCategory[] = ['corrective', 'preventive', 'predictive'];
 
 @Component({
   selector: 'app-work-order-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './work-order-form.component.html',
   styleUrls: ['./work-order-form.component.scss'],
 })
@@ -54,6 +56,7 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
     private maintenanceService: MaintenanceService,
     private vehiclesService: VehiclesService,
     private techniciansService: TechniciansService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       vehicle_id: ['', Validators.required],
@@ -95,7 +98,7 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadFormOptions');
         this.lookupsLoading = false;
       },
     });
@@ -140,7 +143,7 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
         next: (workOrder) => this.assignTechnicians(workOrder),
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to create work order.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedCreateWorkOrder');
         },
       });
   }
@@ -159,10 +162,8 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError =
-          err instanceof Error
-            ? `Work order created, but assigning technicians failed: ${err.message}`
-            : 'Work order created, but assigning technicians failed.';
+        const base = this.i18n.t('maintenance.workOrderCreatedAssignFailed');
+        this.saveError = err instanceof Error ? `${base}: ${err.message}` : base;
       },
     });
   }

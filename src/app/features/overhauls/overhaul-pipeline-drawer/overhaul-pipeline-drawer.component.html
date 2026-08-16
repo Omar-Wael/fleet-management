@@ -3,35 +3,35 @@
 
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
-      <h2>{{ overhaul?.vehicles?.plate_number || 'Overhaul' }}</h2>
-      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+      <h2>{{ overhaul?.vehicles?.plate_number || ('overhauls.detailFallbackTitle' | translate) }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
     </header>
 
     @if (overhaul) {
       <div class="drawer-body">
         <section class="profile-section">
-          <h3>Overview</h3>
+          <h3>{{ 'overhauls.sectionOverview' | translate }}</h3>
           <dl>
-            <dt>Machine Shop</dt>
+            <dt>{{ 'overhauls.machineShop' | translate }}</dt>
             <dd>{{ overhaul.external_workshops?.name || '—' }}</dd>
-            <dt>Entry Date</dt>
+            <dt>{{ 'overhauls.entryDate' | translate }}</dt>
             <dd>{{ overhaul.entry_date | date : 'mediumDate' }}</dd>
-            <dt>Exit Date</dt>
+            <dt>{{ 'overhauls.exitDate' | translate }}</dt>
             <dd>{{ overhaul.exit_date ? (overhaul.exit_date | date : 'mediumDate') : '—' }}</dd>
-            <dt>Total Duration</dt>
-            <dd class="mono">{{ totalDurationDays }} days</dd>
-            <dt>Total Cost</dt>
+            <dt>{{ 'overhauls.totalDuration' | translate }}</dt>
+            <dd class="mono">{{ totalDurationDays }} {{ 'overhauls.daysUnit' | translate }}</dd>
+            <dt>{{ 'overhauls.totalCost' | translate }}</dt>
             <dd class="mono">{{ totalCost | number : '1.2-2' }}</dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Scope</h3>
+          <h3>{{ 'overhauls.scopeSection' | translate }}</h3>
           <p class="notes-text">{{ overhaul.scope_description }}</p>
         </section>
 
         <section class="profile-section">
-          <h3>Pipeline</h3>
+          <h3>{{ 'overhauls.pipelineSection' | translate }}</h3>
           <div class="pipeline">
             @for (stage of stageOrder; track stage; let i = $index) {
               <div
@@ -40,32 +40,32 @@
                 [class.pipeline-step--current]="i === currentStageIndex"
               >
                 <span class="pipeline-dot"></span>
-                <span class="pipeline-label">{{ stageLabels[stage] }}</span>
+                <span class="pipeline-label">{{ stageLabels[stage] | translate }}</span>
               </div>
             }
           </div>
         </section>
 
         <section class="profile-section">
-          <h3>Stage History</h3>
+          <h3>{{ 'overhauls.stageHistorySection' | translate }}</h3>
           @if (loading) {
-            <p class="muted">Loading…</p>
+            <p class="muted">{{ 'common.loading' | translate }}</p>
           } @else if (loadError) {
             <p class="state-message state-message--error">{{ loadError }}</p>
           } @else if (stageHistory.length) {
             <table class="mini-table">
               <thead>
                 <tr>
-                  <th>Stage</th>
-                  <th>Entered</th>
-                  <th>Exited</th>
-                  <th>Duration</th>
+                  <th>{{ 'overhauls.stage' | translate }}</th>
+                  <th>{{ 'overhauls.entered' | translate }}</th>
+                  <th>{{ 'overhauls.exited' | translate }}</th>
+                  <th>{{ 'overhauls.duration' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
                 @for (s of stageHistory; track s.id) {
                   <tr>
-                    <td>{{ stageLabels[s.stage] }}</td>
+                    <td>{{ stageLabels[s.stage] | translate }}</td>
                     <td>{{ s.entered_at | date : 'medium' }}</td>
                     <td>{{ s.exited_at ? (s.exited_at | date : 'medium') : '—' }}</td>
                     <td class="mono">{{ formatDuration(s.duration_seconds) }}</td>
@@ -74,13 +74,13 @@
               </tbody>
             </table>
           } @else {
-            <p class="muted">No stage history yet.</p>
+            <p class="muted">{{ 'overhauls.noStageHistory' | translate }}</p>
           }
         </section>
 
         @if (remainingStages.length) {
           <section class="profile-section">
-            <h3>Advance Stage</h3>
+            <h3>{{ 'overhauls.advanceStageSection' | translate }}</h3>
 
             @if (advanceError) {
               <p class="state-message state-message--error">{{ advanceError }}</p>
@@ -89,13 +89,17 @@
             <div class="advance-actions">
               @for (stage of remainingStages; track stage) {
                 <button type="button" class="btn btn--primary" [disabled]="advancing" (click)="advanceTo(stage)">
-                  {{ advancing ? 'Updating…' : 'Advance to ' + stageLabels[stage] }}
+                  @if (advancing) {
+                    {{ 'overhauls.updatingStatus' | translate }}
+                  } @else {
+                    {{ 'overhauls.advanceTo' | translate }} {{ stageLabels[stage] | translate }}
+                  }
                 </button>
               }
             </div>
           </section>
         } @else {
-          <p class="muted">This overhaul has reached the final stage.</p>
+          <p class="muted">{{ 'overhauls.finalStageReached' | translate }}</p>
         }
       </div>
     }

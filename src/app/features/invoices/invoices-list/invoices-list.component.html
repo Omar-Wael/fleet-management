@@ -1,8 +1,10 @@
 <div class="invoices-page">
   <header class="page-header">
     <div>
-      <h1>Invoices</h1>
-      <p class="page-subtitle">{{ filteredInvoices.length }} of {{ invoices.length }} invoices</p>
+      <h1>{{ 'invoices.title' | translate }}</h1>
+      <p class="page-subtitle">
+        {{ filteredInvoices.length }}/{{ invoices.length }} {{ 'invoices.shown' | translate }}
+      </p>
     </div>
 
     <div class="page-actions">
@@ -13,13 +15,17 @@
         hidden
         (change)="onFileSelected($event)"
       />
-      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">Download Template</button>
-      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
-        {{ importing ? 'Importing…' : 'Import' }}
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">
+        {{ 'common.downloadTemplate' | translate }}
       </button>
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
-      <button type="button" class="btn btn--primary" (click)="openCreateForm()">+ New Invoice</button>
+      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
+        {{ (importing ? 'common.importing' : 'common.import') | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">
+        {{ 'invoices.newInvoiceButton' | translate }}
+      </button>
     </div>
   </header>
 
@@ -29,9 +35,10 @@
 
   @if (importSummary) {
     <div class="state-message state-message--ok">
-      Imported {{ importSummary.savedCount }} invoice(s) (header-only, no line items).
+      {{ 'invoices.importedCount' | translate }} {{ importSummary.savedCount }}
+      {{ 'invoices.importedUnitHeaderOnly' | translate }}
       @if (importSummary.unresolvedCount) {
-        {{ importSummary.unresolvedCount }} row(s) skipped.
+        {{ importSummary.unresolvedCount }} {{ 'invoices.skippedRows' | translate }}
       }
     </div>
   }
@@ -40,13 +47,13 @@
     <input
       type="text"
       class="filters-search"
-      placeholder="Search invoice no., vendor, source…"
+      [placeholder]="'invoices.searchPlaceholder' | translate"
       [(ngModel)]="searchTerm"
     />
   </div>
 
   @if (loading) {
-    <div class="state-message">Loading invoices…</div>
+    <div class="state-message">{{ 'invoices.loadingInvoices' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -54,14 +61,14 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Invoice No.</th>
-            <th>Vendor</th>
-            <th>Date</th>
-            <th>Subtotal</th>
-            <th>Tax</th>
-            <th>Discount</th>
-            <th>Total</th>
-            <th>Actions</th>
+            <th>{{ 'invoices.invoiceNo' | translate }}</th>
+            <th>{{ 'invoices.vendor' | translate }}</th>
+            <th>{{ 'common.date' | translate }}</th>
+            <th>{{ 'invoices.subtotal' | translate }}</th>
+            <th>{{ 'invoices.tax' | translate }}</th>
+            <th>{{ 'invoices.discount' | translate }}</th>
+            <th>{{ 'invoices.total' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -75,12 +82,12 @@
               <td class="mono">{{ inv.discount_value | number : '1.2-2' }}</td>
               <td class="mono total-cell">{{ inv.total_value | number : '1.2-2' }}</td>
               <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openDetail(inv)">View</button>
+                <button type="button" class="link-btn" (click)="openDetail(inv)">{{ 'common.view' | translate }}</button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="empty-row">No invoices match the current filters.</td>
+              <td colspan="8" class="empty-row">{{ 'invoices.noInvoicesMatch' | translate }}</td>
             </tr>
           }
         </tbody>

@@ -3,11 +3,13 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 
 import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { SparePart } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-spare-part-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './spare-part-form.component.html',
   styleUrls: ['./spare-part-form.component.scss'],
 })
@@ -27,6 +29,7 @@ export class SparePartFormComponent implements OnChanges {
   constructor(
     private fb: FormBuilder,
     private sparePartsService: SparePartsService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.buildForm();
   }
@@ -92,7 +95,7 @@ export class SparePartFormComponent implements OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : 'Failed to save spare part.';
+        this.saveError = err instanceof Error ? err.message : this.i18n.t('spareParts.partForm.saveError');
       },
     });
   }

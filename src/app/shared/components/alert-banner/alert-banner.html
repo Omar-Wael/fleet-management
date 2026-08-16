@@ -5,9 +5,15 @@
         <span class="alert-dot"></span>
         <span class="alert-count">{{ licenses.length }}</span>
         <span class="alert-label">
-          {{ licenses.length === 1 ? 'license expires this month' : 'licenses expire this month' }}
+          {{
+            (licenses.length === 1
+              ? 'shared.alertBanner.licenseSingular'
+              : 'shared.alertBanner.licensePlural') | translate
+          }}
         </span>
-        <button type="button" class="alert-action" (click)="viewLicenses.emit()">Review</button>
+        <button type="button" class="alert-action" (click)="viewLicenses.emit()">
+          {{ 'shared.alertBanner.review' | translate }}
+        </button>
       </div>
     }
 
@@ -17,18 +23,20 @@
         <span class="alert-count">{{ maintenance.length }}</span>
         <span class="alert-label">
           {{
-            maintenance.length === 1
-              ? 'vehicle due for preventive maintenance'
-              : 'vehicles due for preventive maintenance'
+            (maintenance.length === 1
+              ? 'shared.alertBanner.maintenanceSingular'
+              : 'shared.alertBanner.maintenancePlural') | translate
           }}
         </span>
-        <button type="button" class="alert-action" (click)="viewMaintenance.emit()">Review</button>
+        <button type="button" class="alert-action" (click)="viewMaintenance.emit()">
+          {{ 'shared.alertBanner.review' | translate }}
+        </button>
       </div>
     }
   </div>
 } @else {
   <div class="alert-strip alert-strip--clear">
     <span class="alert-dot ok"></span>
-    <span class="alert-label">No licenses or preventive maintenance due this month.</span>
+    <span class="alert-label">{{ 'shared.alertBanner.allClear' | translate }}</span>
   </div>
 }

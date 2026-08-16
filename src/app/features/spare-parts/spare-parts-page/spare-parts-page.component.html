@@ -5,7 +5,7 @@
     [class.tab-btn--active]="activeTab === 'catalog'"
     (click)="setTab('catalog')"
   >
-    Parts Catalog
+    {{ 'spareParts.page.tabCatalog' | translate }}
   </button>
   <button
     type="button"
@@ -13,7 +13,7 @@
     [class.tab-btn--active]="activeTab === 'disbursements'"
     (click)="setTab('disbursements')"
   >
-    Disbursement Requests
+    {{ 'spareParts.page.tabDisbursements' | translate }}
   </button>
   <button
     type="button"
@@ -21,7 +21,7 @@
     [class.tab-btn--active]="activeTab === 'price-intelligence'"
     (click)="setTab('price-intelligence')"
   >
-    Price Intelligence
+    {{ 'spareParts.page.tabPriceIntelligence' | translate }}
   </button>
   <button
     type="button"
@@ -29,7 +29,7 @@
     [class.tab-btn--active]="activeTab === 'vendors'"
     (click)="setTab('vendors')"
   >
-    Vendor Directory
+    {{ 'spareParts.page.tabVendors' | translate }}
   </button>
 </div>
 

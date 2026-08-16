@@ -1,16 +1,16 @@
 <div class="lookup-panel">
   <header class="panel-header">
     <div>
-      <h2>Operating Departments</h2>
-      <p class="panel-subtitle">{{ rows.length }} department(s)</p>
+      <h2>{{ 'settings.departments.title' | translate }}</h2>
+      <p class="panel-subtitle">{{ rows.length }} {{ 'settings.departments.countUnit' | translate }}</p>
     </div>
     <div class="panel-actions">
       <label class="filter-checkbox">
         <input type="checkbox" [(ngModel)]="activeOnly" (change)="load()" />
-        Active only
+        {{ 'common.activeOnly' | translate }}
       </label>
       <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
-        + Add Department
+        {{ 'settings.departments.addButton' | translate }}
       </button>
     </div>
   </header>
@@ -20,7 +20,7 @@
   }
 
   @if (loading) {
-    <div class="state-message">Loading departments…</div>
+    <div class="state-message">{{ 'settings.departments.loading' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -28,27 +28,37 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Name (Arabic)</th>
-            <th>Name (English)</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>{{ 'settings.departments.nameArabic' | translate }}</th>
+            <th>{{ 'settings.departments.nameEnglish' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
           @if (addingNew) {
             <tr class="editing-row">
               <td>
-                <input type="text" [(ngModel)]="newDraft.name_ar" placeholder="الاسم بالعربي" />
+                <input
+                  type="text"
+                  [(ngModel)]="newDraft.name_ar"
+                  [placeholder]="'settings.departments.nameArabicPlaceholder' | translate"
+                />
               </td>
-              <td><input type="text" [(ngModel)]="newDraft.name_en" placeholder="Name" /></td>
+              <td>
+                <input
+                  type="text"
+                  [(ngModel)]="newDraft.name_en"
+                  [placeholder]="'settings.departments.nameEnglishPlaceholder' | translate"
+                />
+              </td>
               <td>—</td>
               <td class="actions-cell">
                 <div class="actions-cell-btns">
                   <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
-                    Save
+                    {{ 'common.save' | translate }}
                   </button>
                   <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
-                    Cancel
+                    {{ 'common.cancel' | translate }}
                   </button>
                 </div>
               </td>
@@ -59,7 +69,7 @@
               <tr class="editing-row">
                 <td><input type="text" [(ngModel)]="row._draft.name_ar" /></td>
                 <td><input type="text" [(ngModel)]="row._draft.name_en" /></td>
-                <td>{{ row.is_active ? 'Active' : 'Inactive' }}</td>
+                <td>{{ (row.is_active ? 'common.active' : 'common.inactive') | translate }}</td>
                 <td class="actions-cell">
                   <div class="actions-cell-btns">
                     <button
@@ -68,7 +78,7 @@
                       (click)="confirmEdit(row)"
                       [disabled]="saving"
                     >
-                      Save
+                      {{ 'common.save' | translate }}
                     </button>
                     <button
                       type="button"
@@ -76,7 +86,7 @@
                       (click)="cancelEdit(row)"
                       [disabled]="saving"
                     >
-                      Cancel
+                      {{ 'common.cancel' | translate }}
                     </button>
                   </div>
                 </td>
@@ -87,20 +97,25 @@
                 <td>{{ row.name_en || '—' }}</td>
                 <td>
                   @if (row.is_active) {
-                    <span class="badge badge--ok">Active</span>
+                    <span class="badge badge--ok">{{ 'common.active' | translate }}</span>
                   } @else {
-                    <span class="badge badge--warn">Inactive</span>
+                    <span class="badge badge--warn">{{ 'common.inactive' | translate }}</span>
                   }
                 </td>
                 <td class="actions-cell">
                   <div class="actions-cell-btns">
-                    <button type="button" class="link-btn" (click)="startEdit(row)">Edit</button>
+                    <button type="button" class="link-btn" (click)="startEdit(row)">
+                      {{ 'common.edit' | translate }}
+                    </button>
                     <button
                       type="button"
                       class="link-btn link-btn--danger"
                       (click)="toggleActive(row)"
                     >
-                      {{ row.is_active ? 'Deactivate' : 'Reactivate' }}
+                      {{
+                        (row.is_active ? 'settings.departments.deactivate' : 'settings.departments.reactivate')
+                          | translate
+                      }}
                     </button>
                   </div>
                 </td>
@@ -108,7 +123,7 @@
             }
           } @empty {
             <tr>
-              <td colspan="4" class="empty-row">No departments yet.</td>
+              <td colspan="4" class="empty-row">{{ 'settings.departments.empty' | translate }}</td>
             </tr>
           }
         </tbody>

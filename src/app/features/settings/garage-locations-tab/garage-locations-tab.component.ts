@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 
 import { LookupsService } from '../../../core/services/lookups.service';
 import { GarageLocation, MaintenanceWorkshop } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface Draft {
   garage_name: string;
@@ -20,7 +22,7 @@ const EMPTY_DRAFT: Draft = { garage_name: '', workshop_id: null, zone_label: '',
 @Component({
   selector: 'app-garage-locations-tab',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './garage-locations-tab.component.html',
   styleUrls: ['./garage-locations-tab.component.scss'],
 })
@@ -38,6 +40,7 @@ export class GarageLocationsTabComponent implements OnInit {
   constructor(
     private lookupsService: LookupsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -59,7 +62,7 @@ export class GarageLocationsTabComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load garage locations.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -84,7 +87,7 @@ export class GarageLocationsTabComponent implements OnInit {
 
   confirmAdd(): void {
     if (!this.newDraft.garage_name.trim() || !this.newDraft.zone_label.trim()) {
-      this.saveError = 'Garage name and zone label are required.';
+      this.saveError = this.i18n.t('settings.garageLocations.validationError');
       return;
     }
 
@@ -106,7 +109,7 @@ export class GarageLocationsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to add garage location.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.addError');
         },
       });
   }
@@ -128,7 +131,7 @@ export class GarageLocationsTabComponent implements OnInit {
   confirmEdit(row: EditableRow): void {
     if (!row._draft) return;
     if (!row._draft.garage_name.trim() || !row._draft.zone_label.trim()) {
-      this.saveError = 'Garage name and zone label are required.';
+      this.saveError = this.i18n.t('settings.garageLocations.validationError');
       return;
     }
 
@@ -149,7 +152,7 @@ export class GarageLocationsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to save changes.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.saveError');
         },
       });
   }

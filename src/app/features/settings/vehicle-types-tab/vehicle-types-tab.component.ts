@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 
 import { LookupsService } from '../../../core/services/lookups.service';
 import { VehicleType } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface EditableRow extends VehicleType {
   _draft?: { name_ar: string; name_en: string; default_workshop_type: string };
@@ -21,7 +23,7 @@ const EMPTY_DRAFT = { name_ar: '', name_en: '', default_workshop_type: '' };
 @Component({
   selector: 'app-vehicle-types-tab',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './vehicle-types-tab.component.html',
   styleUrls: ['./vehicle-types-tab.component.scss'],
 })
@@ -38,6 +40,7 @@ export class VehicleTypesTabComponent implements OnInit {
   constructor(
     private lookupsService: LookupsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -55,7 +58,7 @@ export class VehicleTypesTabComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load vehicle types.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -74,7 +77,7 @@ export class VehicleTypesTabComponent implements OnInit {
 
   confirmAdd(): void {
     if (!this.newDraft.name_ar.trim() || !this.newDraft.default_workshop_type.trim()) {
-      this.saveError = 'Arabic name and default workshop type are required.';
+      this.saveError = this.i18n.t('settings.vehicleTypes.validationError');
       return;
     }
 
@@ -95,7 +98,7 @@ export class VehicleTypesTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to add vehicle type.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.addError');
         },
       });
   }
@@ -116,7 +119,7 @@ export class VehicleTypesTabComponent implements OnInit {
   confirmEdit(row: EditableRow): void {
     if (!row._draft) return;
     if (!row._draft.name_ar.trim() || !row._draft.default_workshop_type.trim()) {
-      this.saveError = 'Arabic name and default workshop type are required.';
+      this.saveError = this.i18n.t('settings.vehicleTypes.validationError');
       return;
     }
 
@@ -136,7 +139,7 @@ export class VehicleTypesTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to save changes.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.saveError');
         },
       });
   }

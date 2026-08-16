@@ -16,11 +16,13 @@ import {
   VPartPriceHistoryLast10,
   VPartPriceTrend,
 } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-price-intelligence',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule],
+  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule, TranslatePipe],
   templateUrl: './price-intelligence.component.html',
   styleUrls: ['./price-intelligence.component.scss'],
 })
@@ -45,6 +47,7 @@ export class PriceIntelligenceComponent implements OnInit {
     private fb: FormBuilder,
     private sparePartsService: SparePartsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       vendor_id: [null],
@@ -68,7 +71,7 @@ export class PriceIntelligenceComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementForm.lookupsError');
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
@@ -105,7 +108,7 @@ export class PriceIntelligenceComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.detailError = err instanceof Error ? err.message : 'Failed to load price data.';
+        this.detailError = err instanceof Error ? err.message : this.i18n.t('spareParts.priceIntelligence.detailError');
         this.detailLoading = false;
         this.cdr.markForCheck();
       },
@@ -141,7 +144,7 @@ export class PriceIntelligenceComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to log price point.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('spareParts.priceIntelligence.saveError');
         },
       });
   }

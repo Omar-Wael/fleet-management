@@ -1,15 +1,15 @@
 <div class="tab-nav">
   <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'vehicle-types'" (click)="setTab('vehicle-types')">
-    Vehicle Types
+    {{ 'settings.vehicleTypes.title' | translate }}
   </button>
   <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'departments'" (click)="setTab('departments')">
-    Operating Departments
+    {{ 'settings.departments.title' | translate }}
   </button>
   <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'workshops'" (click)="setTab('workshops')">
-    Maintenance Workshops
+    {{ 'settings.workshops.title' | translate }}
   </button>
   <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'garage-locations'" (click)="setTab('garage-locations')">
-    Garage Locations
+    {{ 'settings.garageLocations.title' | translate }}
   </button>
 </div>
 

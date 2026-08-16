@@ -1,18 +1,18 @@
 <div class="tracker-page">
   <header class="page-header">
-    <h2>Oil &amp; Filter Tracker</h2>
+    <h2>{{ 'maintenance.tabOilFilterTracker' | translate }}</h2>
   </header>
 
   @if (lookupsLoading) {
-    <div class="state-message">Loading vehicles…</div>
+    <div class="state-message">{{ 'maintenance.loadingVehicles' | translate }}</div>
   } @else if (lookupsError) {
     <div class="state-message state-message--error">{{ lookupsError }}</div>
   } @else {
     <div class="vehicle-picker">
       <label class="field">
-        <span>Vehicle</span>
+        <span>{{ 'maintenance.vehicle' | translate }}</span>
         <select [(ngModel)]="selectedVehicleId" [ngModelOptions]="{ standalone: true }" (change)="onVehicleChange()">
-          <option value="" disabled>Select a vehicle…</option>
+          <option value="" disabled>{{ 'maintenance.selectVehiclePlaceholder' | translate }}</option>
           @for (v of vehicles; track v.id) {
             <option [value]="v.id">{{ v.plate_number }}</option>
           }
@@ -20,7 +20,9 @@
       </label>
 
       @if (selectedVehicleId) {
-        <button type="button" class="btn btn--primary" (click)="openRecordForm()">+ Record Change</button>
+        <button type="button" class="btn btn--primary" (click)="openRecordForm()">
+          {{ 'maintenance.recordChangeButton' | translate }}
+        </button>
       }
     </div>
 
@@ -28,47 +30,47 @@
       <form class="record-form" [formGroup]="form" (ngSubmit)="submit()">
         <div class="field-grid">
           <label class="field">
-            <span>Change Type *</span>
+            <span>{{ 'maintenance.changeTypeLabel' | translate }} *</span>
             <select formControlName="change_type">
-              <option value="oil">Oil</option>
-              <option value="filter">Filter</option>
-              <option value="oil_and_filter">Oil &amp; Filter</option>
+              <option value="oil">{{ 'maintenance.changeTypeOil' | translate }}</option>
+              <option value="filter">{{ 'maintenance.changeTypeFilter' | translate }}</option>
+              <option value="oil_and_filter">{{ 'maintenance.changeTypeOilAndFilter' | translate }}</option>
             </select>
           </label>
 
           <label class="field">
-            <span>Change Date *</span>
+            <span>{{ 'maintenance.changeDateLabel' | translate }} *</span>
             <input type="date" formControlName="change_date" />
           </label>
 
           <label class="field">
-            <span>Odometer Reading *</span>
+            <span>{{ 'maintenance.odometerReadingLabel' | translate }} *</span>
             <input type="number" formControlName="odometer_reading" />
           </label>
 
           <label class="field">
-            <span>Odometer Unit *</span>
+            <span>{{ 'maintenance.odometerUnitLabel' | translate }} *</span>
             <select formControlName="odometer_unit">
-              <option value="km">km</option>
-              <option value="hours">hours</option>
-              <option value="other">other</option>
+              <option value="km">{{ 'maintenance.unitKm' | translate }}</option>
+              <option value="hours">{{ 'maintenance.unitHours' | translate }}</option>
+              <option value="other">{{ 'maintenance.unitOther' | translate }}</option>
             </select>
           </label>
 
           <label class="field">
-            <span>Next Due Reading</span>
+            <span>{{ 'maintenance.nextDueReading' | translate }}</span>
             <input type="number" formControlName="next_due_reading" />
           </label>
 
           <label class="field">
-            <span>Next Due Date</span>
+            <span>{{ 'maintenance.nextDueDate' | translate }}</span>
             <input type="date" formControlName="next_due_date" />
           </label>
 
           <label class="field">
-            <span>Technician</span>
+            <span>{{ 'maintenance.technician' | translate }}</span>
             <select formControlName="technician_id">
-              <option [ngValue]="null">— None —</option>
+              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
               @for (t of technicians; track t.id) {
                 <option [ngValue]="t.id">{{ t.full_name }}</option>
               }
@@ -76,7 +78,7 @@
           </label>
 
           <label class="field field--wide">
-            <span>Notes</span>
+            <span>{{ 'common.notes' | translate }}</span>
             <textarea formControlName="notes" rows="2"></textarea>
           </label>
         </div>
@@ -86,9 +88,11 @@
         }
 
         <div class="form-actions">
-          <button type="button" class="btn btn--ghost" (click)="cancelRecordForm()" [disabled]="saving">Cancel</button>
+          <button type="button" class="btn btn--ghost" (click)="cancelRecordForm()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ saving ? 'Saving…' : 'Save Change' }}
+            {{ (saving ? 'common.saving' : 'maintenance.saveChangeButton') | translate }}
           </button>
         </div>
       </form>
@@ -96,7 +100,7 @@
 
     @if (selectedVehicleId) {
       @if (changesLoading) {
-        <div class="state-message">Loading change history…</div>
+        <div class="state-message">{{ 'maintenance.loadingChangeHistory' | translate }}</div>
       } @else if (changesError) {
         <div class="state-message state-message--error">{{ changesError }}</div>
       } @else {
@@ -104,13 +108,13 @@
           <table class="grid-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Odometer</th>
-                <th>Next Due Reading</th>
-                <th>Next Due Date</th>
-                <th>Technician</th>
-                <th>Notes</th>
+                <th>{{ 'common.date' | translate }}</th>
+                <th>{{ 'maintenance.colType' | translate }}</th>
+                <th>{{ 'maintenance.colOdometer' | translate }}</th>
+                <th>{{ 'maintenance.nextDueReading' | translate }}</th>
+                <th>{{ 'maintenance.nextDueDate' | translate }}</th>
+                <th>{{ 'maintenance.technician' | translate }}</th>
+                <th>{{ 'common.notes' | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -126,7 +130,7 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="empty-row">No oil/filter changes recorded for this vehicle yet.</td>
+                  <td colspan="7" class="empty-row">{{ 'maintenance.noOilFilterChanges' | translate }}</td>
                 </tr>
               }
             </tbody>

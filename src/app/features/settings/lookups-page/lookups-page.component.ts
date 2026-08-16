@@ -4,6 +4,7 @@ import { VehicleTypesTabComponent } from '../vehicle-types-tab/vehicle-types-tab
 import { DepartmentsTabComponent } from '../departments-tab/departments-tab.component';
 import { WorkshopsTabComponent } from '../workshops-tab/workshops-tab.component';
 import { GarageLocationsTabComponent } from '../garage-locations-tab/garage-locations-tab.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 type LookupsTab = 'vehicle-types' | 'departments' | 'workshops' | 'garage-locations';
 
@@ -15,6 +16,7 @@ type LookupsTab = 'vehicle-types' | 'departments' | 'workshops' | 'garage-locati
     DepartmentsTabComponent,
     WorkshopsTabComponent,
     GarageLocationsTabComponent,
+    TranslatePipe,
   ],
   templateUrl: './lookups-page.component.html',
   styleUrls: ['./lookups-page.component.scss'],

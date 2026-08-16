@@ -1,8 +1,11 @@
 <div class="catalog-page">
   <header class="page-header">
     <div>
-      <h2>Parts Catalog</h2>
-      <p class="page-subtitle">{{ filteredParts.length }} of {{ parts.length }} parts</p>
+      <h2>{{ 'spareParts.page.tabCatalog' | translate }}</h2>
+      <p class="page-subtitle">
+        {{ filteredParts.length }}/{{ parts.length }}
+        {{ 'spareParts.catalog.shown' | translate }}
+      </p>
     </div>
 
     <div class="page-actions">
@@ -13,13 +16,17 @@
         hidden
         (change)="onFileSelected($event)"
       />
-      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">Download Template</button>
-      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
-        {{ importing ? 'Importing…' : 'Import' }}
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">
+        {{ 'common.downloadTemplate' | translate }}
       </button>
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
-      <button type="button" class="btn btn--primary" (click)="openAddForm()">+ Add Part</button>
+      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
+        {{ (importing ? 'common.importing' : 'common.import') | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
+      <button type="button" class="btn btn--primary" (click)="openAddForm()">
+        {{ 'spareParts.catalog.addButton' | translate }}
+      </button>
     </div>
   </header>
 
@@ -29,9 +36,10 @@
 
   @if (importSummary) {
     <div class="state-message state-message--ok">
-      Imported {{ importSummary.savedCount }} part(s).
+      {{ 'spareParts.catalog.importedCount' | translate }} {{ importSummary.savedCount }}
+      {{ 'spareParts.catalog.importedUnit' | translate }}
       @if (importSummary.unresolvedCount) {
-        {{ importSummary.unresolvedCount }} row(s) skipped.
+        {{ importSummary.unresolvedCount }} {{ 'spareParts.catalog.skippedRows' | translate }}
       }
     </div>
   }
@@ -40,18 +48,18 @@
     <input
       type="text"
       class="filters-search"
-      placeholder="Search part code, name…"
+      [placeholder]="'spareParts.catalog.searchPlaceholder' | translate"
       [(ngModel)]="searchTerm"
     />
 
     <label class="filter-checkbox">
       <input type="checkbox" [(ngModel)]="lowStockOnly" />
-      Low stock only
+      {{ 'spareParts.catalog.lowStockOnly' | translate }}
     </label>
   </div>
 
   @if (loading) {
-    <div class="state-message">Loading parts…</div>
+    <div class="state-message">{{ 'spareParts.catalog.loadingParts' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -59,14 +67,14 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Part Code</th>
-            <th>Name (Arabic)</th>
-            <th>Name (English)</th>
-            <th>Unit</th>
-            <th>Unit Cost</th>
-            <th>Stock Qty</th>
-            <th>Reorder At</th>
-            <th>Actions</th>
+            <th>{{ 'spareParts.catalog.colPartCode' | translate }}</th>
+            <th>{{ 'spareParts.catalog.colNameAr' | translate }}</th>
+            <th>{{ 'spareParts.catalog.colNameEn' | translate }}</th>
+            <th>{{ 'spareParts.catalog.colUnit' | translate }}</th>
+            <th>{{ 'spareParts.catalog.colUnitCost' | translate }}</th>
+            <th>{{ 'spareParts.catalog.colStockQty' | translate }}</th>
+            <th>{{ 'spareParts.catalog.colReorderAt' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -80,17 +88,17 @@
               <td class="mono">
                 {{ p.current_stock_qty | number }}
                 @if (isLowStock(p)) {
-                  <span class="badge badge--warn">Low</span>
+                  <span class="badge badge--warn">{{ 'spareParts.catalog.lowBadge' | translate }}</span>
                 }
               </td>
               <td class="mono">{{ p.reorder_threshold ?? '—' }}</td>
               <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openEditForm(p)">Edit</button>
+                <button type="button" class="link-btn" (click)="openEditForm(p)">{{ 'common.edit' | translate }}</button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="empty-row">No spare parts match the current filters.</td>
+              <td colspan="8" class="empty-row">{{ 'spareParts.catalog.noResults' | translate }}</td>
             </tr>
           }
         </tbody>

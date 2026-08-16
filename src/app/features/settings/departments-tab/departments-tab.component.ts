@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 
 import { LookupsService } from '../../../core/services/lookups.service';
 import { OperatingDepartment } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface EditableRow extends OperatingDepartment {
   _draft?: { name_ar: string; name_en: string };
@@ -13,7 +15,7 @@ const EMPTY_DRAFT = { name_ar: '', name_en: '' };
 @Component({
   selector: 'app-departments-tab',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './departments-tab.component.html',
   styleUrls: ['./departments-tab.component.scss'],
 })
@@ -31,6 +33,7 @@ export class DepartmentsTabComponent implements OnInit {
   constructor(
     private lookupsService: LookupsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -48,7 +51,7 @@ export class DepartmentsTabComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load departments.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('settings.departments.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -67,7 +70,7 @@ export class DepartmentsTabComponent implements OnInit {
 
   confirmAdd(): void {
     if (!this.newDraft.name_ar.trim()) {
-      this.saveError = 'Arabic name is required.';
+      this.saveError = this.i18n.t('settings.departments.arabicNameRequired');
       return;
     }
 
@@ -87,7 +90,7 @@ export class DepartmentsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to add department.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.departments.addError');
         },
       });
   }
@@ -104,7 +107,7 @@ export class DepartmentsTabComponent implements OnInit {
   confirmEdit(row: EditableRow): void {
     if (!row._draft) return;
     if (!row._draft.name_ar.trim()) {
-      this.saveError = 'Arabic name is required.';
+      this.saveError = this.i18n.t('settings.departments.arabicNameRequired');
       return;
     }
 
@@ -123,20 +126,20 @@ export class DepartmentsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to save changes.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.departments.saveError');
         },
       });
   }
 
   toggleActive(row: EditableRow): void {
     const nextState = !row.is_active;
-    const verb = nextState ? 'Reactivate' : 'Deactivate';
+    const verb = this.i18n.t(nextState ? 'settings.departments.reactivate' : 'settings.departments.deactivate');
     if (!window.confirm(`${verb}: ${row.name_en || row.name_ar}?`)) return;
 
     this.lookupsService.setOperatingDepartmentActive(row.id, nextState).subscribe({
       next: () => this.load(),
       error: (err) => {
-        this.saveError = err instanceof Error ? err.message : 'Failed to update status.';
+        this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.departments.statusUpdateError');
       },
     });
   }

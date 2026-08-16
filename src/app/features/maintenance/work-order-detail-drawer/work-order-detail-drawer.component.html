@@ -3,46 +3,46 @@
 
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
-      <h2>{{ workOrder?.vehicles?.plate_number || 'Work Order' }}</h2>
+      <h2>{{ workOrder?.vehicles?.plate_number || ('maintenance.workOrderFallbackTitle' | translate) }}</h2>
       <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
     </header>
 
     @if (workOrder) {
       <div class="drawer-body">
         <section class="profile-section">
-          <h3>Overview</h3>
+          <h3>{{ 'maintenance.sectionOverview' | translate }}</h3>
           <dl>
-            <dt>Type</dt>
+            <dt>{{ 'maintenance.colType' | translate }}</dt>
             <dd>{{ workOrder.maintenance_type || '—' }}</dd>
-            <dt>Opened</dt>
+            <dt>{{ 'maintenance.opened' | translate }}</dt>
             <dd>{{ workOrder.opened_at | date : 'mediumDate' }}</dd>
-            <dt>Closed</dt>
+            <dt>{{ 'maintenance.closed' | translate }}</dt>
             <dd>
               @if (isClosed) {
                 {{ workOrder.closed_at | date : 'mediumDate' }}
               } @else {
-                <span class="badge badge--warn">Open</span>
+                <span class="badge badge--warn">{{ 'maintenance.statusOpen' | translate }}</span>
               }
             </dd>
-            <dt>Odometer at Service</dt>
+            <dt>{{ 'maintenance.odometerAtService' | translate }}</dt>
             <dd class="mono">{{ workOrder.odometer_km_at_service ?? '—' }}</dd>
-            <dt>Total Cost</dt>
+            <dt>{{ 'maintenance.totalCost' | translate }}</dt>
             <dd class="mono">{{ workOrder.total_cost | number : '1.2-2' }}</dd>
-            <dt>Under Warranty</dt>
-            <dd>{{ workOrder.is_under_warranty ? 'Yes' : 'No' }}</dd>
-            <dt>Premature Failure</dt>
-            <dd>{{ workOrder.is_premature_failure ? 'Yes' : 'No' }}</dd>
+            <dt>{{ 'maintenance.underWarranty' | translate }}</dt>
+            <dd>{{ (workOrder.is_under_warranty ? 'maintenance.yes' : 'maintenance.no') | translate }}</dd>
+            <dt>{{ 'maintenance.prematureFailure' | translate }}</dt>
+            <dd>{{ (workOrder.is_premature_failure ? 'maintenance.yes' : 'maintenance.no') | translate }}</dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Description</h3>
+          <h3>{{ 'maintenance.description' | translate }}</h3>
           <p class="notes-text">{{ workOrder.description }}</p>
         </section>
 
         @if (workOrder.repair_types?.length) {
           <section class="profile-section">
-            <h3>Repair Types</h3>
+            <h3>{{ 'maintenance.repairTypes' | translate }}</h3>
             <div class="chip-row">
               @for (t of workOrder.repair_types; track t) {
                 <span class="chip">{{ t }}</span>
@@ -53,7 +53,7 @@
 
         @if (workOrder.maintenance_categories?.length) {
           <section class="profile-section">
-            <h3>Categories</h3>
+            <h3>{{ 'maintenance.categories' | translate }}</h3>
             <div class="chip-row">
               @for (c of workOrder.maintenance_categories; track c) {
                 <span class="chip">{{ c }}</span>
@@ -63,7 +63,7 @@
         }
 
         <section class="profile-section">
-          <h3>Technicians</h3>
+          <h3>{{ 'maintenance.techniciansLabel' | translate }}</h3>
           @if (workOrder.work_order_technicians?.length) {
             <ul class="plain-list">
               @for (wt of workOrder.work_order_technicians; track wt.technicians.full_name) {
@@ -71,18 +71,18 @@
               }
             </ul>
           } @else {
-            <p class="muted">No technicians assigned.</p>
+            <p class="muted">{{ 'maintenance.noTechniciansAssigned' | translate }}</p>
           }
         </section>
 
         <section class="profile-section">
-          <h3>Financial Transactions</h3>
+          <h3>{{ 'maintenance.financialTransactions' | translate }}</h3>
           @if (workOrder.financial_transactions?.length) {
             <table class="mini-table">
               <thead>
                 <tr>
-                  <th>Channel</th>
-                  <th>Amount</th>
+                  <th>{{ 'maintenance.channel' | translate }}</th>
+                  <th>{{ 'maintenance.amount' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -95,15 +95,15 @@
               </tbody>
             </table>
           } @else {
-            <p class="muted">No financial transactions recorded yet.</p>
+            <p class="muted">{{ 'maintenance.noFinancialTransactions' | translate }}</p>
           }
         </section>
 
         @if (!isClosed) {
           <section class="profile-section">
-            <h3>Close Work Order</h3>
+            <h3>{{ 'maintenance.closeWorkOrder' | translate }}</h3>
             <label class="field">
-              <span>Final Total Cost</span>
+              <span>{{ 'maintenance.finalTotalCost' | translate }}</span>
               <input type="number" step="0.01" [(ngModel)]="totalCostInput" />
             </label>
 
@@ -112,7 +112,7 @@
             }
 
             <button type="button" class="btn btn--primary" [disabled]="closing" (click)="closeWorkOrder()">
-              {{ closing ? 'Closing…' : 'Close Work Order' }}
+              {{ (closing ? 'maintenance.closingEllipsis' : 'maintenance.closeWorkOrder') | translate }}
             </button>
           </section>
         }

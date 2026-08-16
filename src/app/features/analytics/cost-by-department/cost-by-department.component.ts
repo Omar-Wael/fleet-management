@@ -13,6 +13,8 @@ import Chart from 'chart.js/auto';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { VDepartmentCostSummary } from '../../../core/models/fleet.models';
 import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 // Same palette used on the dashboard's department cost chart, cycled if
 // there are more departments than colors.
@@ -21,7 +23,7 @@ const CHART_COLORS = ['#1e3a5f', '#2f547f', '#5b7ca0', '#8fa8c2', '#c3d2e0', '#f
 @Component({
   selector: 'app-cost-by-department',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, TranslatePipe],
   templateUrl: './cost-by-department.component.html',
   styleUrls: ['./cost-by-department.component.scss'],
 })
@@ -36,6 +38,7 @@ export class CostByDepartmentComponent implements OnInit, AfterViewInit, OnDestr
   constructor(
     private analyticsService: AnalyticsService,
     private cdr: ChangeDetectorRef,
+    readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -63,7 +66,7 @@ export class CostByDepartmentComponent implements OnInit, AfterViewInit, OnDestr
       },
       error: (err) => {
         this.loadError =
-          err instanceof Error ? err.message : 'Failed to load department cost data.';
+          err instanceof Error ? err.message : this.i18n.t('analytics.failedLoadDepartmentCost');
         this.loading = false;
         this.cdr.markForCheck();
       },

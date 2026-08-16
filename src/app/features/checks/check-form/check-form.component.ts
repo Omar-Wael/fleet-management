@@ -25,13 +25,15 @@ import {
 } from '../../../core/services/disbursement.service';
 import { VehiclesService } from '../../../core/services/vehicles.service';
 import { FinancialTransaction, VehicleWithLookups } from '../../../core/models/fleet.models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 type LinkType = 'none' | 'work_order' | 'overhaul' | 'disbursement_request';
 
 @Component({
   selector: 'app-check-form',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, TranslatePipe],
   templateUrl: './check-form.component.html',
   styleUrls: ['./check-form.component.scss'],
 })
@@ -64,6 +66,7 @@ export class CheckFormComponent implements OnInit, OnChanges {
     private overhaulsService: OverhaulsService,
     private disbursementService: DisbursementService,
     private vehiclesService: VehiclesService,
+    readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       check_number: ['', Validators.required],
@@ -106,7 +109,7 @@ export class CheckFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : 'Failed to load form options.';
+        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('checks.failedLoadFormOptions');
         this.lookupsLoading = false;
       },
     });
@@ -149,7 +152,7 @@ export class CheckFormComponent implements OnInit, OnChanges {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : 'Failed to create check.';
+          this.saveError = err instanceof Error ? err.message : this.i18n.t('checks.failedCreate');
         },
       });
   }

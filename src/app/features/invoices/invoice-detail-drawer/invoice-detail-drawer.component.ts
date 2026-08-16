@@ -2,11 +2,13 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { InvoicesService, InvoiceGridRow } from '../../../core/services/invoices.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-invoice-detail-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './invoice-detail-drawer.component.html',
   styleUrls: ['./invoice-detail-drawer.component.scss'],
 })
@@ -25,7 +27,10 @@ export class InvoiceDetailDrawerComponent implements OnChanges {
   deleting = false;
   deleteError: string | null = null;
 
-  constructor(private invoicesService: InvoicesService) {}
+  constructor(
+    private invoicesService: InvoicesService,
+    readonly i18n: TranslationService,
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -47,7 +52,7 @@ export class InvoiceDetailDrawerComponent implements OnChanges {
         this.loading = false;
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : 'Failed to load linked vehicles.';
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('invoices.failedLoadVehicles');
         this.loading = false;
       },
     });
@@ -60,7 +65,7 @@ export class InvoiceDetailDrawerComponent implements OnChanges {
   deleteInvoice(): void {
     if (!this.invoice) return;
     const confirmed = window.confirm(
-      `Delete invoice "${this.invoice.invoice_no}"? This can't be undone.`,
+      `${this.i18n.t('invoices.deleteConfirmPrefix')} "${this.invoice.invoice_no}"? ${this.i18n.t('invoices.deleteConfirmSuffix')}`,
     );
     if (!confirmed) return;
 
@@ -74,7 +79,7 @@ export class InvoiceDetailDrawerComponent implements OnChanges {
       },
       error: (err) => {
         this.deleting = false;
-        this.deleteError = err instanceof Error ? err.message : 'Failed to delete invoice.';
+        this.deleteError = err instanceof Error ? err.message : this.i18n.t('invoices.failedDeleteInvoice');
       },
     });
   }

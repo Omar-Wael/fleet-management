@@ -1,8 +1,11 @@
 <div class="vehicles-page">
   <header class="page-header">
     <div>
-      <h1>Vehicles</h1>
-      <p class="page-subtitle">{{ filteredVehicles.length }} of {{ vehicles.length }} vehicles</p>
+      <h1>{{ 'vehicles.title' | translate }}</h1>
+      <p class="page-subtitle">
+        {{ filteredVehicles.length }}/{{ vehicles.length }}
+        {{ 'vehicles.shown' | translate }}
+      </p>
     </div>
 
     <div class="page-actions">
@@ -13,11 +16,11 @@
         hidden
         (change)="onFileSelected($event)"
       />
-      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">Download Template</button>
-      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">Import</button>
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
-      <button type="button" class="btn btn--primary" (click)="openAddForm()">+ Add Vehicle</button>
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">{{ 'common.downloadTemplate' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">{{ 'common.import' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
+      <button type="button" class="btn btn--primary" (click)="openAddForm()">{{ 'vehicles.addButton' | translate }}</button>
     </div>
   </header>
 
@@ -30,27 +33,26 @@
 
   @if (isAlertFilterActive) {
     <div class="alert-filter-chip">
-      Showing only alert-flagged vehicles
-      <button type="button" (click)="clearAlertFilter()">Clear</button>
+      {{ 'vehicles.alertFilterChip' | translate }}
+      <button type="button" (click)="clearAlertFilter()">{{ 'vehicles.clear' | translate }}</button>
     </div>
   }
 
   @if (importPickerOpen) {
     <div class="import-picker">
       <p>
-        Choose the default repair workshop to apply to imported rows that don't specify one
-        (their vehicle type / department are matched by name; this workshop applies to the whole batch).
+        {{ 'vehicles.importPickerHint' | translate }}
       </p>
       <div class="import-picker-row">
         <select [(ngModel)]="importWorkshopId">
-          <option value="" disabled>Select workshop…</option>
+          <option value="" disabled>{{ 'vehicles.selectWorkshop' | translate }}</option>
           @for (w of workshops; track w.id) {
             <option [value]="w.id">{{ w.name_en || w.name_ar }} ({{ w.workshop_type }})</option>
           }
         </select>
-        <button type="button" class="btn btn--ghost" (click)="cancelImport()" [disabled]="importing">Cancel</button>
+        <button type="button" class="btn btn--ghost" (click)="cancelImport()" [disabled]="importing">{{ 'common.cancel' | translate }}</button>
         <button type="button" class="btn btn--primary" (click)="confirmImport()" [disabled]="importing || !importWorkshopId">
-          {{ importing ? 'Importing…' : 'Confirm Import' }}
+          {{ (importing ? 'common.importing' : 'vehicles.confirmImport') | translate }}
         </button>
       </div>
     </div>
@@ -62,9 +64,10 @@
 
   @if (importSummary) {
     <div class="state-message state-message--ok">
-      Imported {{ importSummary.savedCount }} vehicle(s).
+      {{ 'vehicles.importedCount' | translate }} {{ importSummary.savedCount }}
+      {{ 'vehicles.importedUnit' | translate }}
       @if (importSummary.unresolvedCount) {
-        {{ importSummary.unresolvedCount }} row(s) skipped — check vehicle type / department names.
+        {{ importSummary.unresolvedCount }} {{ 'vehicles.skippedRowsCheckTypes' | translate }}
       }
     </div>
   }
@@ -73,34 +76,34 @@
     <input
       type="text"
       class="filters-search"
-      placeholder="Search plate, chassis, make/model, engine no…"
+      [placeholder]="'vehicles.searchPlaceholder' | translate"
       [(ngModel)]="searchTerm"
     />
 
     <select [(ngModel)]="departmentFilter">
-      <option value="">All Departments</option>
+      <option value="">{{ 'vehicles.allDepartments' | translate }}</option>
       @for (d of departments; track d.id) {
         <option [value]="d.id">{{ d.name_en || d.name_ar }}</option>
       }
     </select>
 
     <select [(ngModel)]="workshopFilter">
-      <option value="">All Repair Depts</option>
+      <option value="">{{ 'vehicles.allRepairDepts' | translate }}</option>
       @for (w of workshops; track w.id) {
         <option [value]="w.id">{{ w.name_en || w.name_ar }} ({{ w.workshop_type }})</option>
       }
     </select>
 
     <select [(ngModel)]="statusFilter">
-      <option value="">All Statuses</option>
+      <option value="">{{ 'vehicles.allStatuses' | translate }}</option>
       @for (s of statusOptions; track s) {
-        <option [value]="s">{{ s }}</option>
+        <option [value]="s">{{ statusLabelKey(s) | translate }}</option>
       }
     </select>
   </div>
 
   @if (loading) {
-    <div class="state-message">Loading vehicles…</div>
+    <div class="state-message">{{ 'vehicles.loadingList' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -109,19 +112,19 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Plate Number</th>
-            <th>Vehicle Type</th>
-            <th>Make</th>
-            <th>Model</th>
-            <th>Operating Dept</th>
-            <th>Fuel Type</th>
-            <th>Repair Dept</th>
-            <th>Odometer Status</th>
-            <th>Color</th>
-            <th>Chassis No.</th>
-            <th>Engine No.</th>
-            <th>Notes</th>
-            <th>Actions</th>
+            <th>{{ 'vehicles.plateNumber' | translate }}</th>
+            <th>{{ 'vehicles.vehicleType' | translate }}</th>
+            <th>{{ 'vehicles.make' | translate }}</th>
+            <th>{{ 'vehicles.model' | translate }}</th>
+            <th>{{ 'vehicles.operatingDept' | translate }}</th>
+            <th>{{ 'vehicles.fuelType' | translate }}</th>
+            <th>{{ 'vehicles.repairDept' | translate }}</th>
+            <th>{{ 'vehicles.odometerStatus' | translate }}</th>
+            <th>{{ 'vehicles.color' | translate }}</th>
+            <th>{{ 'vehicles.chassisNumber' | translate }}</th>
+            <th>{{ 'vehicles.engineNumber' | translate }}</th>
+            <th>{{ 'common.notes' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -138,7 +141,7 @@
               <td>
                 <span class="mono">{{ v.odometer_km | number }} {{ v.odometer_unit }}</span>
                 @if (!v.odometer_working) {
-                  <span class="badge badge--warn">Not working</span>
+                  <span class="badge badge--warn">{{ 'vehicles.odometerNotWorking' | translate }}</span>
                 }
               </td>
               <td>{{ v.color || '—' }}</td>
@@ -146,14 +149,14 @@
               <td class="mono">{{ v.engines?.engine_serial_number || '—' }}</td>
               <td class="notes-cell" [title]="v.notes || ''">{{ v.notes || '—' }}</td>
               <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openProfile(v)">View</button>
-                <button type="button" class="link-btn" (click)="openEditForm(v)">Edit</button>
-                <button type="button" class="link-btn link-btn--danger" (click)="deleteVehicle(v)">Delete</button>
+                <button type="button" class="link-btn" (click)="openProfile(v)">{{ 'common.view' | translate }}</button>
+                <button type="button" class="link-btn" (click)="openEditForm(v)">{{ 'common.edit' | translate }}</button>
+                <button type="button" class="link-btn link-btn--danger" (click)="deleteVehicle(v)">{{ 'common.delete' | translate }}</button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="14" class="empty-row">No vehicles match the current filters.</td>
+              <td colspan="14" class="empty-row">{{ 'vehicles.noResults' | translate }}</td>
             </tr>
           }
         </tbody>

@@ -3,41 +3,41 @@
 
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
-      <h2>{{ invoice?.invoice_no || 'Invoice' }}</h2>
+      <h2>{{ invoice?.invoice_no || ('invoices.fallbackTitle' | translate) }}</h2>
       <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
     </header>
 
     @if (invoice) {
       <div class="drawer-body">
         <section class="profile-section">
-          <h3>Overview</h3>
+          <h3>{{ 'invoices.sectionOverview' | translate }}</h3>
           <dl>
-            <dt>Vendor</dt>
+            <dt>{{ 'invoices.vendor' | translate }}</dt>
             <dd>{{ invoice.external_workshops?.name || '—' }}</dd>
-            <dt>Invoice Date</dt>
+            <dt>{{ 'invoices.invoiceDate' | translate }}</dt>
             <dd>{{ invoice.invoice_date | date : 'mediumDate' }}</dd>
-            <dt>Source</dt>
+            <dt>{{ 'invoices.source' | translate }}</dt>
             <dd>{{ invoice.invoice_source || '—' }}</dd>
-            <dt>Subtotal</dt>
+            <dt>{{ 'invoices.subtotal' | translate }}</dt>
             <dd class="mono">{{ invoice.subtotal_value | number : '1.2-2' }}</dd>
-            <dt>Tax</dt>
+            <dt>{{ 'invoices.tax' | translate }}</dt>
             <dd class="mono">{{ invoice.tax_value | number : '1.2-2' }}</dd>
-            <dt>Discount</dt>
+            <dt>{{ 'invoices.discount' | translate }}</dt>
             <dd class="mono">{{ invoice.discount_value | number : '1.2-2' }}</dd>
-            <dt>Total</dt>
+            <dt>{{ 'invoices.total' | translate }}</dt>
             <dd class="mono total-value">{{ invoice.total_value | number : '1.2-2' }}</dd>
           </dl>
         </section>
 
         <section class="profile-section">
-          <h3>Line Items</h3>
+          <h3>{{ 'invoices.lineItems' | translate }}</h3>
           <table class="mini-table">
             <thead>
               <tr>
-                <th>Description</th>
-                <th>Qty</th>
-                <th>Unit Value</th>
-                <th>Line Total</th>
+                <th>{{ 'invoices.description' | translate }}</th>
+                <th>{{ 'invoices.qty' | translate }}</th>
+                <th>{{ 'invoices.unitValue' | translate }}</th>
+                <th>{{ 'invoices.lineTotal' | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -50,7 +50,7 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" class="muted">No line items recorded.</td>
+                  <td colspan="4" class="muted">{{ 'invoices.noLineItems' | translate }}</td>
                 </tr>
               }
             </tbody>
@@ -58,9 +58,9 @@
         </section>
 
         <section class="profile-section">
-          <h3>Vehicles Covered</h3>
+          <h3>{{ 'invoices.vehiclesCovered' | translate }}</h3>
           @if (loading) {
-            <p class="muted">Loading…</p>
+            <p class="muted">{{ 'common.loading' | translate }}</p>
           } @else if (loadError) {
             <p class="state-message state-message--error">{{ loadError }}</p>
           } @else if (vehicles.length) {
@@ -70,13 +70,13 @@
               }
             </div>
           } @else {
-            <p class="muted">No vehicle linkage found for this invoice.</p>
+            <p class="muted">{{ 'invoices.noVehicleLinkage' | translate }}</p>
           }
         </section>
 
         @if (invoice.notes) {
           <section class="profile-section">
-            <h3>Notes</h3>
+            <h3>{{ 'common.notes' | translate }}</h3>
             <p class="notes-text">{{ invoice.notes }}</p>
           </section>
         }
@@ -86,9 +86,9 @@
         }
 
         <div class="drawer-actions">
-          <button type="button" class="btn btn--ghost" (click)="editInvoice()">Edit Header</button>
+          <button type="button" class="btn btn--ghost" (click)="editInvoice()">{{ 'invoices.editHeaderButton' | translate }}</button>
           <button type="button" class="btn btn--danger" [disabled]="deleting" (click)="deleteInvoice()">
-            {{ deleting ? 'Deleting…' : 'Delete Invoice' }}
+            {{ (deleting ? 'invoices.deletingEllipsis' : 'invoices.deleteInvoiceButton') | translate }}
           </button>
         </div>
       </div>

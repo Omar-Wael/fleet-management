@@ -1,28 +1,30 @@
 <div class="disbursements-page">
   <header class="page-header">
     <div>
-      <h2>Stock Disbursement Requests</h2>
-      <p class="page-subtitle">{{ requests.length }} request(s)</p>
+      <h2>{{ 'spareParts.disbursement.title' | translate }}</h2>
+      <p class="page-subtitle">{{ requests.length }} {{ 'spareParts.disbursement.requestsCount' | translate }}</p>
     </div>
 
     <div class="page-actions">
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
-      <button type="button" class="btn btn--primary" (click)="openCreateForm()">+ New Request</button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">
+        {{ 'spareParts.disbursement.newRequestButton' | translate }}
+      </button>
     </div>
   </header>
 
   <div class="filters">
     <select [(ngModel)]="statusFilter" (change)="loadRequests()">
-      <option value="">All Statuses</option>
+      <option value="">{{ 'spareParts.disbursement.allStatuses' | translate }}</option>
       @for (s of statusOptions; track s) {
-        <option [value]="s">{{ statusLabels[s] }}</option>
+        <option [value]="s">{{ statusLabelKeys[s] | translate }}</option>
       }
     </select>
   </div>
 
   @if (loading) {
-    <div class="state-message">Loading requests…</div>
+    <div class="state-message">{{ 'spareParts.disbursement.loading' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -30,12 +32,12 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Vehicle</th>
-            <th>Requested By</th>
-            <th>Status</th>
-            <th>Requested At</th>
-            <th>Parts</th>
-            <th>Actions</th>
+            <th>{{ 'spareParts.disbursement.colVehicle' | translate }}</th>
+            <th>{{ 'spareParts.disbursement.colRequestedBy' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'spareParts.disbursement.colRequestedAt' | translate }}</th>
+            <th>{{ 'spareParts.disbursement.colParts' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -43,16 +45,16 @@
             <tr>
               <td class="mono">{{ r.vehicles?.plate_number || '—' }}</td>
               <td>{{ r.technicians?.full_name || '—' }}</td>
-              <td><span class="badge">{{ statusLabels[r.status] }}</span></td>
+              <td><span class="badge">{{ statusLabelKeys[r.status] | translate }}</span></td>
               <td>{{ r.requested_at | date : 'medium' }}</td>
               <td class="parts-cell" [title]="itemsSummary(r)">{{ itemsSummary(r) }}</td>
               <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openDetail(r)">View</button>
+                <button type="button" class="link-btn" (click)="openDetail(r)">{{ 'common.view' | translate }}</button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="empty-row">No disbursement requests match the current filter.</td>
+              <td colspan="6" class="empty-row">{{ 'spareParts.disbursement.noResults' | translate }}</td>
             </tr>
           }
         </tbody>

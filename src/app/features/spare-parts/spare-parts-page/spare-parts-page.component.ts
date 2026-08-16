@@ -4,6 +4,7 @@ import { SparePartsCatalogComponent } from '../spare-parts-catalog/spare-parts-c
 import { DisbursementRequestsComponent } from '../disbursement-requests/disbursement-requests.component';
 import { PriceIntelligenceComponent } from '../price-intelligence/price-intelligence.component';
 import { VendorDirectoryComponent } from '../vendor-directory/vendor-directory.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 type SparePartsTab = 'catalog' | 'disbursements' | 'price-intelligence' | 'vendors';
 
@@ -15,6 +16,7 @@ type SparePartsTab = 'catalog' | 'disbursements' | 'price-intelligence' | 'vendo
     DisbursementRequestsComponent,
     PriceIntelligenceComponent,
     VendorDirectoryComponent,
+    TranslatePipe,
   ],
   templateUrl: './spare-parts-page.component.html',
   styleUrls: ['./spare-parts-page.component.scss'],

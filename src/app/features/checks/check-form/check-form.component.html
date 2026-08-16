@@ -3,12 +3,12 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>New Check</h2>
-      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+      <h2>{{ 'checks.formTitle' | translate }}</h2>
+      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
     </header>
 
     @if (lookupsLoading) {
-      <div class="state-message">Loading form options…</div>
+      <div class="state-message">{{ 'checks.loadingFormOptions' | translate }}</div>
     } @else {
       <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
         @if (lookupsError) {
@@ -17,43 +17,43 @@
 
         <div class="field-grid">
           <label class="field">
-            <span>Check Number *</span>
+            <span>{{ 'checks.fieldCheckNumber' | translate }}</span>
             <input type="text" formControlName="check_number" />
           </label>
 
           <label class="field">
-            <span>Recipient</span>
+            <span>{{ 'checks.recipient' | translate }}</span>
             <input type="text" formControlName="recipient_name" />
           </label>
 
           <label class="field">
-            <span>Amount *</span>
+            <span>{{ 'checks.fieldAmount' | translate }}</span>
             <input type="number" step="0.01" formControlName="amount" />
           </label>
 
           <label class="field">
-            <span>Check Stage</span>
-            <input type="text" formControlName="check_stage" placeholder="e.g. issued, cleared" />
+            <span>{{ 'checks.stage' | translate }}</span>
+            <input type="text" formControlName="check_stage" [placeholder]="'checks.checkStagePlaceholder' | translate" />
           </label>
 
           <label class="field field--wide">
-            <span>Description</span>
+            <span>{{ 'checks.description' | translate }}</span>
             <textarea formControlName="description" rows="2"></textarea>
           </label>
         </div>
 
         <section class="link-section">
-          <h3>Link To (optional, pick one)</h3>
+          <h3>{{ 'checks.linkToSection' | translate }}</h3>
           <select [(ngModel)]="linkType" [ngModelOptions]="{ standalone: true }" (change)="onLinkTypeChange()">
-            <option value="none">— None —</option>
-            <option value="work_order">Work Order</option>
-            <option value="overhaul">Overhaul</option>
-            <option value="disbursement_request">Disbursement Request</option>
+            <option value="none">{{ 'common.none' | translate }}</option>
+            <option value="work_order">{{ 'checks.workOrder' | translate }}</option>
+            <option value="overhaul">{{ 'checks.overhaul' | translate }}</option>
+            <option value="disbursement_request">{{ 'checks.disbursementRequest' | translate }}</option>
           </select>
 
           @if (linkType === 'work_order') {
             <select [(ngModel)]="linkedId" [ngModelOptions]="{ standalone: true }">
-              <option value="" disabled>Select work order…</option>
+              <option value="" disabled>{{ 'checks.selectWorkOrder' | translate }}</option>
               @for (w of workOrders; track w.id) {
                 <option [value]="w.id">{{ w.vehicles?.plate_number }} — {{ w.description }}</option>
               }
@@ -62,7 +62,7 @@
 
           @if (linkType === 'overhaul') {
             <select [(ngModel)]="linkedId" [ngModelOptions]="{ standalone: true }">
-              <option value="" disabled>Select overhaul…</option>
+              <option value="" disabled>{{ 'checks.selectOverhaul' | translate }}</option>
               @for (o of overhauls; track o.id) {
                 <option [value]="o.id">{{ o.vehicles?.plate_number }} — {{ o.scope_description }}</option>
               }
@@ -71,7 +71,7 @@
 
           @if (linkType === 'disbursement_request') {
             <select [(ngModel)]="linkedId" [ngModelOptions]="{ standalone: true }">
-              <option value="" disabled>Select disbursement request…</option>
+              <option value="" disabled>{{ 'checks.selectDisbursementRequest' | translate }}</option>
               @for (d of disbursements; track d.id) {
                 <option [value]="d.id">{{ d.vehicles?.plate_number }} — {{ d.status }}</option>
               }
@@ -80,7 +80,7 @@
         </section>
 
         <section class="link-section">
-          <h3>Additional Vehicles Covered (optional)</h3>
+          <h3>{{ 'checks.additionalVehiclesSection' | translate }}</h3>
           <div class="chip-grid">
             @for (v of vehicles; track v.id) {
               <label class="chip" [class.chip--active]="selectedExtraVehicleIds.has(v.id)">
@@ -100,9 +100,11 @@
         }
 
         <footer class="slide-over-footer">
-          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">Cancel</button>
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ saving ? 'Saving…' : 'Create Check' }}
+            {{ (saving ? 'common.saving' : 'checks.createCheck') | translate }}
           </button>
         </footer>
       </form>

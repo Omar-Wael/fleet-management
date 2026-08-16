@@ -1,8 +1,11 @@
 <div class="overhauls-page">
   <header class="page-header">
     <div>
-      <h1>Overhauls</h1>
-      <p class="page-subtitle">{{ filteredOverhauls.length }} of {{ overhauls.length }} overhauls</p>
+      <h1>{{ 'overhauls.title' | translate }}</h1>
+      <p class="page-subtitle">
+        {{ filteredOverhauls.length }}/{{ overhauls.length }}
+        {{ 'overhauls.shown' | translate }}
+      </p>
     </div>
 
     <div class="page-actions">
@@ -13,13 +16,21 @@
         hidden
         (change)="onFileSelected($event)"
       />
-      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">Download Template</button>
-      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
-        {{ importing ? 'Importing…' : 'Import' }}
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">
+        {{ 'common.downloadTemplate' | translate }}
       </button>
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">Export Excel</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">Export PDF</button>
-      <button type="button" class="btn btn--primary" (click)="openCreateForm()">+ New Overhaul</button>
+      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
+        {{ (importing ? 'common.importing' : 'common.import') | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">
+        {{ 'common.exportExcel' | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">
+        {{ 'common.exportPdf' | translate }}
+      </button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">
+        {{ 'overhauls.addButton' | translate }}
+      </button>
     </div>
   </header>
 
@@ -29,9 +40,10 @@
 
   @if (importSummary) {
     <div class="state-message state-message--ok">
-      Imported {{ importSummary.savedCount }} overhaul(s).
+      {{ 'overhauls.importedCount' | translate }} {{ importSummary.savedCount }}
+      {{ 'overhauls.importedUnit' | translate }}
       @if (importSummary.unresolvedCount) {
-        {{ importSummary.unresolvedCount }} row(s) skipped — check plate numbers match existing vehicles.
+        {{ importSummary.unresolvedCount }} {{ 'overhauls.skippedRows' | translate }}
       }
     </div>
   }
@@ -40,17 +52,17 @@
     <input
       type="text"
       class="filters-search"
-      placeholder="Search plate, machine shop, scope…"
+      [placeholder]="'overhauls.searchPlaceholder' | translate"
       [(ngModel)]="searchTerm"
     />
     <label class="filter-checkbox">
       <input type="checkbox" [(ngModel)]="openOnly" />
-      In progress only
+      {{ 'overhauls.inProgressOnly' | translate }}
     </label>
   </div>
 
   @if (loading) {
-    <div class="state-message">Loading overhauls…</div>
+    <div class="state-message">{{ 'overhauls.loadingList' | translate }}</div>
   } @else if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
@@ -58,14 +70,14 @@
       <table class="grid-table">
         <thead>
           <tr>
-            <th>Vehicle</th>
-            <th>Machine Shop</th>
-            <th>Current Stage</th>
-            <th>Entry Date</th>
-            <th>Exit Date</th>
-            <th>Duration</th>
-            <th>Total Cost</th>
-            <th>Actions</th>
+            <th>{{ 'overhauls.vehicle' | translate }}</th>
+            <th>{{ 'overhauls.machineShop' | translate }}</th>
+            <th>{{ 'overhauls.currentStage' | translate }}</th>
+            <th>{{ 'overhauls.entryDate' | translate }}</th>
+            <th>{{ 'overhauls.exitDate' | translate }}</th>
+            <th>{{ 'overhauls.duration' | translate }}</th>
+            <th>{{ 'overhauls.totalCost' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -75,9 +87,9 @@
               <td>{{ o.external_workshops?.name || '—' }}</td>
               <td>
                 @if (o.current_stage === 'completed') {
-                  <span class="badge badge--ok">{{ stageLabels[o.current_stage] }}</span>
+                  <span class="badge badge--ok">{{ stageLabelKeys[o.current_stage] | translate }}</span>
                 } @else {
-                  <span class="badge badge--warn">{{ stageLabels[o.current_stage] }}</span>
+                  <span class="badge badge--warn">{{ stageLabelKeys[o.current_stage] | translate }}</span>
                 }
               </td>
               <td>{{ o.entry_date | date : 'mediumDate' }}</td>
@@ -85,12 +97,14 @@
               <td class="mono">{{ totalDurationDays(o) }} d</td>
               <td class="mono">{{ totalCost(o) | number : '1.2-2' }}</td>
               <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openPipeline(o)">View</button>
+                <button type="button" class="link-btn" (click)="openPipeline(o)">
+                  {{ 'common.view' | translate }}
+                </button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="empty-row">No overhauls match the current filters.</td>
+              <td colspan="8" class="empty-row">{{ 'overhauls.noResults' | translate }}</td>
             </tr>
           }
         </tbody>
