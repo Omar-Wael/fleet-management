@@ -128,9 +128,11 @@ export class VehiclesListComponent implements OnInit {
         this.workshops = workshops;
         this.vehicleTypes = vehicleTypes;
 
-        this.vehicleTypeIdByName = new Map(
-          vehicleTypes.map((t) => [(t.name_en || t.name_ar).trim().toLowerCase(), t.id]),
-        );
+        this.vehicleTypeIdByName = new Map();
+        for (const t of vehicleTypes) {
+          if (t.name_ar) this.vehicleTypeIdByName.set(t.name_ar.trim().toLowerCase(), t.id);
+          if (t.name_en) this.vehicleTypeIdByName.set(t.name_en.trim().toLowerCase(), t.id);
+        }
         this.departmentIdByName = new Map(
           departments.map((d) => [(d.name_en || d.name_ar).trim().toLowerCase(), d.id]),
         );
@@ -142,7 +144,8 @@ export class VehiclesListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -153,7 +156,8 @@ export class VehiclesListComponent implements OnInit {
     this.vehiclesService.list().subscribe({
       next: (vehicles) => (this.vehicles = vehicles),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -265,7 +269,8 @@ export class VehiclesListComponent implements OnInit {
     this.vehiclesService.delete(vehicle.id).subscribe({
       next: () => this.reloadVehiclesOnly(),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -347,13 +352,15 @@ export class VehiclesListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+            this.importError =
+              err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       });
   }
 

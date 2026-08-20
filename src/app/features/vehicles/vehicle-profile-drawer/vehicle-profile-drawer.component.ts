@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { VehicleFullProfile, VehiclesService } from '../../../core/services/vehicles.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -25,6 +25,7 @@ export class VehicleProfileDrawerComponent implements OnChanges {
   constructor(
     private vehiclesService: VehiclesService,
     readonly i18n: TranslationService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -45,10 +46,12 @@ export class VehicleProfileDrawerComponent implements OnChanges {
       next: (profile) => {
         this.profile = profile;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }
