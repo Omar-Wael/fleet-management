@@ -5,6 +5,18 @@ import { LookupsService } from '../../../core/services/lookups.service';
 import { VehicleType } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
+import { importFileWithMapping } from '../../../shared/utils/document-import.util';
+import {
+  VehicleTypeImportRow,
+  VEHICLE_TYPE_IMPORT_MAP,
+  VEHICLE_TYPE_IMPORT_TEMPLATE_HEADERS,
+  prepareVehicleTypeRowsForImport,
+} from '../../../shared/utils/import-column-maps';
 
 interface EditableRow extends VehicleType {
   _draft?: { name_ar: string; name_en: string; default_workshop_type: string };
@@ -37,6 +49,11 @@ export class VehicleTypesTabComponent implements OnInit {
   newDraft = { ...EMPTY_DRAFT };
   saving = false;
 
+  // ---- import state ----
+  importing = false;
+  importError: string | null = null;
+  importSummary: { savedCount: number; unresolvedCount: number } | null = null;
+
   constructor(
     private lookupsService: LookupsService,
     private cdr: ChangeDetectorRef,
@@ -58,7 +75,8 @@ export class VehicleTypesTabComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.loadError');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -98,7 +116,8 @@ export class VehicleTypesTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.addError');
+          this.saveError =
+            err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.addError');
         },
       });
   }
@@ -139,8 +158,89 @@ export class VehicleTypesTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.saveError');
+          this.saveError =
+            err instanceof Error ? err.message : this.i18n.t('settings.vehicleTypes.saveError');
         },
       });
+  }
+
+  // -------------------------------------------------------------
+  // Import (Excel / PDF / Word)
+  // -------------------------------------------------------------
+
+  onImportButtonClick(fileInput: HTMLInputElement): void {
+    fileInput.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+
+    this.importing = true;
+    this.importError = null;
+    this.importSummary = null;
+
+    const existingNamesLower = new Set(this.rows.map((r) => r.name_ar.trim().toLowerCase()));
+
+    importFileWithMapping<VehicleTypeImportRow>(file, VEHICLE_TYPE_IMPORT_MAP)
+      .then((result) => {
+        const { resolved, unresolved } = prepareVehicleTypeRowsForImport(
+          result.valid,
+          existingNamesLower,
+        );
+        const totalUnresolved = unresolved.length + result.errors.length;
+
+        if (resolved.length === 0) {
+          this.importing = false;
+          this.importError =
+            'No rows could be imported — check for missing fields or names that already exist.';
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.lookupsService.bulkInsertVehicleTypes(resolved).subscribe({
+          next: (saved) => {
+            this.importing = false;
+            this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
+            this.load();
+          },
+          error: (err) => {
+            this.importing = false;
+            this.importError = err instanceof Error ? err.message : 'Import failed.';
+            this.cdr.markForCheck();
+          },
+        });
+      })
+      .catch((err) => {
+        this.importing = false;
+        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.cdr.markForCheck();
+      });
+  }
+
+  downloadTemplate(): void {
+    downloadImportTemplate(VEHICLE_TYPE_IMPORT_TEMPLATE_HEADERS, 'vehicle-types-import-template', {
+      'Name (Arabic)': 'اسم النوع',
+      'Name (English)': 'Type name',
+      'Default Workshop Type': 'e.g. heavy',
+    });
+  }
+
+  // -------------------------------------------------------------
+  // Export
+  // -------------------------------------------------------------
+
+  exportExcel(): void {
+    exportToExcel(this.rows, this.excelColumns(), 'vehicle-types-export');
+  }
+
+  private excelColumns(): ExcelExportColumn<VehicleType>[] {
+    return [
+      { header: 'Name (Arabic)', accessor: (t) => t.name_ar },
+      { header: 'Name (English)', accessor: (t) => t.name_en },
+      { header: 'Default Workshop Type', accessor: (t) => t.default_workshop_type },
+    ];
   }
 }

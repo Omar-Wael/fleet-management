@@ -30,6 +30,12 @@
   color: var(--fleet-ink-muted, #5b6472);
 }
 
+.page-actions {
+  display: flex;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
 .btn {
   font-family: inherit;
   font-size: 0.875rem;
@@ -46,6 +52,17 @@
 }
 
 .btn--primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn--ghost {
+  background: #fff;
+  border-color: var(--fleet-line, #dfe3e8);
+  color: var(--fleet-ink, #1f2430);
+}
+
+.btn:disabled {
   opacity: 0.6;
   cursor: default;
 }
