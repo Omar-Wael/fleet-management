@@ -5,6 +5,18 @@ import { LookupsService } from '../../../core/services/lookups.service';
 import { OperatingDepartment } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
+import { importFileWithMapping } from '../../../shared/utils/document-import.util';
+import {
+  DepartmentImportRow,
+  DEPARTMENT_IMPORT_MAP,
+  DEPARTMENT_IMPORT_TEMPLATE_HEADERS,
+  prepareDepartmentRowsForImport,
+} from '../../../shared/utils/import-column-maps';
 
 interface EditableRow extends OperatingDepartment {
   _draft?: { name_ar: string; name_en: string };
@@ -30,6 +42,11 @@ export class DepartmentsTabComponent implements OnInit {
   newDraft = { ...EMPTY_DRAFT };
   saving = false;
 
+  // ---- import state ----
+  importing = false;
+  importError: string | null = null;
+  importSummary: { savedCount: number; unresolvedCount: number } | null = null;
+
   constructor(
     private lookupsService: LookupsService,
     private cdr: ChangeDetectorRef,
@@ -51,7 +68,8 @@ export class DepartmentsTabComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('settings.departments.loadError');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('settings.departments.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -90,7 +108,8 @@ export class DepartmentsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.departments.addError');
+          this.saveError =
+            err instanceof Error ? err.message : this.i18n.t('settings.departments.addError');
         },
       });
   }
@@ -126,21 +145,110 @@ export class DepartmentsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.departments.saveError');
+          this.saveError =
+            err instanceof Error ? err.message : this.i18n.t('settings.departments.saveError');
         },
       });
   }
 
   toggleActive(row: EditableRow): void {
     const nextState = !row.is_active;
-    const verb = this.i18n.t(nextState ? 'settings.departments.reactivate' : 'settings.departments.deactivate');
+    const verb = this.i18n.t(
+      nextState ? 'settings.departments.reactivate' : 'settings.departments.deactivate',
+    );
     if (!window.confirm(`${verb}: ${row.name_en || row.name_ar}?`)) return;
 
     this.lookupsService.setOperatingDepartmentActive(row.id, nextState).subscribe({
       next: () => this.load(),
       error: (err) => {
-        this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.departments.statusUpdateError');
+        this.saveError =
+          err instanceof Error
+            ? err.message
+            : this.i18n.t('settings.departments.statusUpdateError');
       },
     });
+  }
+
+  // -------------------------------------------------------------
+  // Import (Excel / PDF / Word)
+  // -------------------------------------------------------------
+
+  onImportButtonClick(fileInput: HTMLInputElement): void {
+    fileInput.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file) return;
+
+    this.importing = true;
+    this.importError = null;
+    this.importSummary = null;
+
+    // Duplicate check runs against whatever's currently loaded — if
+    // "Active only" is on, an inactive department with the same name
+    // won't be caught here and the insert will go through. Toggle
+    // "Active only" off before importing if that matters to you.
+    const existingNamesLower = new Set(this.rows.map((r) => r.name_ar.trim().toLowerCase()));
+
+    importFileWithMapping<DepartmentImportRow>(file, DEPARTMENT_IMPORT_MAP)
+      .then((result) => {
+        const { resolved, unresolved } = prepareDepartmentRowsForImport(
+          result.valid,
+          existingNamesLower,
+        );
+        const totalUnresolved = unresolved.length + result.errors.length;
+
+        if (resolved.length === 0) {
+          this.importing = false;
+          this.importError =
+            'No rows could be imported — check for a missing Arabic name or names that already exist.';
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.lookupsService.bulkInsertOperatingDepartments(resolved).subscribe({
+          next: (saved) => {
+            this.importing = false;
+            this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
+            this.load();
+          },
+          error: (err) => {
+            this.importing = false;
+            this.importError = err instanceof Error ? err.message : 'Import failed.';
+            this.cdr.markForCheck();
+          },
+        });
+      })
+      .catch((err) => {
+        this.importing = false;
+        this.importError = err instanceof Error ? err.message : 'Could not parse the import file.';
+        this.cdr.markForCheck();
+      });
+  }
+
+  downloadTemplate(): void {
+    downloadImportTemplate(DEPARTMENT_IMPORT_TEMPLATE_HEADERS, 'departments-import-template', {
+      'Name (Arabic)': 'اسم القسم',
+      'Name (English)': 'Department name',
+    });
+  }
+
+  // -------------------------------------------------------------
+  // Export
+  // -------------------------------------------------------------
+
+  exportExcel(): void {
+    exportToExcel(this.rows, this.excelColumns(), 'departments-export');
+  }
+
+  private excelColumns(): ExcelExportColumn<EditableRow>[] {
+    return [
+      { header: 'Name (Arabic)', accessor: (d) => d.name_ar },
+      { header: 'Name (English)', accessor: (d) => d.name_en },
+      { header: 'Active', accessor: (d) => (d.is_active ? 'Yes' : 'No') },
+    ];
   }
 }

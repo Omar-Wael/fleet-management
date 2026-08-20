@@ -2,13 +2,36 @@
   <header class="panel-header">
     <div>
       <h2>{{ 'settings.departments.title' | translate }}</h2>
-      <p class="panel-subtitle">{{ rows.length }} {{ 'settings.departments.countUnit' | translate }}</p>
+      <p class="panel-subtitle">
+        {{ rows.length }} {{ 'settings.departments.countUnit' | translate }}
+      </p>
     </div>
     <div class="panel-actions">
       <label class="filter-checkbox">
         <input type="checkbox" [(ngModel)]="activeOnly" (change)="load()" />
         {{ 'common.activeOnly' | translate }}
       </label>
+      <input
+        #importFileInput
+        type="file"
+        accept=".xlsx,.xls,.csv,.pdf,.docx"
+        hidden
+        (change)="onFileSelected($event)"
+      />
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">
+        {{ 'common.downloadTemplate' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="onImportButtonClick(importFileInput)"
+        [disabled]="importing"
+      >
+        {{ importing ? ('common.importing | translate'): ('common.import' | translate) }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">
+        {{ 'common.exportExcel' | translate }}
+      </button>
       <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
         {{ 'settings.departments.addButton' | translate }}
       </button>
@@ -113,8 +136,10 @@
                       (click)="toggleActive(row)"
                     >
                       {{
-                        (row.is_active ? 'settings.departments.deactivate' : 'settings.departments.reactivate')
-                          | translate
+                        (row.is_active
+                          ? 'settings.departments.deactivate'
+                          : 'settings.departments.reactivate'
+                        ) | translate
                       }}
                     </button>
                   </div>

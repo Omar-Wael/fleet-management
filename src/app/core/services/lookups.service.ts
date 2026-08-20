@@ -45,6 +45,11 @@ export class LookupsService {
     );
   }
 
+  /** Plain insert, not upsert — see prepareVehicleTypeRowsForImport() in import-column-maps.ts for why (no unique constraint on name_ar to upsert against). */
+  bulkInsertVehicleTypes(rows: Partial<VehicleType>[]): Observable<VehicleType[]> {
+    return fromSupabase<VehicleType[]>(this.client.from('vehicle_types').insert(rows).select());
+  }
+
   updateVehicleType(id: string, changes: Partial<VehicleType>): Observable<VehicleType> {
     return fromSupabase<VehicleType>(
       this.client.from('vehicle_types').update(changes).eq('id', id).select().single(),
@@ -59,7 +64,23 @@ export class LookupsService {
 
   createOperatingDepartment(row: Partial<OperatingDepartment>): Observable<OperatingDepartment> {
     return fromSupabase<OperatingDepartment>(
-      this.client.from('operating_departments').insert({ ...row, is_active: true }).select().single(),
+      this.client
+        .from('operating_departments')
+        .insert({ ...row, is_active: true })
+        .select()
+        .single(),
+    );
+  }
+
+  /** Plain insert, not upsert — same no-unique-constraint reasoning as bulkInsertVehicleTypes(). */
+  bulkInsertOperatingDepartments(
+    rows: Partial<OperatingDepartment>[],
+  ): Observable<OperatingDepartment[]> {
+    return fromSupabase<OperatingDepartment[]>(
+      this.client
+        .from('operating_departments')
+        .insert(rows.map((r) => ({ ...r, is_active: true })))
+        .select(),
     );
   }
 

@@ -4,6 +4,8 @@ import {
   GarageLodging,
   Invoice,
   MaintenanceCategory,
+  OperatingDepartment,
+  VehicleType,
   Overhaul,
   SparePart,
   Technician,
@@ -46,7 +48,9 @@ export interface VehicleImportRow {
 export const VEHICLE_IMPORT_MAP: ColumnMapping<VehicleImportRow> = {
   plate_number: { headers: ['Plate Number', 'رقم اللوحة'], required: true },
   vehicle_type_name: { headers: ['Vehicle Type', 'نوع السيارة'], required: true },
-  operating_department_name: { headers: ['Operating Dept', 'Operating Department', 'الإدارة المشغلة'] },
+  operating_department_name: {
+    headers: ['Operating Dept', 'Operating Department', 'الإدارة المشغلة'],
+  },
   make: { headers: ['Make', 'الشركة المصنعة'] },
   model: { headers: ['Model', 'الموديل'] },
   manufacture_year: { headers: ['Manufacture Year', 'Year', 'سنة الصنع'], type: 'number' },
@@ -72,13 +76,15 @@ export function resolveVehicleForeignKeys(
     departmentIdByName: Map<string, string>;
     engineIdBySerial: Map<string, string>;
     defaultMaintenanceWorkshopId: string; // required column on vehicles; ask the user to pick one for the whole batch, or add a "Repair Dept" column to VehicleImportRow and resolve it the same way
-  }
+  },
 ): { resolved: Partial<Vehicle>[]; unresolved: { row: VehicleImportRow; reason: string }[] } {
   const resolved: Partial<Vehicle>[] = [];
   const unresolved: { row: VehicleImportRow; reason: string }[] = [];
 
   for (const row of rows) {
-    const vehicleTypeId = lookups.vehicleTypeIdByName.get(row.vehicle_type_name.trim().toLowerCase());
+    const vehicleTypeId = lookups.vehicleTypeIdByName.get(
+      row.vehicle_type_name.trim().toLowerCase(),
+    );
     if (!vehicleTypeId) {
       unresolved.push({ row, reason: `Unknown vehicle type: "${row.vehicle_type_name}"` });
       continue;
@@ -88,11 +94,12 @@ export function resolveVehicleForeignKeys(
       plate_number: row.plate_number,
       vehicle_type_id: vehicleTypeId,
       operating_department_id: row.operating_department_name
-        ? lookups.departmentIdByName.get(row.operating_department_name.trim().toLowerCase()) ?? null
+        ? (lookups.departmentIdByName.get(row.operating_department_name.trim().toLowerCase()) ??
+          null)
         : null,
       maintenance_workshop_id: lookups.defaultMaintenanceWorkshopId,
       current_engine_id: row.engine_serial_number
-        ? lookups.engineIdBySerial.get(row.engine_serial_number.trim().toLowerCase()) ?? null
+        ? (lookups.engineIdBySerial.get(row.engine_serial_number.trim().toLowerCase()) ?? null)
         : null,
       make: row.make,
       model: row.model,
@@ -145,8 +152,11 @@ export const WORK_ORDER_IMPORT_MAP: ColumnMapping<WorkOrderImportRow> = {
 /** Resolves plate_number -> vehicle_id and splits the comma-separated tag columns, ready for maintenanceService.create(). */
 export function resolveWorkOrderForeignKeys(
   rows: WorkOrderImportRow[],
-  vehicleIdByPlate: Map<string, string>
-): { resolved: Partial<WorkOrder & { vehicle_id: string }>[]; unresolved: { row: WorkOrderImportRow; reason: string }[] } {
+  vehicleIdByPlate: Map<string, string>,
+): {
+  resolved: Partial<WorkOrder & { vehicle_id: string }>[];
+  unresolved: { row: WorkOrderImportRow; reason: string }[];
+} {
   const resolved: Partial<WorkOrder & { vehicle_id: string }>[] = [];
   const unresolved: { row: WorkOrderImportRow; reason: string }[] = [];
 
@@ -162,7 +172,9 @@ export function resolveWorkOrderForeignKeys(
       description: row.description,
       repair_types: row.repair_types ? row.repair_types.split(',').map((s) => s.trim()) : [],
       maintenance_categories: row.maintenance_categories
-        ? (row.maintenance_categories.split(',').map((s) => s.trim().toLowerCase()) as MaintenanceCategory[])
+        ? (row.maintenance_categories
+            .split(',')
+            .map((s) => s.trim().toLowerCase()) as MaintenanceCategory[])
         : [],
       odometer_km_at_service: row.odometer_km_at_service ?? undefined,
       opened_at: row.opened_at ?? undefined,
@@ -202,7 +214,7 @@ export const TECHNICIAN_IMPORT_MAP: ColumnMapping<TechnicianImportRow> = {
  */
 export function resolveTechnicianForeignKeys(
   rows: TechnicianImportRow[],
-  workshopIdByName: Map<string, string>
+  workshopIdByName: Map<string, string>,
 ): { resolved: Partial<Technician>[]; unresolved: { row: TechnicianImportRow; reason: string }[] } {
   const resolved: Partial<Technician>[] = [];
   const unresolved: { row: TechnicianImportRow; reason: string }[] = [];
@@ -214,7 +226,7 @@ export function resolveTechnicianForeignKeys(
     }
 
     const workshopId = row.workshop_name
-      ? workshopIdByName.get(row.workshop_name.trim().toLowerCase()) ?? null
+      ? (workshopIdByName.get(row.workshop_name.trim().toLowerCase()) ?? null)
       : null;
 
     resolved.push({
@@ -256,7 +268,10 @@ export interface EngineImportRow {
 }
 
 export const ENGINE_IMPORT_MAP: ColumnMapping<EngineImportRow> = {
-  engine_serial_number: { headers: ['Serial No.', 'Engine Serial Number', 'رقم المحرك'], required: true },
+  engine_serial_number: {
+    headers: ['Serial No.', 'Engine Serial Number', 'رقم المحرك'],
+    required: true,
+  },
   model_name: { headers: ['Model', 'الموديل'] },
   manufacturer: { headers: ['Manufacturer', 'الشركة المصنعة'] },
   horsepower: { headers: ['Horsepower', 'HP', 'قوة الحصان'], type: 'number' },
@@ -364,8 +379,11 @@ export const GARAGE_LODGING_IMPORT_MAP: ColumnMapping<GarageLodgingImportRow> = 
 export function resolveGarageLodgingForeignKeys(
   rows: GarageLodgingImportRow[],
   vehicleIdByPlate: Map<string, string>,
-  garageLocationIdByName: Map<string, string>
-): { resolved: Partial<GarageLodging>[]; unresolved: { row: GarageLodgingImportRow; reason: string }[] } {
+  garageLocationIdByName: Map<string, string>,
+): {
+  resolved: Partial<GarageLodging>[];
+  unresolved: { row: GarageLodgingImportRow; reason: string }[];
+} {
   const resolved: Partial<GarageLodging>[] = [];
   const unresolved: { row: GarageLodgingImportRow; reason: string }[] = [];
 
@@ -379,7 +397,7 @@ export function resolveGarageLodgingForeignKeys(
     resolved.push({
       vehicle_id: vehicleId,
       garage_location_id: row.garage_name
-        ? garageLocationIdByName.get(row.garage_name.trim().toLowerCase()) ?? null
+        ? (garageLocationIdByName.get(row.garage_name.trim().toLowerCase()) ?? null)
         : null,
       reason: row.reason,
       entry_date: row.entry_date,
@@ -425,7 +443,7 @@ export const OVERHAUL_IMPORT_MAP: ColumnMapping<OverhaulImportRow> = {
 export function resolveOverhaulForeignKeys(
   rows: OverhaulImportRow[],
   vehicleIdByPlate: Map<string, string>,
-  machineShopIdByName: Map<string, string>
+  machineShopIdByName: Map<string, string>,
 ): { resolved: Partial<Overhaul>[]; unresolved: { row: OverhaulImportRow; reason: string }[] } {
   const resolved: Partial<Overhaul>[] = [];
   const unresolved: { row: OverhaulImportRow; reason: string }[] = [];
@@ -441,7 +459,7 @@ export function resolveOverhaulForeignKeys(
       vehicle_id: vehicleId,
       scope_description: row.scope_description,
       machine_shop_id: row.machine_shop_name
-        ? machineShopIdByName.get(row.machine_shop_name.trim().toLowerCase()) ?? null
+        ? (machineShopIdByName.get(row.machine_shop_name.trim().toLowerCase()) ?? null)
         : null,
       entry_date: row.entry_date || new Date().toISOString().slice(0, 10),
     });
@@ -450,7 +468,12 @@ export function resolveOverhaulForeignKeys(
   return { resolved, unresolved };
 }
 
-export const OVERHAUL_IMPORT_TEMPLATE_HEADERS = ['Plate Number', 'Scope', 'Machine Shop', 'Entry Date'];
+export const OVERHAUL_IMPORT_TEMPLATE_HEADERS = [
+  'Plate Number',
+  'Scope',
+  'Machine Shop',
+  'Entry Date',
+];
 
 // ---------------------------------------------------------------------
 // Invoices tab import (header-only — see InvoicesService.bulkUpsert)
@@ -469,7 +492,11 @@ export interface InvoiceImportRow {
 export const INVOICE_IMPORT_MAP: ColumnMapping<InvoiceImportRow> = {
   invoice_no: { headers: ['Invoice No.', 'Invoice Number', 'رقم الفاتورة'], required: true },
   vendor_name: { headers: ['Vendor', 'المورد'] },
-  invoice_date: { headers: ['Invoice Date', 'Date', 'تاريخ الفاتورة'], type: 'date', required: true },
+  invoice_date: {
+    headers: ['Invoice Date', 'Date', 'تاريخ الفاتورة'],
+    type: 'date',
+    required: true,
+  },
   subtotal_value: { headers: ['Subtotal', 'المجموع الفرعي'], type: 'number' },
   tax_value: { headers: ['Tax', 'الضريبة'], type: 'number' },
   discount_value: { headers: ['Discount', 'الخصم'], type: 'number' },
@@ -485,7 +512,7 @@ export const INVOICE_IMPORT_MAP: ColumnMapping<InvoiceImportRow> = {
  */
 export function resolveInvoiceForeignKeys(
   rows: InvoiceImportRow[],
-  vendorIdByName: Map<string, string>
+  vendorIdByName: Map<string, string>,
 ): { resolved: Partial<Invoice>[]; unresolved: { row: InvoiceImportRow; reason: string }[] } {
   const resolved: Partial<Invoice>[] = [];
   const unresolved: { row: InvoiceImportRow; reason: string }[] = [];
@@ -499,7 +526,7 @@ export function resolveInvoiceForeignKeys(
     resolved.push({
       invoice_no: row.invoice_no.trim(),
       vendor_id: row.vendor_name
-        ? vendorIdByName.get(row.vendor_name.trim().toLowerCase()) ?? null
+        ? (vendorIdByName.get(row.vendor_name.trim().toLowerCase()) ?? null)
         : null,
       invoice_date: row.invoice_date,
       subtotal_value: row.subtotal_value ?? 0,
@@ -521,3 +548,120 @@ export const INVOICE_IMPORT_TEMPLATE_HEADERS = [
   'Discount',
   'Notes',
 ];
+
+// ---------------------------------------------------------------------
+// Settings: Vehicle Types tab import
+// ---------------------------------------------------------------------
+
+export interface VehicleTypeImportRow {
+  name_ar: string;
+  name_en: string | null;
+  default_workshop_type: string;
+}
+
+export const VEHICLE_TYPE_IMPORT_MAP: ColumnMapping<VehicleTypeImportRow> = {
+  name_ar: { headers: ['Name (Arabic)', 'الاسم بالعربي', 'الاسم'], required: true },
+  name_en: { headers: ['Name (English)', 'Name', 'الاسم بالإنجليزي'] },
+  default_workshop_type: {
+    headers: ['Default Workshop Type', 'نوع الورشة الافتراضي'],
+    required: true,
+  },
+};
+
+/**
+ * vehicle_types has no unique constraint on name_ar/name_en (only on id),
+ * so there's no DB-level onConflict target to upsert against — this is a
+ * plain insert, guarded by a client-side duplicate-name check against
+ * whatever's already loaded in the grid. That's a best-effort dedupe, not
+ * a hard guarantee: two people importing at the same time, or a name that
+ * doesn't match casing/whitespace exactly, could still both get through.
+ */
+export function prepareVehicleTypeRowsForImport(
+  rows: VehicleTypeImportRow[],
+  existingNamesLower: Set<string>,
+): {
+  resolved: Partial<VehicleType>[];
+  unresolved: { row: VehicleTypeImportRow; reason: string }[];
+} {
+  const resolved: Partial<VehicleType>[] = [];
+  const unresolved: { row: VehicleTypeImportRow; reason: string }[] = [];
+  const seenThisBatch = new Set<string>();
+
+  for (const row of rows) {
+    if (!row.name_ar?.trim() || !row.default_workshop_type?.trim()) {
+      unresolved.push({ row, reason: 'Missing Arabic name or default workshop type' });
+      continue;
+    }
+
+    const key = row.name_ar.trim().toLowerCase();
+    if (existingNamesLower.has(key) || seenThisBatch.has(key)) {
+      unresolved.push({ row, reason: `Duplicate — "${row.name_ar}" already exists` });
+      continue;
+    }
+    seenThisBatch.add(key);
+
+    resolved.push({
+      name_ar: row.name_ar.trim(),
+      name_en: row.name_en || null,
+      default_workshop_type: row.default_workshop_type.trim(),
+    });
+  }
+
+  return { resolved, unresolved };
+}
+
+export const VEHICLE_TYPE_IMPORT_TEMPLATE_HEADERS = [
+  'Name (Arabic)',
+  'Name (English)',
+  'Default Workshop Type',
+];
+
+// ---------------------------------------------------------------------
+// Settings: Operating Departments tab import
+// ---------------------------------------------------------------------
+
+export interface DepartmentImportRow {
+  name_ar: string;
+  name_en: string | null;
+}
+
+export const DEPARTMENT_IMPORT_MAP: ColumnMapping<DepartmentImportRow> = {
+  name_ar: { headers: ['Name (Arabic)', 'الاسم بالعربي', 'الاسم'], required: true },
+  name_en: { headers: ['Name (English)', 'Name', 'الاسم بالإنجليزي'] },
+};
+
+/** Same no-unique-constraint situation as vehicle_types — plain insert, client-side duplicate-name guard, not a DB-enforced dedupe. */
+export function prepareDepartmentRowsForImport(
+  rows: DepartmentImportRow[],
+  existingNamesLower: Set<string>,
+): {
+  resolved: Partial<OperatingDepartment>[];
+  unresolved: { row: DepartmentImportRow; reason: string }[];
+} {
+  const resolved: Partial<OperatingDepartment>[] = [];
+  const unresolved: { row: DepartmentImportRow; reason: string }[] = [];
+  const seenThisBatch = new Set<string>();
+
+  for (const row of rows) {
+    if (!row.name_ar?.trim()) {
+      unresolved.push({ row, reason: 'Missing Arabic name' });
+      continue;
+    }
+
+    const key = row.name_ar.trim().toLowerCase();
+    if (existingNamesLower.has(key) || seenThisBatch.has(key)) {
+      unresolved.push({ row, reason: `Duplicate — "${row.name_ar}" already exists` });
+      continue;
+    }
+    seenThisBatch.add(key);
+
+    resolved.push({
+      name_ar: row.name_ar.trim(),
+      name_en: row.name_en || null,
+    });
+  }
+
+  return { resolved, unresolved };
+}
+
+export const DEPARTMENT_IMPORT_TEMPLATE_HEADERS = ['Name (Arabic)', 'Name (English)'];

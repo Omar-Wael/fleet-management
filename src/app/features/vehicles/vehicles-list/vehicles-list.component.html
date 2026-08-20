@@ -17,7 +17,7 @@
         (change)="onFileSelected($event)"
       />
       <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">{{ 'common.downloadTemplate' | translate }}</button>
-      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">{{ 'common.import' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">{{ importing ? ('common.importing | translate'): ('common.import' | translate) }}</button>
       <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
       <button type="button" class="btn btn--primary" (click)="openAddForm()">{{ 'vehicles.addButton' | translate }}</button>
