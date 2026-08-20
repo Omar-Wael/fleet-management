@@ -16,7 +16,7 @@
         (change)="onFileSelected($event)"
       />
       <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">
-        {{ 'common.import' | translate }}
+        {{ importing ? ('common.importing | translate'): ('common.import' | translate) }}
       </button>
       <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>

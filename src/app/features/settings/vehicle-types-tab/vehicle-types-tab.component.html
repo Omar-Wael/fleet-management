@@ -2,11 +2,36 @@
   <header class="panel-header">
     <div>
       <h2>{{ 'settings.vehicleTypes.title' | translate }}</h2>
-      <p class="panel-subtitle">{{ rows.length }} {{ 'settings.vehicleTypes.countUnit' | translate }}</p>
+      <p class="panel-subtitle">
+        {{ rows.length }} {{ 'settings.vehicleTypes.countUnit' | translate }}
+      </p>
     </div>
-    <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
-      {{ 'settings.vehicleTypes.addButton' | translate }}
-    </button>
+    <div class="page-actions">
+      <input
+        #importFileInput
+        type="file"
+        accept=".xlsx,.xls,.csv,.pdf,.docx"
+        hidden
+        (change)="onFileSelected($event)"
+      />
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">
+        {{ 'common.downloadTemplate' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="onImportButtonClick(importFileInput)"
+        [disabled]="importing"
+      >
+        {{ importing ? ('common.importing | translate'): ('common.import' | translate) }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">
+        {{ 'common.exportExcel' | translate }}
+      </button>
+      <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
+        {{ 'settings.vehicleTypes.addButton' | translate }}
+      </button>
+    </div>
   </header>
 
   @if (saveError) {
