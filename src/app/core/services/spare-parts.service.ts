@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import {
   ExternalWorkshop,
   SparePart,
@@ -31,6 +32,41 @@ export class SparePartsService {
       query = query.or(`name_ar.ilike.%${search}%,name_en.ilike.%${search}%,part_code.ilike.%${search}%`);
     }
     return fromSupabase<SparePart[]>(query.order('name_ar', { ascending: true }));
+  }
+
+  private buildCatalogGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client.from('spare_parts').select('*', withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['lowStockOnly'] === 'true') {
+      // Supabase/PostgREST can't compare two columns on the same row
+      // (current_stock_qty <= reorder_threshold) via the query builder,
+      // so "low stock" filtering happens client-side in isLowStock()
+      // after the page loads. This filter is intentionally a no-op here;
+      // see spare-parts-catalog.component.ts for the display-time check.
+    }
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.or(`name_ar.ilike.%${escaped}%,name_en.ilike.%${escaped}%,part_code.ilike.%${escaped}%`);
+    }
+
+    const sortField = query.sort?.field ?? 'name_ar';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : true;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to list() for the Spare Parts Catalog grid — drives SharedDataTableComponent. */
+  listPaged(query: DataTableQuery): Observable<PagedResult<SparePart>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildCatalogGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<SparePart>(q);
+  }
+
+  /** Every row matching the grid's current search, unpaginated — used for Export Excel/PDF. */
+  listAllMatching(query: DataTableQuery): Observable<SparePart[]> {
+    return fromSupabase<SparePart[]>(this.buildCatalogGridQuery(query, false));
   }
 
   create(part: Partial<SparePart>): Observable<SparePart> {
@@ -126,6 +162,32 @@ export class SparePartsService {
     let query = this.client.from('external_workshops').select('*');
     if (vendorType) query = query.eq('vendor_type', vendorType);
     return fromSupabase<ExternalWorkshop[]>(query.order('name', { ascending: true }));
+  }
+
+  private buildVendorGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('external_workshops')
+      .select('*', withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['vendor_type']) q = q.eq('vendor_type', query.filters['vendor_type']);
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.or(`name.ilike.%${escaped}%,contact_person.ilike.%${escaped}%,specialty.ilike.%${escaped}%`);
+    }
+
+    const sortField = query.sort?.field ?? 'name';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : true;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to listVendors() for the Vendor Directory grid — drives SharedDataTableComponent. */
+  listVendorsPaged(query: DataTableQuery): Observable<PagedResult<ExternalWorkshop>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildVendorGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<ExternalWorkshop>(q);
   }
 
   createVendor(vendor: Partial<ExternalWorkshop>): Observable<ExternalWorkshop> {

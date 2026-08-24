@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { MaintenanceService, WorkOrderGridRow } from '../../../core/services/maintenance.service';
@@ -12,6 +12,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [DatePipe, DecimalPipe, FormsModule, TranslatePipe],
   templateUrl: './work-order-detail-drawer.component.html',
   styleUrls: ['./work-order-detail-drawer.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WorkOrderDetailDrawerComponent implements OnChanges {
   @Input() workOrder: WorkOrderGridRow | null = null;

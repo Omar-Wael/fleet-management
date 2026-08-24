@@ -2,16 +2,10 @@
   <header class="page-header">
     <div>
       <h2>{{ 'spareParts.page.tabVendors' | translate }}</h2>
-      <p class="page-subtitle">{{ vendors.length }} {{ 'spareParts.vendors.count' | translate }}</p>
+      <p class="page-subtitle">{{ total }} {{ 'spareParts.vendors.count' | translate }}</p>
     </div>
 
     <div class="page-actions">
-      <select [(ngModel)]="typeFilter" [ngModelOptions]="{ standalone: true }" (change)="loadAll()">
-        <option value="">{{ 'spareParts.vendors.allTypes' | translate }}</option>
-        @for (t of vendorTypeOptions; track t.value) {
-          <option [value]="t.value">{{ t.labelKey | translate }}</option>
-        }
-      </select>
       <button type="button" class="btn btn--primary" (click)="openAddForm()">
         {{ 'spareParts.vendors.addButton' | translate }}
       </button>
@@ -74,60 +68,19 @@
     </form>
   }
 
-  @if (loading) {
-    <div class="state-message">{{ 'spareParts.vendors.loading' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'spareParts.vendors.colName' | translate }}</th>
-            <th>{{ 'spareParts.vendors.colType' | translate }}</th>
-            <th>{{ 'spareParts.vendors.colContact' | translate }}</th>
-            <th>{{ 'common.phone' | translate }}</th>
-            <th>{{ 'common.active' | translate }}</th>
-            <th>{{ 'spareParts.vendors.colPartsSupplied' | translate }}</th>
-            <th>{{ 'spareParts.vendors.colTotalPurchases' | translate }}</th>
-            <th>{{ 'spareParts.vendors.colAvgUnitPrice' | translate }}</th>
-            <th>{{ 'spareParts.vendors.colLastPurchase' | translate }}</th>
-            <th>{{ 'spareParts.vendors.colExternalRepairs' | translate }}</th>
-            <th>{{ 'spareParts.vendors.colAvgRepairCost' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (v of vendors; track v.id) {
-            <tr>
-              <td>{{ v.name }}</td>
-              <td>{{ v.vendor_type }}</td>
-              <td>{{ v.contact_person || '—' }}</td>
-              <td>{{ v.phone || '—' }}</td>
-              <td>
-                @if (v.is_active) {
-                  <span class="badge badge--ok">{{ 'common.active' | translate }}</span>
-                } @else {
-                  <span class="badge badge--muted">{{ 'common.inactive' | translate }}</span>
-                }
-              </td>
-              <td class="mono">{{ v.performance?.distinct_parts_supplied ?? '—' }}</td>
-              <td class="mono">{{ v.performance?.total_purchases ?? '—' }}</td>
-              <td class="mono">
-                {{ v.performance?.avg_unit_price != null ? (v.performance!.avg_unit_price | number : '1.2-2') : '—' }}
-              </td>
-              <td>{{ v.performance?.last_purchase_date ? (v.performance!.last_purchase_date | date : 'mediumDate') : '—' }}</td>
-              <td class="mono">{{ v.performance?.external_repairs_count ?? '—' }}</td>
-              <td class="mono">
-                {{ v.performance?.avg_external_repair_cost != null ? (v.performance!.avg_external_repair_cost | number : '1.2-2') : '—' }}
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="11" class="empty-row">{{ 'spareParts.vendors.noResults' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
   }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [searchPlaceholder]="'spareParts.vendors.searchPlaceholder' | translate"
+    [emptyMessage]="'spareParts.vendors.noResults' | translate"
+    actionsColumnKey=""
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>

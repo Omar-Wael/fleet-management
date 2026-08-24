@@ -1,5 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { GarageLodgingFormComponent } from '../garage-lodging-form/garage-lodging-form.component';
@@ -23,22 +23,35 @@ import {
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+
 @Component({
   selector: 'app-garage-lodging-list',
   standalone: true,
-  imports: [DatePipe, FormsModule, TranslatePipe, GarageLodgingFormComponent],
+  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, GarageLodgingFormComponent],
   templateUrl: './garage-lodging-list.component.html',
   styleUrls: ['./garage-lodging-list.component.scss'],
+  providers: [DatePipe],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GarageLodgingListComponent implements OnInit {
-  lodgings: GarageLodgingGridRow[] = [];
+  rows: GarageLodgingGridRow[] = [];
+  total = 0;
   vehicles: VehicleWithLookups[] = [];
   loading = true;
   loadError: string | null = null;
 
-  searchTerm = '';
-  openOnly = false;
-  vehicleFilter = '';
+  columns: DataTableColumn<GarageLodgingGridRow>[] = [];
+  filters: DataTableFilter[] = [];
+
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: { field: 'entry_date', dir: 'desc' },
+    filters: { vehicle_id: '', openOnly: '' },
+  };
 
   vehicleStat: VGarageVisitsThisYear | null = null;
   vehicleStatLoading = false;
@@ -58,26 +71,131 @@ export class GarageLodgingListComponent implements OnInit {
     private garageLodgingService: GarageLodgingService,
     private vehiclesService: VehiclesService,
     private lookupsService: LookupsService,
+    private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
-    this.vehiclesService.list().subscribe({ next: (vehicles) => (this.vehicles = vehicles) });
+    this.buildColumns();
+    this.buildFilters();
+    this.loadLodgings(this.currentQuery);
+
+    this.vehiclesService.list().subscribe({
+      next: (vehicles) => {
+        this.vehicles = vehicles;
+        this.filters = [
+          {
+            key: 'vehicle_id',
+            label: this.i18n.t('garageLodging.allVehicles'),
+            value: this.currentQuery.filters['vehicle_id'] ?? '',
+            options: vehicles.map((v) => ({ value: v.id, label: v.plate_number })),
+          },
+          ...this.filters.slice(1),
+        ];
+        this.cdr.markForCheck();
+      },
+    });
     this.lookupsService.listGarageLocations().subscribe({
       next: (locations) => (this.garageLocations = locations),
       error: () => {},
     });
-    this.loadLodgings();
   }
 
-  loadLodgings(): void {
+  private buildColumns(): void {
+    this.columns = [
+      { key: 'vehicle', header: this.i18n.t('garageLodging.vehicle'), mono: true, render: (l) => l.vehicles?.plate_number || '—' },
+      {
+        key: 'garage',
+        header: this.i18n.t('garageLodging.garage'),
+        render: (l) => l.garage_locations?.garage_name || '—',
+      },
+      {
+        key: 'zone',
+        header: this.i18n.t('garageLodging.zone'),
+        render: (l) => l.garage_locations?.zone_label || '—',
+      },
+      {
+        key: 'reason',
+        header: this.i18n.t('garageLodging.reason'),
+        truncate: true,
+        render: (l) => l.reason,
+      },
+      {
+        key: 'entry_date',
+        header: this.i18n.t('garageLodging.entryDate'),
+        sortable: true,
+        render: (l) => this.datePipe.transform(l.entry_date, 'mediumDate') || '—',
+      },
+      {
+        key: 'exit_date',
+        header: this.i18n.t('garageLodging.exitDate'),
+        sortable: true,
+        render: (l) => (l.exit_date ? this.datePipe.transform(l.exit_date, 'mediumDate') || '—' : '—'),
+      },
+      {
+        key: 'duration',
+        header: this.i18n.t('garageLodging.duration'),
+        mono: true,
+        render: (l) => (l.duration_days ?? '—') + '',
+      },
+      {
+        key: 'status',
+        header: this.i18n.t('common.status'),
+        render: () => '',
+        badge: (l) =>
+          l.exit_date
+            ? { text: this.i18n.t('garageLodging.statusClosed'), variant: 'ok' }
+            : { text: this.i18n.t('garageLodging.statusInGarage'), variant: 'warn' },
+      },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (l) => [
+          {
+            label: this.i18n.t(this.checkingOutId === l.id ? 'garageLodging.checkingOut' : 'garageLodging.checkOut'),
+            onClick: (l) => this.checkOut(l),
+            hidden: (l) => !!l.exit_date,
+            disabled: (l) => this.checkingOutId === l.id,
+          },
+        ],
+      },
+    ];
+  }
+
+  private buildFilters(): void {
+    this.filters = [
+      {
+        key: 'vehicle_id',
+        label: this.i18n.t('garageLodging.allVehicles'),
+        value: this.currentQuery.filters['vehicle_id'] ?? '',
+        options: [],
+      },
+      {
+        key: 'openOnly',
+        label: this.i18n.t('shared.dataTable.allFilter'),
+        value: this.currentQuery.filters['openOnly'] ?? '',
+        options: [{ value: 'true', label: this.i18n.t('garageLodging.currentlyInGarageOnly') }],
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    const vehicleChanged = query.filters['vehicle_id'] !== this.currentQuery.filters['vehicle_id'];
+    this.currentQuery = query;
+    this.loadLodgings(query);
+    if (vehicleChanged) this.onVehicleFilterChange(query.filters['vehicle_id']);
+  }
+
+  loadLodgings(query: DataTableQuery): void {
     this.loading = true;
     this.loadError = null;
 
-    this.garageLodgingService.list(this.vehicleFilter || undefined).subscribe({
-      next: (lodgings) => {
-        this.lodgings = lodgings;
+    this.garageLodgingService.listPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -89,38 +207,32 @@ export class GarageLodgingListComponent implements OnInit {
     });
   }
 
-  onVehicleFilterChange(): void {
-    this.loadLodgings();
+  private reloadLodgingsOnly(): void {
+    this.loadLodgings(this.currentQuery);
+  }
 
-    if (!this.vehicleFilter) {
+  get currentQueryVehicleId(): string {
+    return this.currentQuery.filters['vehicle_id'] ?? '';
+  }
+
+  onVehicleFilterChange(vehicleId: string): void {
+    if (!vehicleId) {
       this.vehicleStat = null;
       return;
     }
 
     this.vehicleStatLoading = true;
-    this.garageLodgingService.getVisitsThisYear(this.vehicleFilter).subscribe({
+    this.garageLodgingService.getVisitsThisYear(vehicleId).subscribe({
       next: (stat) => {
         this.vehicleStat = stat;
         this.vehicleStatLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.vehicleStat = null;
         this.vehicleStatLoading = false;
+        this.cdr.markForCheck();
       },
-    });
-  }
-
-  get filteredLodgings(): GarageLodgingGridRow[] {
-    const term = this.searchTerm.trim().toLowerCase();
-
-    return this.lodgings.filter((l) => {
-      if (this.openOnly && l.exit_date) return false;
-      if (!term) return true;
-      const haystack = [l.vehicles?.plate_number, l.garage_locations?.garage_name, l.reason]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
     });
   }
 
@@ -134,7 +246,7 @@ export class GarageLodgingListComponent implements OnInit {
 
   onFormSaved(): void {
     this.formOpen = false;
-    this.loadLodgings();
+    this.reloadLodgingsOnly();
   }
 
   checkOut(lodging: GarageLodgingGridRow): void {
@@ -149,7 +261,7 @@ export class GarageLodgingListComponent implements OnInit {
     this.garageLodgingService.checkOut(lodging.id).subscribe({
       next: () => {
         this.checkingOutId = null;
-        this.loadLodgings();
+        this.reloadLodgingsOnly();
       },
       error: (err) => {
         this.checkingOutId = null;
@@ -202,7 +314,7 @@ export class GarageLodgingListComponent implements OnInit {
           next: (saved) => {
             this.importing = false;
             this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
-            this.loadLodgings();
+            this.reloadLodgingsOnly();
           },
           error: (err) => {
             this.importing = false;
@@ -226,21 +338,37 @@ export class GarageLodgingListComponent implements OnInit {
     });
   }
 
+  // -------------------------------------------------------------
+  // Export — pulls every row matching the grid's current search/filters
+  // (not just the current page) via listAllMatching().
+  // -------------------------------------------------------------
+
   exportExcel(): void {
-    exportToExcel(this.filteredLodgings, this.excelColumns(), 'garage-lodging-export');
+    this.garageLodgingService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'garage-lodging-export'),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.filteredLodgings,
-      this.pdfColumns(),
-      {
-        title: 'Garage Lodging Report',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.garageLodgingService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Garage Lodging Report',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'garage-lodging-report',
+        ),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'garage-lodging-report',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<GarageLodgingGridRow>[] {

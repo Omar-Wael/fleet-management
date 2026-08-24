@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import { FinancialTransaction } from '../models/fleet.models';
 
 /** Row shape for the "Checks" grid (financial_transactions where channel = 'check'). */
@@ -34,6 +35,45 @@ export class FinancialTransactionsService {
         .eq('channel', 'check')
         .order('created_at', { ascending: false })
     );
+  }
+
+  /**
+   * Search matches check_number/recipient_name only — not the linked
+   * vehicle plate, which comes in via two different possible joins
+   * (work_orders → vehicles, or external_repairs → vehicles) and can't be
+   * reliably `ilike`'d across both without forcing inner joins on each
+   * (see maintenance.service.ts buildGridQuery for the same limitation).
+   */
+  private buildChecksGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('financial_transactions')
+      .select(FINANCIAL_TRANSACTION_SELECT, withCount ? { count: 'exact' } : undefined)
+      .eq('channel', 'check');
+
+    if (query.filters['pendingOnly'] === 'true') q = q.is('disbursed_at', null);
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.or(`check_number.ilike.%${escaped}%,recipient_name.ilike.%${escaped}%`);
+    }
+
+    const sortField = query.sort?.field ?? 'created_at';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : false;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to listChecks() — drives SharedDataTableComponent. */
+  listChecksPaged(query: DataTableQuery): Observable<PagedResult<CheckGridRow>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildChecksGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<CheckGridRow>(q);
+  }
+
+  /** Every check row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF. */
+  listChecksAllMatching(query: DataTableQuery): Observable<CheckGridRow[]> {
+    return fromSupabase<CheckGridRow[]>(this.buildChecksGridQuery(query, false));
   }
 
   /** Petty-cash workflow rows, i.e. channel = 'petty_cash'. */

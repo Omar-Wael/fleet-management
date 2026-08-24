@@ -59,8 +59,9 @@
 
 .profile-section {
   h3 {
+    border-bottom: 1px solid var(--fleet-line, #dfe3e8);
     margin: 0 0 0.625rem;
-    font-size: 0.8125rem;
+    // font-size: 0.8125rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--fleet-primary, #1e3a5f);

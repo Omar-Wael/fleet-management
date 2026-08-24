@@ -6,8 +6,7 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
-  ViewChild,
-} from '@angular/core';
+  ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import Chart from 'chart.js/auto';
 
 import { AnalyticsService } from '../../../core/services/analytics.service';
@@ -26,6 +25,7 @@ const CHART_COLORS = ['#1e3a5f', '#2f547f', '#5b7ca0', '#8fa8c2', '#c3d2e0', '#f
   imports: [DecimalPipe, TranslatePipe],
   templateUrl: './cost-by-department.component.html',
   styleUrls: ['./cost-by-department.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CostByDepartmentComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('costChartCanvas') costChartCanvasRef?: ElementRef<HTMLCanvasElement>;

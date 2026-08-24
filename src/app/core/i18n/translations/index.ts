@@ -11,6 +11,7 @@ import { INVOICES_TRANSLATIONS } from './invoices';
 import { CHECKS_TRANSLATIONS } from './checks';
 import { OVERHAULS_TRANSLATIONS } from './overhauls';
 import { ANALYTICS_TRANSLATIONS } from './analytics';
+import { REPORTS_TRANSLATIONS } from './reports';
 import { SETTINGS_TRANSLATIONS } from './settings';
 import { DASHBOARD_TRANSLATIONS } from './dashboard';
 import { SHARED_TRANSLATIONS } from './shared';
@@ -32,6 +33,7 @@ export const TRANSLATIONS: Record<string, TranslationEntry> = {
   ...OVERHAULS_TRANSLATIONS,
   ...ANALYTICS_TRANSLATIONS,
   ...SETTINGS_TRANSLATIONS,
+  ...REPORTS_TRANSLATIONS,
   ...DASHBOARD_TRANSLATIONS,
   ...SHARED_TRANSLATIONS,
 };

@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 
 import { OverhaulsService, OverhaulGridRow } from '../../../core/services/overhauls.service';
 import { OverhaulStage, OverhaulStageName } from '../../../core/models/fleet.models';
@@ -34,6 +34,7 @@ const STAGE_LABEL_KEYS: Record<OverhaulStageName, string> = {
   imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './overhaul-pipeline-drawer.component.html',
   styleUrls: ['./overhaul-pipeline-drawer.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverhaulPipelineDrawerComponent implements OnChanges {
   @Input() overhaul: OverhaulGridRow | null = null;

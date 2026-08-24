@@ -4,23 +4,32 @@
       <h2>{{ 'analytics.vehicleCostTitle' | translate }}</h2>
       <p class="panel-subtitle">
         {{ rows.length }} {{ 'analytics.vehicleCount' | translate }} &middot;
-        {{ 'analytics.total' | translate }} {{ totalCost | number : '1.2-2' }}
+        {{ 'analytics.total' | translate }} {{ totalCost | number: '1.2-2' }}
       </p>
     </div>
 
     <div class="panel-actions">
-      <select [(ngModel)]="departmentFilter" [ngModelOptions]="{ standalone: true }" (change)="onDepartmentChange()">
+      <select
+        [(ngModel)]="departmentFilter"
+        [ngModelOptions]="{ standalone: true }"
+        (change)="onDepartmentChange()"
+      >
         <option value="">{{ 'analytics.allDepartments' | translate }}</option>
         @for (d of departments; track d.id) {
           <option [value]="d.id">{{ d.name_en || d.name_ar }}</option>
         }
       </select>
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!rows.length">
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="exportExcel()"
+        [disabled]="!rows.length"
+      >
         {{ 'common.exportExcel' | translate }}
       </button>
     </div>
   </header>
-<!-- <div>{{loading}}</div> -->
+
   @if (loading) {
     <div class="state-message">{{ 'analytics.loadingVehicleCost' | translate }}</div>
   } @else if (loadError) {
@@ -44,7 +53,7 @@
             <tr>
               <td>{{ r.plate_number }}</td>
               <td>{{ departmentName(r.operating_department_id) }}</td>
-              <td class="mono">{{ r.total_cost | number : '1.2-2' }}</td>
+              <td class="mono">{{ r.total_cost | number: '1.2-2' }}</td>
             </tr>
           } @empty {
             <tr>

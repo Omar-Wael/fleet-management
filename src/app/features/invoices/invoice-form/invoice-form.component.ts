@@ -6,8 +6,7 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -40,6 +39,7 @@ interface DraftItem {
   imports: [ReactiveFormsModule, FormsModule, DecimalPipe, TranslatePipe],
   templateUrl: './invoice-form.component.html',
   styleUrls: ['./invoice-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InvoiceFormComponent implements OnInit, OnChanges {
   @Input() open = false;

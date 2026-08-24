@@ -118,4 +118,17 @@ export const VEHICLES_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'No open overhaul or lodging',
     ar: 'لا توجد عمرة مفتوحة أو مبيت',
   },
+
+  'vehicles.allVehicleTypes': { en: 'All vehicle types', ar: 'كل أنواع السيارات' },
+  'vehicles.allMakes': { en: 'All makes', ar: 'كل الماركات' },
+  'vehicles.allYears': { en: 'All years', ar: 'كل السنوات' },
+  'vehicles.allFuelTypes': { en: 'All fuel types', ar: 'كل أنواع الوقود' },
+  'vehicles.fuel.diesel': { en: 'Diesel', ar: 'ديزل' },
+  'vehicles.fuel.petrol': { en: 'Petrol', ar: 'بنزين' },
+  'vehicles.fuel.gasoline': { en: 'Gasoline', ar: 'بنزين' },
+  'vehicles.fuel.electric': { en: 'Electric', ar: 'كهربائي' },
+  'vehicles.fuel.hybrid': { en: 'Hybrid', ar: 'هجين' },
+  'vehicles.fuel.cng': { en: 'CNG', ar: 'غاز طبيعي' },
+  'vehicles.fuel.lpg': { en: 'LPG', ar: 'غاز بترولي' },
+
 };

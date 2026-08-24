@@ -6,6 +6,7 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -42,6 +43,7 @@ const VEHICLE_STATUS_OPTIONS: { value: string; labelKey: string }[] = [
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './vehicle-form.component.html',
   styleUrls: ['./vehicle-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VehicleFormComponent implements OnInit, OnChanges {
   @Input() open = false;
@@ -171,7 +173,8 @@ export class VehicleFormComponent implements OnInit, OnChanges {
         this.lookupsLoading = false;
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.lookupsError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
       },
     });
@@ -199,7 +202,8 @@ export class VehicleFormComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.saveError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import {
   DisbursementStatus,
   StockDisbursementItem,
@@ -35,6 +36,38 @@ export class DisbursementService {
     let query = this.client.from('stock_disbursement_requests').select(DISBURSEMENT_GRID_SELECT);
     if (status) query = query.eq('status', status);
     return fromSupabase<DisbursementGridRow[]>(query.order('requested_at', { ascending: false }));
+  }
+
+  /** Search matches notes only (see maintenance.service.ts buildGridQuery for why joined vehicle plate/technician name aren't included). */
+  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('stock_disbursement_requests')
+      .select(DISBURSEMENT_GRID_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['status']) q = q.eq('status', query.filters['status']);
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.ilike('notes', `%${escaped}%`);
+    }
+
+    const sortField = query.sort?.field ?? 'requested_at';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : false;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to list() for the Disbursement Requests grid — drives SharedDataTableComponent. */
+  listPaged(query: DataTableQuery): Observable<PagedResult<DisbursementGridRow>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<DisbursementGridRow>(q);
+  }
+
+  /** Every row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF. */
+  listAllMatching(query: DataTableQuery): Observable<DisbursementGridRow[]> {
+    return fromSupabase<DisbursementGridRow[]>(this.buildGridQuery(query, false));
   }
 
   getById(requestId: string): Observable<DisbursementGridRow> {

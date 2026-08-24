@@ -66,6 +66,12 @@ export const routes: Routes = [
     title: 'Analytics',
   },
   {
+    path: 'reports',
+    loadChildren: () =>
+      import('./features/reports/reports.routes').then((m) => m.REPORTS_ROUTES),
+    title: 'Reports',
+  },
+  {
     path: 'settings',
     loadChildren: () =>
       import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),

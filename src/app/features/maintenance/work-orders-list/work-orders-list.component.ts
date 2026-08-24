@@ -1,5 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -19,27 +19,40 @@ import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pd
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+
 @Component({
   selector: 'app-work-orders-list',
   standalone: true,
   imports: [
-    DatePipe,
-    DecimalPipe,
     FormsModule,
     TranslatePipe,
+    SharedDataTableComponent,
     WorkOrderFormComponent,
     WorkOrderDetailDrawerComponent,
   ],
   templateUrl: './work-orders-list.component.html',
   styleUrls: ['./work-orders-list.component.scss'],
+  providers: [DatePipe],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WorkOrdersListComponent implements OnInit {
-  workOrders: WorkOrderGridRow[] = [];
+  rows: WorkOrderGridRow[] = [];
+  total = 0;
   loading = true;
   loadError: string | null = null;
 
-  searchTerm = '';
-  openOnly = false;
+  columns: DataTableColumn<WorkOrderGridRow>[] = [];
+  filters: DataTableFilter[] = [];
+
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: { field: 'opened_at', dir: 'desc' },
+    filters: { vehicle_id: '', openOnly: '' },
+  };
 
   formOpen = false;
 
@@ -55,27 +68,129 @@ export class WorkOrdersListComponent implements OnInit {
   constructor(
     private maintenanceService: MaintenanceService,
     private vehiclesService: VehiclesService,
+    private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
-    this.loadAll();
-  }
+    this.buildColumns();
+    this.buildFilters();
+    this.loadWorkOrders(this.currentQuery);
 
-  loadAll(): void {
-    this.loading = true;
-    this.loadError = null;
-
-    forkJoin({
-      workOrders: this.maintenanceService.list(),
-      vehicles: this.vehiclesService.list(),
-    }).subscribe({
-      next: ({ workOrders, vehicles }) => {
-        this.workOrders = workOrders;
+    // Full unpaginated vehicle list — needed for the vehicle filter dropdown and for resolving plate → id during import. This grid is small/personal-scale so loading it in full here is fine.
+    this.vehiclesService.list().subscribe({
+      next: (vehicles) => {
         this.vehicleIdByPlate = new Map(
           vehicles.map((v) => [v.plate_number.trim().toLowerCase(), v.id]),
         );
+        this.filters = [
+          {
+            key: 'vehicle_id',
+            label: this.i18n.t('shared.dataTable.allFilter'),
+            value: this.currentQuery.filters['vehicle_id'] ?? '',
+            options: vehicles.map((v) => ({ value: v.id, label: v.plate_number })),
+          },
+          ...this.filters.slice(1),
+        ];
+        this.cdr.markForCheck();
+      },
+      error: () => {},
+    });
+  }
+
+  private buildColumns(): void {
+    this.columns = [
+      {
+        key: 'vehicle',
+        header: this.i18n.t('maintenance.vehicle'),
+        mono: true,
+        render: (w) => w.vehicles?.plate_number || '—',
+      },
+      {
+        key: 'maintenance_type',
+        header: this.i18n.t('maintenance.colType'),
+        render: (w) => w.maintenance_type || '—',
+      },
+      {
+        key: 'description',
+        header: this.i18n.t('maintenance.description'),
+        truncate: true,
+        render: (w) => w.description,
+      },
+      {
+        key: 'opened_at',
+        header: this.i18n.t('maintenance.opened'),
+        sortable: true,
+        render: (w) => this.datePipe.transform(w.opened_at, 'mediumDate') || '—',
+      },
+      {
+        key: 'status',
+        header: this.i18n.t('common.status'),
+        render: () => '',
+        badge: (w) =>
+          w.closed_at
+            ? { text: this.i18n.t('maintenance.closed'), variant: 'ok' }
+            : { text: this.i18n.t('maintenance.statusOpen'), variant: 'warn' },
+      },
+      {
+        key: 'odometer_km_at_service',
+        header: this.i18n.t('maintenance.colOdometer'),
+        mono: true,
+        render: (w) => (w.odometer_km_at_service ?? '—') + '',
+      },
+      {
+        key: 'total_cost',
+        header: this.i18n.t('maintenance.totalCost'),
+        sortable: true,
+        mono: true,
+        render: (w) => (w.total_cost == null ? '—' : w.total_cost.toFixed(2)),
+      },
+      {
+        key: 'technicians',
+        header: this.i18n.t('maintenance.techniciansLabel'),
+        truncate: true,
+        render: (w) => this.technicianNames(w),
+      },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (w) => [{ label: this.i18n.t('common.view'), onClick: (w) => this.openDetail(w) }],
+      },
+    ];
+  }
+
+  private buildFilters(): void {
+    this.filters = [
+      {
+        key: 'vehicle_id',
+        label: this.i18n.t('shared.dataTable.allFilter'),
+        value: this.currentQuery.filters['vehicle_id'] ?? '',
+        options: [],
+      },
+      {
+        key: 'openOnly',
+        label: this.i18n.t('shared.dataTable.allFilter'),
+        value: this.currentQuery.filters['openOnly'] ?? '',
+        options: [{ value: 'true', label: this.i18n.t('maintenance.openOnly') }],
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    this.currentQuery = query;
+    this.loadWorkOrders(query);
+  }
+
+  loadWorkOrders(query: DataTableQuery): void {
+    this.loading = true;
+    this.loadError = null;
+
+    this.maintenanceService.listPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -88,26 +203,7 @@ export class WorkOrdersListComponent implements OnInit {
   }
 
   private reloadWorkOrdersOnly(): void {
-    this.maintenanceService.list().subscribe({
-      next: (workOrders) => (this.workOrders = workOrders),
-      error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedReloadWorkOrders');
-      },
-    });
-  }
-
-  get filteredWorkOrders(): WorkOrderGridRow[] {
-    const term = this.searchTerm.trim().toLowerCase();
-
-    return this.workOrders.filter((w) => {
-      if (this.openOnly && w.closed_at) return false;
-      if (!term) return true;
-      const haystack = [w.vehicles?.plate_number, w.description, w.maintenance_type]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
+    this.loadWorkOrders(this.currentQuery);
   }
 
   technicianNames(workOrder: WorkOrderGridRow): string {
@@ -200,24 +296,36 @@ export class WorkOrdersListComponent implements OnInit {
   }
 
   // -------------------------------------------------------------
-  // Export
+  // Export — pulls every row matching the grid's current search/filters
+  // (not just the current page) via listAllMatching().
   // -------------------------------------------------------------
 
   exportExcel(): void {
-    exportToExcel(this.filteredWorkOrders, this.excelColumns(), 'work-orders-export');
+    this.maintenanceService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'work-orders-export'),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.filteredWorkOrders,
-      this.pdfColumns(),
-      {
-        title: 'Work Orders Report',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.maintenanceService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Work Orders Report',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'work-orders-report',
+        ),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'work-orders-report',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<WorkOrderGridRow>[] {

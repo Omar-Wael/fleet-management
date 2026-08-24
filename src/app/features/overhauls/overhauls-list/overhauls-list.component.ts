@@ -1,5 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { OverhaulFormComponent } from '../overhaul-form/overhaul-form.component';
@@ -20,6 +20,9 @@ import {
 } from '../../../shared/utils/import-column-maps';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
 
 // English labels — used only for Excel/PDF export columns (deliberately
 // left untranslated, per repo convention). UI display uses STAGE_LABEL_KEYS
@@ -47,26 +50,31 @@ const STAGE_LABEL_KEYS: Record<OverhaulStageName, string> = {
 @Component({
   selector: 'app-overhauls-list',
   standalone: true,
-  imports: [
-    DatePipe,
-    DecimalPipe,
-    FormsModule,
-    TranslatePipe,
-    OverhaulFormComponent,
-    OverhaulPipelineDrawerComponent,
-  ],
+  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, OverhaulFormComponent, OverhaulPipelineDrawerComponent],
   templateUrl: './overhauls-list.component.html',
   styleUrls: ['./overhauls-list.component.scss'],
+  providers: [DatePipe],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverhaulsListComponent implements OnInit {
-  overhauls: OverhaulGridRow[] = [];
+  rows: OverhaulGridRow[] = [];
+  total = 0;
   loading = true;
   loadError: string | null = null;
 
   readonly stageLabels = STAGE_LABELS;
   readonly stageLabelKeys = STAGE_LABEL_KEYS;
-  searchTerm = '';
-  openOnly = false;
+
+  columns: DataTableColumn<OverhaulGridRow>[] = [];
+  filters: DataTableFilter[] = [];
+
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: { field: 'entry_date', dir: 'desc' },
+    filters: { vehicle_id: '', openOnly: '' },
+  };
 
   formOpen = false;
 
@@ -84,26 +92,118 @@ export class OverhaulsListComponent implements OnInit {
     private overhaulsService: OverhaulsService,
     private vehiclesService: VehiclesService,
     private sparePartsService: SparePartsService,
+    private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
-    this.vehiclesService.list().subscribe({ next: (vehicles) => (this.vehicles = vehicles) });
+    this.buildColumns();
+    this.buildFilters();
+    this.loadOverhauls(this.currentQuery);
+
+    // Full unpaginated vehicle list — needed for the vehicle filter dropdown and for resolving plate → id during import.
+    this.vehiclesService.list().subscribe({
+      next: (vehicles) => {
+        this.vehicles = vehicles;
+        this.filters = [
+          {
+            key: 'vehicle_id',
+            label: this.i18n.t('shared.dataTable.allFilter'),
+            value: this.currentQuery.filters['vehicle_id'] ?? '',
+            options: vehicles.map((v) => ({ value: v.id, label: v.plate_number })),
+          },
+          ...this.filters.slice(1),
+        ];
+        this.cdr.markForCheck();
+      },
+    });
     this.sparePartsService.listVendors('machine_shop').subscribe({
       next: (shops) => (this.machineShops = shops),
       error: () => {},
     });
-    this.loadOverhauls();
   }
 
-  loadOverhauls(): void {
+  private buildColumns(): void {
+    this.columns = [
+      { key: 'vehicle', header: this.i18n.t('overhauls.vehicle'), mono: true, render: (o) => o.vehicles?.plate_number || '—' },
+      {
+        key: 'machine_shop',
+        header: this.i18n.t('overhauls.machineShop'),
+        render: (o) => o.external_workshops?.name || '—',
+      },
+      {
+        key: 'current_stage',
+        header: this.i18n.t('overhauls.currentStage'),
+        render: () => '',
+        badge: (o) => ({
+          text: this.stageLabelText(o.current_stage),
+          variant: o.current_stage === 'completed' ? 'ok' : 'warn',
+        }),
+      },
+      {
+        key: 'entry_date',
+        header: this.i18n.t('overhauls.entryDate'),
+        sortable: true,
+        render: (o) => this.datePipe.transform(o.entry_date, 'mediumDate') || '—',
+      },
+      {
+        key: 'exit_date',
+        header: this.i18n.t('overhauls.exitDate'),
+        sortable: true,
+        render: (o) => (o.exit_date ? this.datePipe.transform(o.exit_date, 'mediumDate') || '—' : '—'),
+      },
+      {
+        key: 'duration',
+        header: this.i18n.t('overhauls.duration'),
+        mono: true,
+        render: (o) => `${this.totalDurationDays(o)} d`,
+      },
+      {
+        key: 'total_cost',
+        header: this.i18n.t('overhauls.totalCost'),
+        mono: true,
+        render: (o) => this.totalCost(o).toFixed(2),
+      },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (o) => [{ label: this.i18n.t('common.view'), onClick: (o) => this.openPipeline(o) }],
+      },
+    ];
+  }
+
+  private buildFilters(): void {
+    this.filters = [
+      {
+        key: 'vehicle_id',
+        label: this.i18n.t('shared.dataTable.allFilter'),
+        value: this.currentQuery.filters['vehicle_id'] ?? '',
+        options: [],
+      },
+      {
+        key: 'openOnly',
+        label: this.i18n.t('shared.dataTable.allFilter'),
+        value: this.currentQuery.filters['openOnly'] ?? '',
+        options: [{ value: 'true', label: this.i18n.t('overhauls.inProgressOnly') }],
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    this.currentQuery = query;
+    this.loadOverhauls(query);
+  }
+
+  loadOverhauls(query: DataTableQuery): void {
     this.loading = true;
     this.loadError = null;
 
-    this.overhaulsService.list().subscribe({
-      next: (overhauls) => {
-        this.overhauls = overhauls;
+    this.overhaulsService.listPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -115,18 +215,8 @@ export class OverhaulsListComponent implements OnInit {
     });
   }
 
-  get filteredOverhauls(): OverhaulGridRow[] {
-    const term = this.searchTerm.trim().toLowerCase();
-
-    return this.overhauls.filter((o) => {
-      if (this.openOnly && o.current_stage === 'completed') return false;
-      if (!term) return true;
-      const haystack = [o.vehicles?.plate_number, o.external_workshops?.name, o.scope_description]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
+  private reloadOverhaulsOnly(): void {
+    this.loadOverhauls(this.currentQuery);
   }
 
   totalCost(overhaul: OverhaulGridRow): number {
@@ -141,6 +231,11 @@ export class OverhaulsListComponent implements OnInit {
     return Math.round((totalSeconds / 86400) * 100) / 100;
   }
 
+  /** Returns the translated stage label text (not a key) — badge.text is rendered directly by SharedDataTableComponent, with no `| translate` applied to it. */
+  stageLabelText(stage: OverhaulStageName): string {
+    return this.i18n.t(this.stageLabelKeys[stage]);
+  }
+
   openCreateForm(): void {
     this.formOpen = true;
   }
@@ -151,7 +246,7 @@ export class OverhaulsListComponent implements OnInit {
 
   onFormSaved(): void {
     this.formOpen = false;
-    this.loadOverhauls();
+    this.reloadOverhaulsOnly();
   }
 
   openPipeline(overhaul: OverhaulGridRow): void {
@@ -164,7 +259,7 @@ export class OverhaulsListComponent implements OnInit {
   }
 
   onDrawerUpdated(): void {
-    this.loadOverhauls();
+    this.reloadOverhaulsOnly();
   }
 
   // -------------------------------------------------------------
@@ -211,7 +306,7 @@ export class OverhaulsListComponent implements OnInit {
           next: (saved) => {
             this.importing = false;
             this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
-            this.loadOverhauls();
+            this.reloadOverhaulsOnly();
           },
           error: (err) => {
             this.importing = false;
@@ -234,21 +329,37 @@ export class OverhaulsListComponent implements OnInit {
     });
   }
 
+  // -------------------------------------------------------------
+  // Export — pulls every row matching the grid's current search/filters
+  // (not just the current page) via listAllMatching().
+  // -------------------------------------------------------------
+
   exportExcel(): void {
-    exportToExcel(this.filteredOverhauls, this.excelColumns(), 'overhauls-export');
+    this.overhaulsService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'overhauls-export'),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.filteredOverhauls,
-      this.pdfColumns(),
-      {
-        title: 'Overhauls Report',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.overhaulsService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Overhauls Report',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'overhauls-report',
+        ),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'overhauls-report',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<OverhaulGridRow>[] {

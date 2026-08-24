@@ -5,8 +5,7 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 
@@ -30,6 +29,7 @@ const CATEGORY_OPTIONS: MaintenanceCategory[] = ['corrective', 'preventive', 'pr
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './work-order-form.component.html',
   styleUrls: ['./work-order-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WorkOrderFormComponent implements OnInit, OnChanges {
   @Input() open = false;

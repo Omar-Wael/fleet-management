@@ -2,9 +2,7 @@
   <header class="page-header">
     <div>
       <h1>{{ 'invoices.title' | translate }}</h1>
-      <p class="page-subtitle">
-        {{ filteredInvoices.length }}/{{ invoices.length }} {{ 'invoices.shown' | translate }}
-      </p>
+      <p class="page-subtitle">{{ total }} {{ 'invoices.shown' | translate }}</p>
     </div>
 
     <div class="page-actions">
@@ -43,57 +41,21 @@
     </div>
   }
 
-  <div class="filters">
-    <input
-      type="text"
-      class="filters-search"
-      [placeholder]="'invoices.searchPlaceholder' | translate"
-      [(ngModel)]="searchTerm"
-    />
-  </div>
-
-  @if (loading) {
-    <div class="state-message">{{ 'invoices.loadingInvoices' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'invoices.invoiceNo' | translate }}</th>
-            <th>{{ 'invoices.vendor' | translate }}</th>
-            <th>{{ 'common.date' | translate }}</th>
-            <th>{{ 'invoices.subtotal' | translate }}</th>
-            <th>{{ 'invoices.tax' | translate }}</th>
-            <th>{{ 'invoices.discount' | translate }}</th>
-            <th>{{ 'invoices.total' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (inv of filteredInvoices; track inv.id) {
-            <tr>
-              <td class="mono">{{ inv.invoice_no }}</td>
-              <td>{{ inv.external_workshops?.name || '—' }}</td>
-              <td>{{ inv.invoice_date | date : 'mediumDate' }}</td>
-              <td class="mono">{{ inv.subtotal_value | number : '1.2-2' }}</td>
-              <td class="mono">{{ inv.tax_value | number : '1.2-2' }}</td>
-              <td class="mono">{{ inv.discount_value | number : '1.2-2' }}</td>
-              <td class="mono total-cell">{{ inv.total_value | number : '1.2-2' }}</td>
-              <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openDetail(inv)">{{ 'common.view' | translate }}</button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" class="empty-row">{{ 'invoices.noInvoicesMatch' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
   }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [searchPlaceholder]="'invoices.searchPlaceholder' | translate"
+    [emptyMessage]="'invoices.noInvoicesMatch' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>
 
 <app-invoice-form

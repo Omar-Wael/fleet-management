@@ -5,8 +5,7 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -36,6 +35,7 @@ type LinkType = 'none' | 'work_order' | 'overhaul' | 'disbursement_request';
   imports: [ReactiveFormsModule, FormsModule, TranslatePipe],
   templateUrl: './check-form.component.html',
   styleUrls: ['./check-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckFormComponent implements OnInit, OnChanges {
   @Input() open = false;

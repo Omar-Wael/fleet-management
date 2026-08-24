@@ -1,0 +1,195 @@
+<div class="dt">
+  <div class="dt-toolbar">
+    @if (searchable) {
+      <input
+        type="text"
+        class="dt-search"
+        [placeholder]="searchPlaceholder || ('common.search' | translate)"
+        [ngModel]="searchTerm"
+        (ngModelChange)="onSearchInput($event)"
+      />
+    }
+
+    @if (filters.length) {
+      <div class="dt-filters">
+        @for (f of filters; track f.key) {
+          <app-searchable-select
+            class="dt-filter-select"
+            [options]="f.options"
+            [ngModel]="f.value"
+            (ngModelChange)="onFilterChange(f.key, $event)"
+            [placeholder]="f.label"
+            [clearable]="true"
+          ></app-searchable-select>
+        }
+      </div>
+    }
+
+    <div class="dt-toolbar-projected">
+      <ng-content select="[dtFilters]"></ng-content>
+    </div>
+
+    <div class="dt-toolbar-actions">
+      <ng-content select="[dtActions]"></ng-content>
+    </div>
+  </div>
+
+  <div class="dt-scroll">
+    <table class="dt-table">
+      <thead>
+        <tr>
+          @for (col of columns; track col.key) {
+            <th
+              [class.dt-col-sticky]="col.key === actionsColumnKey && actionsColumnKey"
+              [class.dt-col-sortable]="col.sortable"
+              [class.dt-col-align-center]="col.align === 'center'"
+              [class.dt-col-align-end]="col.align === 'end'"
+              [style.width]="col.width || null"
+              (click)="onSort(col)"
+            >
+              <span class="dt-th-label">
+                {{ col.header }}
+                @if (col.sortable) {
+                  <span class="dt-sort-icon" [class.dt-sort-icon--active]="sort?.field === col.key">
+                    @if (sort?.field === col.key && sort?.dir === 'desc') {
+                      ▾
+                    } @else {
+                      ▴
+                    }
+                  </span>
+                }
+              </span>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading) {
+          <tr>
+            <td [attr.colspan]="columns.length" class="dt-state">
+              {{ 'shared.dataTable.loading' | translate }}
+            </td>
+          </tr>
+        } @else if (error) {
+          <tr>
+            <td [attr.colspan]="columns.length" class="dt-state dt-state--error">{{ error }}</td>
+          </tr>
+        } @else if (rows.length === 0) {
+          <tr>
+            <td [attr.colspan]="columns.length" class="dt-state">
+              {{ emptyMessage || ('shared.dataTable.noResults' | translate) }}
+            </td>
+          </tr>
+        } @else {
+          @for (row of rows; track trackRow($index, row); let i = $index) {
+            <tr>
+              @for (col of columns; track col.key) {
+                <td
+                  [class.dt-col-sticky]="col.key === actionsColumnKey && actionsColumnKey"
+                  [class.dt-col-align-center]="col.align === 'center'"
+                  [class.dt-col-align-end]="col.align === 'end'"
+                  [class.mono]="col.mono"
+                >
+                  @if (col.actions) {
+                    <div class="dt-actions-btns">
+                      @for (action of visibleActions(col, row); track action.label) {
+                        <button
+                          type="button"
+                          class="dt-link-btn"
+                          [class.dt-link-btn--danger]="action.variant === 'danger'"
+                          [disabled]="isActionDisabled(action, row)"
+                          (click)="action.onClick(row)"
+                        >
+                          {{ action.label }}
+                        </button>
+                      }
+                    </div>
+                  } @else if (col.editable && col.editable.isEditing(row)) {
+                    @if (col.editable.options) {
+                      <app-searchable-select
+                        class="dt-edit-select"
+                        [options]="col.editable.options"
+                        [ngModel]="col.editable.getValue(row)"
+                        (ngModelChange)="col.editable.setValue(row, $event)"
+                        [clearable]="!!col.editable.allowEmpty"
+                        [placeholder]="
+                          col.editable.allowEmpty
+                            ? col.editable.emptyLabel || '—'
+                            : col.editable.placeholder || ''
+                        "
+                      ></app-searchable-select>
+                    } @else {
+                      <input
+                        type="text"
+                        class="dt-edit-input"
+                        [ngModel]="col.editable.getValue(row)"
+                        (ngModelChange)="col.editable.setValue(row, $event)"
+                        [placeholder]="col.editable.placeholder || ''"
+                      />
+                    }
+                  } @else {
+                    <span
+                      class="dt-cell-text"
+                      [class.dt-cell-text--truncate]="!!col.truncate"
+                      [style.max-width]="col.truncate === true ? null : col.truncate || null"
+                      [attr.title]="col.truncate ? cellText(col, row, rowNumber(i)) : null"
+                      >{{ cellText(col, row, rowNumber(i)) }}</span
+                    >
+                    @for (b of cellBadges(col, row); track b.text) {
+                      <span class="dt-badge" [class]="'dt-badge--' + (b.variant || 'neutral')">{{
+                        b.text
+                      }}</span>
+                    }
+                  }
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="dt-pagination">
+    <div class="dt-pagination-info">
+      {{ rangeStart }}–{{ rangeEnd }} {{ 'shared.dataTable.of' | translate }} {{ total }}
+    </div>
+
+    <label class="dt-page-size">
+      {{ 'shared.dataTable.rowsPerPage' | translate }}
+      <select
+        class="dt-page-size-select"
+        [ngModel]="pageSize.toString()"
+        (ngModelChange)="onPageSizeChange($event)"
+      >
+        <option *ngFor="let option of pageSizeSelectOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </label>
+
+    <div class="dt-page-nav">
+      <button
+        type="button"
+        class="dt-page-btn"
+        [disabled]="page <= 1"
+        (click)="goToPage(page - 1)"
+        [attr.aria-label]="'shared.dataTable.previous' | translate"
+      >
+        ‹
+      </button>
+      <span class="dt-page-current">
+        {{ 'shared.dataTable.page' | translate }} {{ page }} / {{ pageCount }}
+      </span>
+      <button
+        type="button"
+        class="dt-page-btn"
+        [disabled]="page >= pageCount"
+        (click)="goToPage(page + 1)"
+        [attr.aria-label]="'shared.dataTable.next' | translate"
+      >
+        ›
+      </button>
+    </div>
+  </div>
+</div>

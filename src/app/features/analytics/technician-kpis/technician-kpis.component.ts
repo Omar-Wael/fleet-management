@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 
 import { TechniciansService } from '../../../core/services/technicians.service';
 import { RepairBounce, VTechnicianKpiRollup } from '../../../core/models/fleet.models';
@@ -13,6 +13,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [DatePipe, TranslatePipe],
   templateUrl: './technician-kpis.component.html',
   styleUrls: ['./technician-kpis.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TechnicianKpisComponent implements OnInit {
   rows: VTechnicianKpiRollup[] = [];

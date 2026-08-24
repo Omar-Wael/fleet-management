@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 /**
@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
   imports: [],
   templateUrl: './fleet-gauge.html',
   styleUrl: './fleet-gauge.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FleetGauge {
   /** 0-100 */

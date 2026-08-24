@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { DisbursementFormComponent } from '../disbursement-form/disbursement-form.component';
@@ -14,6 +14,9 @@ import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-im
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
 
 // English-only labels — used for Excel/PDF export accessors, which stay in
 // English regardless of app language (matches the technicians export
@@ -45,19 +48,32 @@ const STATUS_LABEL_KEYS: Record<DisbursementStatus, string> = {
 @Component({
   selector: 'app-disbursement-requests',
   standalone: true,
-  imports: [DatePipe, FormsModule, TranslatePipe, DisbursementFormComponent, DisbursementDetailDrawerComponent],
+  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, DisbursementFormComponent, DisbursementDetailDrawerComponent],
   templateUrl: './disbursement-requests.component.html',
   styleUrls: ['./disbursement-requests.component.scss'],
+  providers: [DatePipe],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisbursementRequestsComponent implements OnInit {
-  requests: DisbursementGridRow[] = [];
+  rows: DisbursementGridRow[] = [];
+  total = 0;
   loading = true;
   loadError: string | null = null;
 
   readonly statusLabels = STATUS_LABELS;
   readonly statusLabelKeys = STATUS_LABEL_KEYS;
   readonly statusOptions = Object.keys(STATUS_LABELS) as DisbursementStatus[];
-  statusFilter: DisbursementStatus | '' = '';
+
+  columns: DataTableColumn<DisbursementGridRow>[] = [];
+  filters: DataTableFilter[] = [];
+
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: { field: 'requested_at', dir: 'desc' },
+    filters: { status: '' },
+  };
 
   formOpen = false;
 
@@ -66,21 +82,87 @@ export class DisbursementRequestsComponent implements OnInit {
 
   constructor(
     private disbursementService: DisbursementService,
+    private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
-    this.loadRequests();
+    this.buildColumns();
+    this.buildFilters();
+    this.loadRequests(this.currentQuery);
   }
 
-  loadRequests(): void {
+  private buildColumns(): void {
+    this.columns = [
+      {
+        key: 'vehicle',
+        header: this.i18n.t('spareParts.disbursement.vehicle'),
+        mono: true,
+        render: (r) => r.vehicles?.plate_number || '—',
+      },
+      {
+        key: 'requested_by',
+        header: this.i18n.t('spareParts.disbursement.requestedBy'),
+        render: (r) => r.technicians?.full_name || '—',
+      },
+      {
+        key: 'status',
+        header: this.i18n.t('common.status'),
+        render: () => '',
+        badge: (r) => ({ text: this.statusLabelText(r.status), variant: 'neutral' }),
+      },
+      {
+        key: 'requested_at',
+        header: this.i18n.t('spareParts.disbursement.requestedAt'),
+        sortable: true,
+        render: (r) => this.datePipe.transform(r.requested_at, 'medium') || '—',
+      },
+      {
+        key: 'issued_at',
+        header: this.i18n.t('spareParts.disbursement.issuedAt'),
+        sortable: true,
+        render: (r) => (r.issued_at ? this.datePipe.transform(r.issued_at, 'medium') || '—' : '—'),
+      },
+      {
+        key: 'parts',
+        header: this.i18n.t('spareParts.disbursement.colParts'),
+        truncate: '320px',
+        render: (r) => this.itemsSummary(r),
+      },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (r) => [{ label: this.i18n.t('common.view'), onClick: (r) => this.openDetail(r) }],
+      },
+    ];
+  }
+
+  private buildFilters(): void {
+    this.filters = [
+      {
+        key: 'status',
+        label: this.i18n.t('shared.dataTable.allFilter'),
+        value: this.currentQuery.filters['status'] ?? '',
+        options: this.statusOptions.map((s) => ({ value: s, label: this.i18n.t(this.statusLabelKeys[s]) })),
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    this.currentQuery = query;
+    this.loadRequests(query);
+  }
+
+  loadRequests(query: DataTableQuery): void {
     this.loading = true;
     this.loadError = null;
 
-    this.disbursementService.list(this.statusFilter || undefined).subscribe({
-      next: (requests) => {
-        this.requests = requests;
+    this.disbursementService.listPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -93,11 +175,20 @@ export class DisbursementRequestsComponent implements OnInit {
     });
   }
 
+  private reloadRequestsOnly(): void {
+    this.loadRequests(this.currentQuery);
+  }
+
   itemsSummary(request: DisbursementGridRow): string {
     const items = request.stock_disbursement_items ?? [];
     if (!items.length) return '—';
     const partFallback = this.i18n.t('spareParts.disbursement.partFallback');
     return items.map((i) => `${i.spare_parts?.name_ar || partFallback} × ${i.qty}`).join(', ');
+  }
+
+  /** Returns the translated status label text (not a key) — badge.text is rendered directly by SharedDataTableComponent, with no `| translate` applied to it. */
+  statusLabelText(status: DisbursementStatus): string {
+    return this.i18n.t(this.statusLabelKeys[status]);
   }
 
   openCreateForm(): void {
@@ -110,7 +201,7 @@ export class DisbursementRequestsComponent implements OnInit {
 
   onFormSaved(): void {
     this.formOpen = false;
-    this.loadRequests();
+    this.reloadRequestsOnly();
   }
 
   openDetail(request: DisbursementGridRow): void {
@@ -123,24 +214,40 @@ export class DisbursementRequestsComponent implements OnInit {
   }
 
   onDrawerUpdated(): void {
-    this.loadRequests();
+    this.reloadRequestsOnly();
   }
 
+  // -------------------------------------------------------------
+  // Export — pulls every row matching the grid's current search/filters
+  // (not just the current page) via listAllMatching().
+  // -------------------------------------------------------------
+
   exportExcel(): void {
-    exportToExcel(this.requests, this.excelColumns(), 'disbursement-requests');
+    this.disbursementService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'disbursement-requests'),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.requests,
-      this.pdfColumns(),
-      {
-        title: 'Disbursement Requests',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.disbursementService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Disbursement Requests',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'disbursement-requests',
+        ),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'disbursement-requests',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<DisbursementGridRow>[] {

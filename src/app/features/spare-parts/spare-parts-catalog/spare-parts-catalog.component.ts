@@ -1,5 +1,4 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { SparePartFormComponent } from '../spare-part-form/spare-part-form.component';
@@ -17,20 +16,42 @@ import {
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableColumn, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+
 @Component({
   selector: 'app-spare-parts-catalog',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, TranslatePipe, SparePartFormComponent],
+  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, SparePartFormComponent],
   templateUrl: './spare-parts-catalog.component.html',
   styleUrls: ['./spare-parts-catalog.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SparePartsCatalogComponent implements OnInit {
-  parts: SparePart[] = [];
+  rows: SparePart[] = [];
+  total = 0;
   loading = true;
   loadError: string | null = null;
 
-  searchTerm = '';
-  lowStockOnly = false;
+  columns: DataTableColumn<SparePart>[] = [];
+
+  /**
+   * No `filters` array — the old "low stock only" checkbox can't become a
+   * server-side filter without a DB-side comparison of two columns on the
+   * same row (current_stock_qty <= reorder_threshold), which PostgREST's
+   * query builder doesn't support directly (it compares columns to
+   * literal values, not to each other). Doing it correctly would need a
+   * Postgres view (e.g. `v_low_stock_parts`) exposing that comparison.
+   * Low-stock items are still flagged with a badge on whatever page
+   * they land on — see isLowStock() below.
+   */
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: null,
+    filters: {},
+  };
 
   formOpen = false;
   editingPart: SparePart | null = null;
@@ -47,16 +68,65 @@ export class SparePartsCatalogComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadParts();
+    this.buildColumns();
+    this.loadParts(this.currentQuery);
   }
 
-  loadParts(): void {
+  private buildColumns(): void {
+    this.columns = [
+      {
+        key: 'part_code',
+        header: this.i18n.t('spareParts.catalog.colPartCode'),
+        sortable: true,
+        mono: true,
+        render: (p) => p.part_code || '—',
+      },
+      { key: 'name_ar', header: this.i18n.t('spareParts.catalog.colNameAr'), sortable: true, render: (p) => p.name_ar },
+      { key: 'name_en', header: this.i18n.t('spareParts.catalog.colNameEn'), render: (p) => p.name_en || '—' },
+      { key: 'unit', header: this.i18n.t('spareParts.catalog.colUnit'), render: (p) => p.unit || '—' },
+      {
+        key: 'unit_cost',
+        header: this.i18n.t('spareParts.catalog.colUnitCost'),
+        sortable: true,
+        mono: true,
+        render: (p) => (p.unit_cost == null ? '—' : p.unit_cost.toFixed(2)),
+      },
+      {
+        key: 'current_stock_qty',
+        header: this.i18n.t('spareParts.catalog.colStockQty'),
+        sortable: true,
+        mono: true,
+        render: (p) => new Intl.NumberFormat().format(p.current_stock_qty),
+        badge: (p) => (this.isLowStock(p) ? { text: this.i18n.t('spareParts.catalog.lowBadge'), variant: 'warn' } : null),
+      },
+      {
+        key: 'reorder_threshold',
+        header: this.i18n.t('spareParts.catalog.colReorderAt'),
+        mono: true,
+        render: (p) => (p.reorder_threshold ?? '—') + '',
+      },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (p) => [{ label: this.i18n.t('common.edit'), onClick: (p) => this.openEditForm(p) }],
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    this.currentQuery = query;
+    this.loadParts(query);
+  }
+
+  loadParts(query: DataTableQuery): void {
     this.loading = true;
     this.loadError = null;
 
-    this.sparePartsService.list().subscribe({
-      next: (parts) => {
-        this.parts = parts;
+    this.sparePartsService.listPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -68,19 +138,12 @@ export class SparePartsCatalogComponent implements OnInit {
     });
   }
 
-  isLowStock(part: SparePart): boolean {
-    return part.reorder_threshold != null && part.current_stock_qty <= part.reorder_threshold;
+  private reloadPartsOnly(): void {
+    this.loadParts(this.currentQuery);
   }
 
-  get filteredParts(): SparePart[] {
-    const term = this.searchTerm.trim().toLowerCase();
-
-    return this.parts.filter((p) => {
-      if (this.lowStockOnly && !this.isLowStock(p)) return false;
-      if (!term) return true;
-      const haystack = [p.part_code, p.name_ar, p.name_en].filter(Boolean).join(' ').toLowerCase();
-      return haystack.includes(term);
-    });
+  isLowStock(part: SparePart): boolean {
+    return part.reorder_threshold != null && part.current_stock_qty <= part.reorder_threshold;
   }
 
   openAddForm(): void {
@@ -99,7 +162,7 @@ export class SparePartsCatalogComponent implements OnInit {
 
   onFormSaved(): void {
     this.formOpen = false;
-    this.loadParts();
+    this.reloadPartsOnly();
   }
 
   // -------------------------------------------------------------
@@ -135,7 +198,7 @@ export class SparePartsCatalogComponent implements OnInit {
           next: (saved) => {
             this.importing = false;
             this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
-            this.loadParts();
+            this.reloadPartsOnly();
           },
           error: (err) => {
             this.importing = false;
@@ -161,21 +224,37 @@ export class SparePartsCatalogComponent implements OnInit {
     });
   }
 
+  // -------------------------------------------------------------
+  // Export — pulls every row matching the grid's current search
+  // (not just the current page) via listAllMatching().
+  // -------------------------------------------------------------
+
   exportExcel(): void {
-    exportToExcel(this.filteredParts, this.excelColumns(), 'spare-parts-catalog');
+    this.sparePartsService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'spare-parts-catalog'),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.filteredParts,
-      this.pdfColumns(),
-      {
-        title: 'Spare Parts Catalog',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.sparePartsService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Spare Parts Catalog',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'spare-parts-catalog',
+        ),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'spare-parts-catalog',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<SparePart>[] {

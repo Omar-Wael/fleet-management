@@ -2,10 +2,7 @@
   <header class="page-header">
     <div>
       <h2>{{ 'spareParts.page.tabCatalog' | translate }}</h2>
-      <p class="page-subtitle">
-        {{ filteredParts.length }}/{{ parts.length }}
-        {{ 'spareParts.catalog.shown' | translate }}
-      </p>
+      <p class="page-subtitle">{{ total }} {{ 'spareParts.catalog.shown' | translate }}</p>
     </div>
 
     <div class="page-actions">
@@ -44,67 +41,20 @@
     </div>
   }
 
-  <div class="filters">
-    <input
-      type="text"
-      class="filters-search"
-      [placeholder]="'spareParts.catalog.searchPlaceholder' | translate"
-      [(ngModel)]="searchTerm"
-    />
-
-    <label class="filter-checkbox">
-      <input type="checkbox" [(ngModel)]="lowStockOnly" />
-      {{ 'spareParts.catalog.lowStockOnly' | translate }}
-    </label>
-  </div>
-
-  @if (loading) {
-    <div class="state-message">{{ 'spareParts.catalog.loadingParts' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'spareParts.catalog.colPartCode' | translate }}</th>
-            <th>{{ 'spareParts.catalog.colNameAr' | translate }}</th>
-            <th>{{ 'spareParts.catalog.colNameEn' | translate }}</th>
-            <th>{{ 'spareParts.catalog.colUnit' | translate }}</th>
-            <th>{{ 'spareParts.catalog.colUnitCost' | translate }}</th>
-            <th>{{ 'spareParts.catalog.colStockQty' | translate }}</th>
-            <th>{{ 'spareParts.catalog.colReorderAt' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of filteredParts; track p.id) {
-            <tr>
-              <td class="mono">{{ p.part_code || '—' }}</td>
-              <td>{{ p.name_ar }}</td>
-              <td>{{ p.name_en || '—' }}</td>
-              <td>{{ p.unit || '—' }}</td>
-              <td class="mono">{{ p.unit_cost != null ? (p.unit_cost | number : '1.2-2') : '—' }}</td>
-              <td class="mono">
-                {{ p.current_stock_qty | number }}
-                @if (isLowStock(p)) {
-                  <span class="badge badge--warn">{{ 'spareParts.catalog.lowBadge' | translate }}</span>
-                }
-              </td>
-              <td class="mono">{{ p.reorder_threshold ?? '—' }}</td>
-              <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openEditForm(p)">{{ 'common.edit' | translate }}</button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" class="empty-row">{{ 'spareParts.catalog.noResults' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
   }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [searchPlaceholder]="'spareParts.catalog.searchPlaceholder' | translate"
+    [emptyMessage]="'spareParts.catalog.noResults' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>
 
 <app-spare-part-form

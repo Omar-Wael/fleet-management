@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -49,6 +49,7 @@ const STATUS_LABEL_KEYS: Record<DisbursementStatus, string> = {
   imports: [DatePipe, DecimalPipe, FormsModule, TranslatePipe],
   templateUrl: './disbursement-detail-drawer.component.html',
   styleUrls: ['./disbursement-detail-drawer.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisbursementDetailDrawerComponent implements OnChanges {
   @Input() request: DisbursementGridRow | null = null;

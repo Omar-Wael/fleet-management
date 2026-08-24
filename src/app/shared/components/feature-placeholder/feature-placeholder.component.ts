@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -56,6 +56,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
       border-radius: 0.25rem;
     }
   `],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeaturePlaceholderComponent {
   @Input() title = '';

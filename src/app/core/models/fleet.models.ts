@@ -193,6 +193,7 @@ export interface Vehicle {
   inactive_since: string | null;
   created_at: string;
   updated_at: string;
+  color?: string | null;
   // delta columns
   odometer_working: boolean;
   odometer_unit: OdometerUnit;
@@ -201,6 +202,8 @@ export interface Vehicle {
   custodian_phone: string | null;
   clutch_kit_last_change_date: string | null;
   clutch_kit_last_change_odometer: number | null;
+  notes?: string | null;
+  engine_number?: string | null; // for import mapping only, not stored in DB
 }
 
 /** Vehicle joined with its most commonly-needed lookups, for grid rows. */
@@ -209,6 +212,7 @@ export interface VehicleWithLookups extends Vehicle {
   operating_departments?: OperatingDepartment;
   maintenance_workshops?: MaintenanceWorkshop;
   engines?: Engine; // current engine
+  engine_number?: string | null; // for import mapping only, not stored in DB
   garage_locations?: GarageLocation | null;
   color?: string | null;
   notes?: string | null;

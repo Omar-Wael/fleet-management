@@ -2,15 +2,9 @@
   <header class="panel-header">
     <div>
       <h2>{{ 'settings.departments.title' | translate }}</h2>
-      <p class="panel-subtitle">
-        {{ rows.length }} {{ 'settings.departments.countUnit' | translate }}
-      </p>
+      <p class="panel-subtitle">{{ total }} {{ 'settings.departments.countUnit' | translate }}</p>
     </div>
     <div class="panel-actions">
-      <label class="filter-checkbox">
-        <input type="checkbox" [(ngModel)]="activeOnly" (change)="load()" />
-        {{ 'common.activeOnly' | translate }}
-      </label>
       <input
         #importFileInput
         type="file"
@@ -27,7 +21,7 @@
         (click)="onImportButtonClick(importFileInput)"
         [disabled]="importing"
       >
-        {{ importing ? ('common.importing | translate'): ('common.import' | translate) }}
+        {{ (importing ? 'common.importing' : 'common.import') | translate }}
       </button>
       <button type="button" class="btn btn--ghost" (click)="exportExcel()">
         {{ 'common.exportExcel' | translate }}
@@ -38,121 +32,58 @@
     </div>
   </header>
 
+  @if (addingNew) {
+    <div class="add-row-form">
+      <input
+        type="text"
+        [(ngModel)]="newDraft.name_ar"
+        [placeholder]="'settings.departments.nameArabicPlaceholder' | translate"
+      />
+      <input
+        type="text"
+        [(ngModel)]="newDraft.name_en"
+        [placeholder]="'settings.departments.nameEnglishPlaceholder' | translate"
+      />
+      <button type="button" class="btn btn--ghost" (click)="cancelAdd()" [disabled]="saving">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn--primary" (click)="confirmAdd()" [disabled]="saving">
+        {{ (saving ? 'common.saving' : 'common.save') | translate }}
+      </button>
+    </div>
+  }
+
   @if (saveError) {
     <div class="state-message state-message--error">{{ saveError }}</div>
   }
 
-  @if (loading) {
-    <div class="state-message">{{ 'settings.departments.loading' | translate }}</div>
-  } @else if (loadError) {
-    <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'settings.departments.nameArabic' | translate }}</th>
-            <th>{{ 'settings.departments.nameEnglish' | translate }}</th>
-            <th>{{ 'common.status' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (addingNew) {
-            <tr class="editing-row">
-              <td>
-                <input
-                  type="text"
-                  [(ngModel)]="newDraft.name_ar"
-                  [placeholder]="'settings.departments.nameArabicPlaceholder' | translate"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  [(ngModel)]="newDraft.name_en"
-                  [placeholder]="'settings.departments.nameEnglishPlaceholder' | translate"
-                />
-              </td>
-              <td>—</td>
-              <td class="actions-cell">
-                <div class="actions-cell-btns">
-                  <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
-                    {{ 'common.save' | translate }}
-                  </button>
-                  <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
-                    {{ 'common.cancel' | translate }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-          @for (row of rows; track row.id) {
-            @if (row._draft) {
-              <tr class="editing-row">
-                <td><input type="text" [(ngModel)]="row._draft.name_ar" /></td>
-                <td><input type="text" [(ngModel)]="row._draft.name_en" /></td>
-                <td>{{ (row.is_active ? 'common.active' : 'common.inactive') | translate }}</td>
-                <td class="actions-cell">
-                  <div class="actions-cell-btns">
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="confirmEdit(row)"
-                      [disabled]="saving"
-                    >
-                      {{ 'common.save' | translate }}
-                    </button>
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="cancelEdit(row)"
-                      [disabled]="saving"
-                    >
-                      {{ 'common.cancel' | translate }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @else {
-              <tr>
-                <td>{{ row.name_ar }}</td>
-                <td>{{ row.name_en || '—' }}</td>
-                <td>
-                  @if (row.is_active) {
-                    <span class="badge badge--ok">{{ 'common.active' | translate }}</span>
-                  } @else {
-                    <span class="badge badge--warn">{{ 'common.inactive' | translate }}</span>
-                  }
-                </td>
-                <td class="actions-cell">
-                  <div class="actions-cell-btns">
-                    <button type="button" class="link-btn" (click)="startEdit(row)">
-                      {{ 'common.edit' | translate }}
-                    </button>
-                    <button
-                      type="button"
-                      class="link-btn link-btn--danger"
-                      (click)="toggleActive(row)"
-                    >
-                      {{
-                        (row.is_active
-                          ? 'settings.departments.deactivate'
-                          : 'settings.departments.reactivate'
-                        ) | translate
-                      }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          } @empty {
-            <tr>
-              <td colspan="4" class="empty-row">{{ 'settings.departments.empty' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+  @if (importError) {
+    <div class="state-message state-message--error">{{ importError }}</div>
+  }
+
+  @if (importSummary) {
+    <div class="state-message state-message--ok">
+      {{ importSummary.savedCount }} {{ 'settings.departments.importedUnit' | translate }}
+      @if (importSummary.unresolvedCount) {
+        {{ importSummary.unresolvedCount }} {{ 'settings.departments.skippedRows' | translate }}
+      }
     </div>
   }
+
+  @if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [pageSizeOptions]="[10, 25, 50]"
+    [pageSize]="10"
+    [emptyMessage]="'settings.departments.empty' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>

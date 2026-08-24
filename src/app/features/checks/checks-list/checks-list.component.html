@@ -2,10 +2,7 @@
   <header class="page-header">
     <div>
       <h1>{{ 'checks.title' | translate }}</h1>
-      <p class="page-subtitle">
-        {{ filteredChecks.length }}/{{ checks.length }}
-        {{ 'checks.shown' | translate }}
-      </p>
+      <p class="page-subtitle">{{ total }} {{ 'checks.shown' | translate }}</p>
     </div>
 
     <div class="page-actions">
@@ -21,67 +18,21 @@
     </div>
   </header>
 
-  <div class="filters">
-    <input
-      type="text"
-      class="filters-search"
-      [placeholder]="'checks.searchPlaceholder' | translate"
-      [(ngModel)]="searchTerm"
-    />
-    <label class="filter-checkbox">
-      <input type="checkbox" [(ngModel)]="pendingOnly" />
-      {{ 'checks.notYetDisbursed' | translate }}
-    </label>
-  </div>
-
-  @if (loading) {
-    <div class="state-message">{{ 'checks.loadingList' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'checks.checkNumber' | translate }}</th>
-            <th>{{ 'checks.recipient' | translate }}</th>
-            <th>{{ 'checks.amount' | translate }}</th>
-            <th>{{ 'checks.stage' | translate }}</th>
-            <th>{{ 'checks.vehicle' | translate }}</th>
-            <th>{{ 'common.status' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (c of filteredChecks; track c.id) {
-            <tr>
-              <td class="mono">{{ c.check_number || '—' }}</td>
-              <td>{{ c.recipient_name || '—' }}</td>
-              <td class="mono">{{ c.amount | number : '1.2-2' }}</td>
-              <td>{{ c.check_stage || '—' }}</td>
-              <td class="mono">{{ linkedVehiclePlate(c) || '—' }}</td>
-              <td>
-                @if (c.disbursed_at) {
-                  <span class="badge badge--ok">{{ 'checks.stepDisbursed' | translate }}</span>
-                } @else {
-                  <span class="badge badge--warn">{{ 'checks.pending' | translate }}</span>
-                }
-              </td>
-              <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openDetail(c)">
-                  {{ 'common.view' | translate }}
-                </button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7" class="empty-row">{{ 'checks.noResults' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
   }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [searchPlaceholder]="'checks.searchPlaceholder' | translate"
+    [emptyMessage]="'checks.noResults' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>
 
 <app-check-form

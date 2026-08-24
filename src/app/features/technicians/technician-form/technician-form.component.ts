@@ -5,8 +5,7 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TechniciansService, TechnicianGridRow } from '../../../core/services/technicians.service';
@@ -21,6 +20,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './technician-form.component.html',
   styleUrls: ['./technician-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TechnicianFormComponent implements OnInit, OnChanges {
   @Input() open = false;

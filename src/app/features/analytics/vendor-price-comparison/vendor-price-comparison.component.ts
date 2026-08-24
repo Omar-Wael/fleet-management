@@ -6,8 +6,7 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
-  ViewChild,
-} from '@angular/core';
+  ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import Chart from 'chart.js/auto';
 
 import { SparePartsService } from '../../../core/services/spare-parts.service';
@@ -37,6 +36,7 @@ const VENDOR_TYPE_LABEL_KEYS: Record<string, string> = {
   imports: [DecimalPipe, DatePipe, TranslatePipe],
   templateUrl: './vendor-price-comparison.component.html',
   styleUrls: ['./vendor-price-comparison.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VendorPriceComparisonComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('priceChartCanvas') priceChartCanvasRef?: ElementRef<HTMLCanvasElement>;

@@ -1,5 +1,10 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -34,14 +39,21 @@ import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pd
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
+
 @Component({
   selector: 'app-vehicles-list',
   standalone: true,
   imports: [
-    DecimalPipe,
     FormsModule,
     TranslatePipe,
     AlertBanner,
+    SharedDataTableComponent,
     VehicleFormComponent,
     VehicleProfileDrawerComponent,
   ],
@@ -49,7 +61,8 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   styleUrls: ['./vehicles-list.component.scss'],
 })
 export class VehiclesListComponent implements OnInit {
-  vehicles: VehicleWithLookups[] = [];
+  rows: VehicleWithLookups[] = [];
+  total = 0;
   loading = true;
   loadError: string | null = null;
 
@@ -59,15 +72,31 @@ export class VehiclesListComponent implements OnInit {
   departments: OperatingDepartment[] = [];
   workshops: MaintenanceWorkshop[] = [];
   vehicleTypes: VehicleType[] = [];
+  distinctMakes: string[] = [];
 
   readonly statusOptions = ['active', 'maintenance', 'out_of_service'];
 
-  // ---- filters (all client-side; dataset is single-user scale) ----
-  searchTerm = '';
-  departmentFilter = '';
-  workshopFilter = '';
-  statusFilter = '';
-  private alertPlateFilter: Set<string> | null = null;
+  columns: DataTableColumn<VehicleWithLookups>[] = [];
+  filters: DataTableFilter[] = [];
+
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: null,
+    filters: {
+      operating_department_id: '',
+      maintenance_workshop_id: '',
+      status: '',
+      vehicle_type_id: '',
+      make: '',
+      manufacture_year: '',
+      fuel_type: '',
+    },
+  };
+
+  /** Set when the grid is opened from the alert banner's "Review" link — restricts the grid to just those plate numbers via a hidden filter (not one of the dropdowns). */
+  private alertPlates: string[] | null = null;
 
   // ---- form / drawer state ----
   formOpen = false;
@@ -96,15 +125,11 @@ export class VehiclesListComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    this.loadAll();
-  }
-
-  loadAll(): void {
-    this.loading = true;
-    this.loadError = null;
+    this.buildColumns();
+    this.buildFilters();
+    this.loadVehicles(this.currentQuery);
 
     forkJoin({
-      vehicles: this.vehiclesService.list(),
       licensesDue: this.vehiclesService.getLicensesDueThisMonth(),
       maintenanceDue: this.vehiclesService.getMaintenanceDueThisMonth(),
       vehicleTypes: this.lookupsService.listVehicleTypes(),
@@ -112,21 +137,21 @@ export class VehiclesListComponent implements OnInit {
       workshops: this.lookupsService.listMaintenanceWorkshops(),
       engines: this.enginesService.list(),
     }).subscribe({
-      next: ({
-        vehicles,
-        licensesDue,
-        maintenanceDue,
-        vehicleTypes,
-        departments,
-        workshops,
-        engines,
-      }) => {
-        this.vehicles = vehicles;
+      next: ({ licensesDue, maintenanceDue, vehicleTypes, departments, workshops, engines }) => {
         this.licensesDue = licensesDue;
         this.maintenanceDue = maintenanceDue;
         this.departments = departments;
         this.workshops = workshops;
         this.vehicleTypes = vehicleTypes;
+
+        this.vehiclesService.listDistinctMakes().subscribe({
+          next: (makes) => {
+            this.distinctMakes = makes;
+            this.buildFilters();
+            this.cdr.markForCheck();
+          },
+          error: () => {},
+        });
 
         this.vehicleTypeIdByName = new Map();
         for (const t of vehicleTypes) {
@@ -140,6 +165,212 @@ export class VehiclesListComponent implements OnInit {
           engines.map((e) => [e.engine_serial_number.trim().toLowerCase(), e.id]),
         );
 
+        this.buildFilters();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private buildColumns(): void {
+    this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
+      {
+        key: 'plate_number',
+        header: this.i18n.t('vehicles.plateNumber'),
+        sortable: true,
+        // mono: true,
+        render: (v) => v.plate_number,
+      },
+      {
+        key: 'vehicle_type',
+        header: this.i18n.t('vehicles.vehicleType'),
+        render: (v) => v.vehicle_types?.name_ar || v.vehicle_types?.name_en || '—',
+      },
+      {
+        key: 'make',
+        header: this.i18n.t('vehicles.make'),
+        sortable: true,
+        render: (v) => v.make || '—',
+      },
+      { key: 'model', header: this.i18n.t('vehicles.model'), render: (v) => v.model || '—' },
+      {
+        key: 'year',
+        header: this.i18n.t('vehicles.manufactureYear'),
+        render: (v) => v.manufacture_year?.toString() || '—',
+      },
+      {
+        key: 'operating_dept',
+        header: this.i18n.t('vehicles.operatingDept'),
+        render: (v) => v.operating_departments?.name_ar || v.operating_departments?.name_en || '—',
+      },
+      {
+        key: 'fuel_type',
+        header: this.i18n.t('vehicles.fuelType'),
+        render: (v) => v.engines?.fuel_type || '—',
+      },
+      {
+        key: 'repair_dept',
+        header: this.i18n.t('vehicles.repairDept'),
+        render: (v) => v.maintenance_workshops?.workshop_type || '—',
+      },
+      {
+        key: 'odometer',
+        header: this.i18n.t('vehicles.odometerStatus'),
+        mono: true,
+        render: (v) => `${this.formatOdometer(v)} ${v.odometer_unit ?? ''}`.trim(),
+        badge: (v) =>
+          v.odometer_working
+            ? null
+            : { text: this.i18n.t('vehicles.odometerNotWorking'), variant: 'warn' },
+      },
+      { key: 'color', header: this.i18n.t('vehicles.color'), render: (v) => v.color || '—' },
+      {
+        key: 'chassis_number',
+        header: this.i18n.t('vehicles.chassisNumber'),
+        mono: true,
+        render: (v) => v.chassis_number || '—',
+      },
+      {
+        key: 'engine_number',
+        header: this.i18n.t('vehicles.engineNumber'),
+        mono: true,
+        render: (v) => v.engine_number || '—',
+      },
+      // {
+      //   key: 'engine_serial_number',
+      //   header: this.i18n.t('vehicles.engineSerialNumber'),
+      //   mono: true,
+      //   render: (v) => v.engines?.engine_serial_number || '—',
+      // },
+      {
+        key: 'notes',
+        header: this.i18n.t('common.notes'),
+        truncate: true,
+        render: (v) => v.notes || '—',
+      },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (v) => [
+          { label: this.i18n.t('common.view'), onClick: (v) => this.openProfile(v) },
+          { label: this.i18n.t('common.edit'), onClick: (v) => this.openEditForm(v) },
+          {
+            label: this.i18n.t('common.delete'),
+            onClick: (v) => this.deleteVehicle(v),
+            variant: 'danger',
+          },
+        ],
+      },
+    ];
+  }
+
+  private formatOdometer(v: VehicleWithLookups): string {
+    return v.odometer_km == null ? '—' : new Intl.NumberFormat().format(v.odometer_km);
+  }
+
+  private formatWorkshopType(type: string | null | undefined): string {
+    if (!type) return '—';
+    const key = `workshopType.${type}`;
+    const translated = this.i18n.t(key);
+    if (translated !== key) return translated;
+    return type
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+
+  private buildFilters(): void {
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 40 }, (_, i) => String(currentYear - i));
+    const fuelTypes = ['diesel', 'petrol', 'gasoline', 'electric', 'hybrid', 'cng', 'lpg'];
+
+    this.filters = [
+      {
+        key: 'operating_department_id',
+        label: this.i18n.t('vehicles.allDepartments'),
+        value: this.currentQuery.filters['operating_department_id'] ?? '',
+        options: this.departments.map((d) => ({
+          value: d.id,
+          label: d.name_ar || d.name_en || '',
+        })),
+      },
+      {
+        key: 'maintenance_workshop_id',
+        label: this.i18n.t('vehicles.allRepairDepts'),
+        value: this.currentQuery.filters['maintenance_workshop_id'] ?? '',
+        options: this.workshops.map((w) => ({
+          value: w.id,
+          label: `${w.name_ar || w.name_en} (${this.formatWorkshopType(w.workshop_type)})`,
+        })),
+      },
+      {
+        key: 'vehicle_type_id',
+        label: this.i18n.t('vehicles.allVehicleTypes'),
+        value: this.currentQuery.filters['vehicle_type_id'] ?? '',
+        options: this.vehicleTypes.map((vt) => ({
+          value: vt.id,
+          label: vt.name_ar || vt.name_en || '',
+        })),
+      },
+      {
+        key: 'make',
+        label: this.i18n.t('vehicles.allMakes'),
+        value: this.currentQuery.filters['make'] ?? '',
+        options: this.distinctMakes.map((m) => ({ value: m, label: m })),
+      },
+      {
+        key: 'manufacture_year',
+        label: this.i18n.t('vehicles.allYears'),
+        value: this.currentQuery.filters['manufacture_year'] ?? '',
+        options: years.map((y) => ({ value: y, label: y })),
+      },
+      {
+        key: 'fuel_type',
+        label: this.i18n.t('vehicles.allFuelTypes'),
+        value: this.currentQuery.filters['fuel_type'] ?? '',
+        options: fuelTypes.map((f) => {
+          const k = `vehicles.fuel.${f}`;
+          const tr = this.i18n.t(k);
+          return { value: f, label: tr !== k ? tr : f.charAt(0).toUpperCase() + f.slice(1) };
+        }),
+      },
+      {
+        key: 'status',
+        label: this.i18n.t('vehicles.allStatuses'),
+        value: this.currentQuery.filters['status'] ?? '',
+        options: this.statusOptions.map((s) => ({
+          value: s,
+          label: this.i18n.t(this.statusLabelKey(s)),
+        })),
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    this.currentQuery = {
+      ...query,
+      filters: {
+        ...query.filters,
+        alertPlates: this.alertPlates ? this.alertPlates.join(',') : '',
+      },
+    };
+    this.loadVehicles(this.currentQuery);
+  }
+
+  loadVehicles(query: DataTableQuery): void {
+    this.loading = true;
+    this.loadError = null;
+
+    this.vehiclesService.listPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -153,13 +384,7 @@ export class VehiclesListComponent implements OnInit {
   }
 
   private reloadVehiclesOnly(): void {
-    this.vehiclesService.list().subscribe({
-      next: (vehicles) => (this.vehicles = vehicles),
-      error: (err) => {
-        this.loadError =
-          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
-      },
-    });
+    this.loadVehicles(this.currentQuery);
   }
 
   statusLabelKey(value: string): string {
@@ -175,33 +400,8 @@ export class VehiclesListComponent implements OnInit {
     }
   }
 
-  get filteredVehicles(): VehicleWithLookups[] {
-    const term = this.searchTerm.trim().toLowerCase();
-
-    return this.vehicles.filter((v) => {
-      if (this.alertPlateFilter && !this.alertPlateFilter.has(v.plate_number)) return false;
-      if (this.departmentFilter && v.operating_department_id !== this.departmentFilter)
-        return false;
-      if (this.workshopFilter && v.maintenance_workshop_id !== this.workshopFilter) return false;
-      if (this.statusFilter && v.status !== this.statusFilter) return false;
-
-      if (!term) return true;
-      const haystack = [
-        v.plate_number,
-        v.chassis_number,
-        v.make,
-        v.model,
-        v.engines?.engine_serial_number,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
-  }
-
   get isAlertFilterActive(): boolean {
-    return this.alertPlateFilter !== null;
+    return this.alertPlates !== null;
   }
 
   // -------------------------------------------------------------
@@ -209,15 +409,32 @@ export class VehiclesListComponent implements OnInit {
   // -------------------------------------------------------------
 
   onViewLicenses(): void {
-    this.alertPlateFilter = new Set(this.licensesDue.map((l) => l.plate_number));
+    this.alertPlates = this.licensesDue.map((l) => l.plate_number);
+    this.currentQuery = {
+      ...this.currentQuery,
+      page: 1,
+      filters: { ...this.currentQuery.filters, alertPlates: this.alertPlates.join(',') },
+    };
+    this.loadVehicles(this.currentQuery);
   }
 
   onViewMaintenance(): void {
-    this.alertPlateFilter = new Set(this.maintenanceDue.map((m) => m.plate_number));
+    this.alertPlates = this.maintenanceDue.map((m) => m.plate_number);
+    this.currentQuery = {
+      ...this.currentQuery,
+      page: 1,
+      filters: { ...this.currentQuery.filters, alertPlates: this.alertPlates.join(',') },
+    };
+    this.loadVehicles(this.currentQuery);
   }
 
   clearAlertFilter(): void {
-    this.alertPlateFilter = null;
+    this.alertPlates = null;
+    this.currentQuery = {
+      ...this.currentQuery,
+      filters: { ...this.currentQuery.filters, alertPlates: '' },
+    };
+    this.loadVehicles(this.currentQuery);
   }
 
   // -------------------------------------------------------------
@@ -290,7 +507,8 @@ export class VehiclesListComponent implements OnInit {
     if (!file) return;
 
     this.pendingImportFile = file;
-    this.importWorkshopId = this.workshopFilter || this.workshops[0]?.id || '';
+    this.importWorkshopId =
+      this.currentQuery.filters['maintenance_workshop_id'] || this.workshops[0]?.id || '';
     this.importSummary = null;
     this.importError = null;
     this.importPickerOpen = true;
@@ -365,24 +583,38 @@ export class VehiclesListComponent implements OnInit {
   }
 
   // -------------------------------------------------------------
-  // Export
+  // Export — pulls every row matching the grid's current search/filters
+  // (not just the current page) via listAllMatching().
   // -------------------------------------------------------------
 
   exportExcel(): void {
-    exportToExcel(this.filteredVehicles, this.excelColumns(), 'vehicles-export');
+    this.vehiclesService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'vehicles-export'),
+      error: (err) => {
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.filteredVehicles,
-      this.pdfColumns(),
-      {
-        title: 'Vehicles Report',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.vehiclesService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Vehicles Report',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'vehicles-report',
+        ),
+      error: (err) => {
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'vehicles-report',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<VehicleWithLookups>[] {

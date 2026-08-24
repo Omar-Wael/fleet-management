@@ -5,8 +5,7 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -23,6 +22,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './overhaul-form.component.html',
   styleUrls: ['./overhaul-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverhaulFormComponent implements OnInit, OnChanges {
   @Input() open = false;

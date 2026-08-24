@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import { Invoice, InvoiceItem } from '../models/fleet.models';
 
 /** Row shape for the "Invoices" grid. */
@@ -30,6 +31,38 @@ export class InvoicesService {
     return fromSupabase<InvoiceGridRow[]>(
       this.client.from('invoices').select(INVOICE_SELECT).order('invoice_date', { ascending: false })
     );
+  }
+
+  /** Search matches invoice_no/invoice_source only (see maintenance.service.ts buildGridQuery for why the joined vendor name isn't included). */
+  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('invoices')
+      .select(INVOICE_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['vendor_id']) q = q.eq('vendor_id', query.filters['vendor_id']);
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.or(`invoice_no.ilike.%${escaped}%,invoice_source.ilike.%${escaped}%`);
+    }
+
+    const sortField = query.sort?.field ?? 'invoice_date';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : false;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to list() for the Invoices grid — drives SharedDataTableComponent. */
+  listPaged(query: DataTableQuery): Observable<PagedResult<InvoiceGridRow>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<InvoiceGridRow>(q);
+  }
+
+  /** Every row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF. */
+  listAllMatching(query: DataTableQuery): Observable<InvoiceGridRow[]> {
+    return fromSupabase<InvoiceGridRow[]>(this.buildGridQuery(query, false));
   }
 
   getById(invoiceId: string): Observable<InvoiceGridRow> {

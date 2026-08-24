@@ -1,5 +1,4 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { EngineFormComponent } from '../engine-form/engine-form.component';
@@ -18,20 +17,33 @@ import {
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+
 @Component({
   selector: 'app-engines-list',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, TranslatePipe, EngineFormComponent, EngineProfileDrawerComponent],
+  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, EngineFormComponent, EngineProfileDrawerComponent],
   templateUrl: './engines-list.component.html',
   styleUrls: ['./engines-list.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EnginesListComponent implements OnInit {
-  engines: EngineGridRow[] = [];
+  rows: EngineGridRow[] = [];
+  total = 0;
   loading = true;
   loadError: string | null = null;
 
-  searchTerm = '';
-  inStockOnly = false;
+  columns: DataTableColumn<EngineGridRow>[] = [];
+  filters: DataTableFilter[] = [];
+
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: null,
+    filters: { inStockOnly: '' },
+  };
 
   formOpen = false;
   editingEngine: EngineGridRow | null = null;
@@ -51,16 +63,88 @@ export class EnginesListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadEngines();
+    this.buildColumns();
+    this.buildFilters();
+    this.loadEngines(this.currentQuery);
   }
 
-  loadEngines(): void {
+  private buildColumns(): void {
+    this.columns = [
+      {
+        key: 'engine_serial_number',
+        header: this.i18n.t('engines.serialNumber'),
+        sortable: true,
+        mono: true,
+        render: (e) => e.engine_serial_number,
+      },
+      {
+        key: 'model_name',
+        header: this.i18n.t('engines.model'),
+        sortable: true,
+        render: (e) => e.model_name || '—',
+      },
+      { key: 'manufacturer', header: this.i18n.t('engines.manufacturer'), render: (e) => e.manufacturer || '—' },
+      { key: 'horsepower', header: this.i18n.t('engines.hp'), mono: true, render: (e) => (e.horsepower ?? '—') + '' },
+      {
+        key: 'cc',
+        header: this.i18n.t('engines.cc'),
+        mono: true,
+        render: (e) => (e.cc == null ? '—' : new Intl.NumberFormat().format(e.cc)),
+      },
+      { key: 'fuel_type', header: this.i18n.t('engines.fuelType'), render: (e) => e.fuel_type || '—' },
+      {
+        key: 'compatible_types',
+        header: this.i18n.t('engines.colCompatibleTypes'),
+        truncate: true,
+        render: (e) => this.compatibleTypeNames(e),
+      },
+      {
+        key: 'status',
+        header: this.i18n.t('common.status'),
+        render: () => '',
+        badge: (e) =>
+          e.is_in_stock
+            ? { text: this.i18n.t('engines.statusInStock'), variant: 'ok' }
+            : { text: this.i18n.t('engines.statusFitted'), variant: 'warn' },
+      },
+      { key: 'notes', header: this.i18n.t('common.notes'), truncate: true, render: (e) => e.notes || '—' },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (e) => [
+          { label: this.i18n.t('common.view'), onClick: (e) => this.openProfile(e) },
+          { label: this.i18n.t('common.edit'), onClick: (e) => this.openEditForm(e) },
+          { label: this.i18n.t('common.delete'), onClick: (e) => this.deleteEngine(e), variant: 'danger' },
+        ],
+      },
+    ];
+  }
+
+  private buildFilters(): void {
+    this.filters = [
+      {
+        key: 'inStockOnly',
+        label: this.i18n.t('shared.dataTable.allFilter'),
+        value: this.currentQuery.filters['inStockOnly'] ?? '',
+        options: [{ value: 'true', label: this.i18n.t('engines.inStockOnly') }],
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    this.currentQuery = query;
+    this.loadEngines(query);
+  }
+
+  loadEngines(query: DataTableQuery): void {
     this.loading = true;
     this.loadError = null;
 
-    this.enginesService.list(this.inStockOnly).subscribe({
-      next: (engines) => {
-        this.engines = engines;
+    this.enginesService.listPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -69,19 +153,6 @@ export class EnginesListComponent implements OnInit {
         this.loading = false;
         this.cdr.markForCheck();
       },
-    });
-  }
-
-  get filteredEngines(): EngineGridRow[] {
-    const term = this.searchTerm.trim().toLowerCase();
-    if (!term) return this.engines;
-
-    return this.engines.filter((e) => {
-      const haystack = [e.engine_serial_number, e.model_name, e.manufacturer, e.fuel_type]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
     });
   }
 
@@ -112,7 +183,7 @@ export class EnginesListComponent implements OnInit {
 
   onFormSaved(): void {
     this.formOpen = false;
-    this.loadEngines();
+    this.loadEngines(this.currentQuery);
   }
 
   // -------------------------------------------------------------
@@ -139,7 +210,7 @@ export class EnginesListComponent implements OnInit {
     if (!confirmed) return;
 
     this.enginesService.delete(engine.id).subscribe({
-      next: () => this.loadEngines(),
+      next: () => this.loadEngines(this.currentQuery),
       error: (err) => {
         this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
@@ -179,7 +250,7 @@ export class EnginesListComponent implements OnInit {
           next: (saved) => {
             this.importing = false;
             this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
-            this.loadEngines();
+            this.loadEngines(this.currentQuery);
           },
           error: (err) => {
             this.importing = false;
@@ -206,24 +277,36 @@ export class EnginesListComponent implements OnInit {
   }
 
   // -------------------------------------------------------------
-  // Export
+  // Export — pulls every row matching the grid's current search/filters
+  // (not just the current page) via listAllMatching().
   // -------------------------------------------------------------
 
   exportExcel(): void {
-    exportToExcel(this.filteredEngines, this.excelColumns(), 'engines-export');
+    this.enginesService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'engines-export'),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.filteredEngines,
-      this.pdfColumns(),
-      {
-        title: 'Engines Report',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.enginesService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Engines Report',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'engines-report',
+        ),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'engines-report',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<EngineGridRow>[] {

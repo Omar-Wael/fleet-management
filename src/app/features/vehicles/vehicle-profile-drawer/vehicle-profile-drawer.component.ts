@@ -1,5 +1,15 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { DatePipe, DecimalPipe, CommonModule } from '@angular/common';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+
+} from '@angular/core';
 
 import { VehicleFullProfile, VehiclesService } from '../../../core/services/vehicles.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -8,9 +18,10 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-vehicle-profile-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TranslatePipe],
+  imports: [DatePipe, DecimalPipe, TranslatePipe, CommonModule],
   templateUrl: './vehicle-profile-drawer.component.html',
   styleUrls: ['./vehicle-profile-drawer.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VehicleProfileDrawerComponent implements OnChanges {
   @Input() vehicleId: string | null = null;
@@ -33,6 +44,7 @@ export class VehicleProfileDrawerComponent implements OnChanges {
       this.open && this.vehicleId && (changes['vehicleId'] || (changes['open'] && this.open));
     if (shouldLoad) {
       this.loadProfile();
+      this.cdr.markForCheck(); // OnPush: ensure async loadProfile() updates re-render
     }
   }
 
@@ -49,7 +61,8 @@ export class VehicleProfileDrawerComponent implements OnChanges {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
         this.cdr.markForCheck();
       },

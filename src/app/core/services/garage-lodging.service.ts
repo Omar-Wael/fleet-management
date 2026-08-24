@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import { GarageLodging, VGarageVisitsThisYear } from '../models/fleet.models';
 
 /** Row shape for the "Garage Lodging" grid. */
@@ -29,6 +30,39 @@ export class GarageLodgingService {
     let query = this.client.from('garage_lodgings').select(GARAGE_LODGING_SELECT);
     if (vehicleId) query = query.eq('vehicle_id', vehicleId);
     return fromSupabase<GarageLodgingGridRow[]>(query.order('entry_date', { ascending: false }));
+  }
+
+  /** Search matches reason only (see maintenance.service.ts buildGridQuery for why joined plate/garage-name aren't included). */
+  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('garage_lodgings')
+      .select(GARAGE_LODGING_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['vehicle_id']) q = q.eq('vehicle_id', query.filters['vehicle_id']);
+    if (query.filters['openOnly'] === 'true') q = q.is('exit_date', null);
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.ilike('reason', `%${escaped}%`);
+    }
+
+    const sortField = query.sort?.field ?? 'entry_date';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : false;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to list() for the Garage Lodging grid — drives SharedDataTableComponent. */
+  listPaged(query: DataTableQuery): Observable<PagedResult<GarageLodgingGridRow>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<GarageLodgingGridRow>(q);
+  }
+
+  /** Every row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF. */
+  listAllMatching(query: DataTableQuery): Observable<GarageLodgingGridRow[]> {
+    return fromSupabase<GarageLodgingGridRow[]>(this.buildGridQuery(query, false));
   }
 
   /**

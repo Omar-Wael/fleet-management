@@ -1,5 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { InvoiceFormComponent } from '../invoice-form/invoice-form.component';
@@ -20,26 +20,34 @@ import {
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+
 @Component({
   selector: 'app-invoices-list',
   standalone: true,
-  imports: [
-    DatePipe,
-    DecimalPipe,
-    FormsModule,
-    TranslatePipe,
-    InvoiceFormComponent,
-    InvoiceDetailDrawerComponent,
-  ],
+  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, InvoiceFormComponent, InvoiceDetailDrawerComponent],
   templateUrl: './invoices-list.component.html',
   styleUrls: ['./invoices-list.component.scss'],
+  providers: [DatePipe],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InvoicesListComponent implements OnInit {
-  invoices: InvoiceGridRow[] = [];
+  rows: InvoiceGridRow[] = [];
+  total = 0;
   loading = true;
   loadError: string | null = null;
 
-  searchTerm = '';
+  columns: DataTableColumn<InvoiceGridRow>[] = [];
+  filters: DataTableFilter[] = [];
+
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: { field: 'invoice_date', dir: 'desc' },
+    filters: { vendor_id: '' },
+  };
 
   formOpen = false;
   editingInvoice: InvoiceGridRow | null = null;
@@ -56,25 +64,95 @@ export class InvoicesListComponent implements OnInit {
   constructor(
     private invoicesService: InvoicesService,
     private sparePartsService: SparePartsService,
+    private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
   ) {}
 
   ngOnInit(): void {
+    this.buildColumns();
+    this.loadInvoices(this.currentQuery);
+
     this.sparePartsService.listVendors().subscribe({
-      next: (vendors) => (this.vendors = vendors),
+      next: (vendors) => {
+        this.vendors = vendors;
+        this.filters = [
+          {
+            key: 'vendor_id',
+            label: this.i18n.t('shared.dataTable.allFilter'),
+            value: this.currentQuery.filters['vendor_id'] ?? '',
+            options: vendors.map((v) => ({ value: v.id, label: v.name })),
+          },
+        ];
+        this.cdr.markForCheck();
+      },
       error: () => {},
     });
-    this.loadInvoices();
   }
 
-  loadInvoices(): void {
+  private buildColumns(): void {
+    this.columns = [
+      {
+        key: 'invoice_no',
+        header: this.i18n.t('invoices.invoiceNo'),
+        sortable: true,
+        mono: true,
+        render: (inv) => inv.invoice_no,
+      },
+      { key: 'vendor', header: this.i18n.t('invoices.vendor'), render: (inv) => inv.external_workshops?.name || '—' },
+      {
+        key: 'invoice_date',
+        header: this.i18n.t('common.date'),
+        sortable: true,
+        render: (inv) => this.datePipe.transform(inv.invoice_date, 'mediumDate') || '—',
+      },
+      {
+        key: 'subtotal_value',
+        header: this.i18n.t('invoices.subtotal'),
+        mono: true,
+        render: (inv) => (inv.subtotal_value == null ? '—' : inv.subtotal_value.toFixed(2)),
+      },
+      {
+        key: 'tax_value',
+        header: this.i18n.t('invoices.tax'),
+        mono: true,
+        render: (inv) => (inv.tax_value == null ? '—' : inv.tax_value.toFixed(2)),
+      },
+      {
+        key: 'discount_value',
+        header: this.i18n.t('invoices.discount'),
+        mono: true,
+        render: (inv) => (inv.discount_value == null ? '—' : inv.discount_value.toFixed(2)),
+      },
+      {
+        key: 'total_value',
+        header: this.i18n.t('invoices.total'),
+        sortable: true,
+        mono: true,
+        render: (inv) => (inv.total_value == null ? '—' : inv.total_value.toFixed(2)),
+      },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (inv) => [{ label: this.i18n.t('common.view'), onClick: (inv) => this.openDetail(inv) }],
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    this.currentQuery = query;
+    this.loadInvoices(query);
+  }
+
+  loadInvoices(query: DataTableQuery): void {
     this.loading = true;
     this.loadError = null;
 
-    this.invoicesService.list().subscribe({
-      next: (invoices) => {
-        this.invoices = invoices;
+    this.invoicesService.listPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -86,17 +164,8 @@ export class InvoicesListComponent implements OnInit {
     });
   }
 
-  get filteredInvoices(): InvoiceGridRow[] {
-    const term = this.searchTerm.trim().toLowerCase();
-    if (!term) return this.invoices;
-
-    return this.invoices.filter((inv) => {
-      const haystack = [inv.invoice_no, inv.external_workshops?.name, inv.invoice_source]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
+  private reloadInvoicesOnly(): void {
+    this.loadInvoices(this.currentQuery);
   }
 
   openCreateForm(): void {
@@ -110,7 +179,7 @@ export class InvoicesListComponent implements OnInit {
 
   onFormSaved(): void {
     this.formOpen = false;
-    this.loadInvoices();
+    this.reloadInvoicesOnly();
   }
 
   openDetail(invoice: InvoiceGridRow): void {
@@ -130,7 +199,7 @@ export class InvoicesListComponent implements OnInit {
 
   onDrawerDeleted(): void {
     this.drawerOpen = false;
-    this.loadInvoices();
+    this.reloadInvoicesOnly();
   }
 
   // -------------------------------------------------------------
@@ -168,7 +237,7 @@ export class InvoicesListComponent implements OnInit {
           next: (saved) => {
             this.importing = false;
             this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
-            this.loadInvoices();
+            this.reloadInvoicesOnly();
           },
           error: (err) => {
             this.importing = false;
@@ -194,21 +263,37 @@ export class InvoicesListComponent implements OnInit {
     });
   }
 
+  // -------------------------------------------------------------
+  // Export — pulls every row matching the grid's current search/filters
+  // (not just the current page) via listAllMatching().
+  // -------------------------------------------------------------
+
   exportExcel(): void {
-    exportToExcel(this.filteredInvoices, this.excelColumns(), 'invoices-export');
+    this.invoicesService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'invoices-export'),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.filteredInvoices,
-      this.pdfColumns(),
-      {
-        title: 'Invoices Report',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.invoicesService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Invoices Report',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'invoices-report',
+        ),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'invoices-report',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<InvoiceGridRow>[] {

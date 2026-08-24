@@ -2,10 +2,7 @@
   <header class="page-header">
     <div>
       <h1>{{ 'engines.title' | translate }}</h1>
-      <p class="page-subtitle">
-        {{ filteredEngines.length }}/{{ engines.length }}
-        {{ 'engines.shown' | translate }}
-      </p>
+      <p class="page-subtitle">{{ total }} {{ 'engines.shown' | translate }}</p>
     </div>
 
     <div class="page-actions">
@@ -40,75 +37,21 @@
     </div>
   }
 
-
-  <div class="filters">
-    <input
-      type="text"
-      class="filters-search"
-      [placeholder]="'engines.searchPlaceholder' | translate"
-      [(ngModel)]="searchTerm"
-    />
-
-    <label class="filter-checkbox">
-      <input type="checkbox" [(ngModel)]="inStockOnly" (change)="loadEngines()" />
-      {{ 'engines.inStockOnly' | translate }}
-    </label>
-  </div>
-
-  @if (loading) {
-    <div class="state-message">{{ 'engines.loadingList' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'engines.serialNumber' | translate }}</th>
-            <th>{{ 'engines.model' | translate }}</th>
-            <th>{{ 'engines.manufacturer' | translate }}</th>
-            <th>{{ 'engines.hp' | translate }}</th>
-            <th>{{ 'engines.cc' | translate }}</th>
-            <th>{{ 'engines.fuelType' | translate }}</th>
-            <th>{{ 'engines.colCompatibleTypes' | translate }}</th>
-            <th>{{ 'common.status' | translate }}</th>
-            <th>{{ 'common.notes' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (e of filteredEngines; track e.id) {
-            <tr>
-              <td class="mono">{{ e.engine_serial_number }}</td>
-              <td>{{ e.model_name || '—' }}</td>
-              <td>{{ e.manufacturer || '—' }}</td>
-              <td class="mono">{{ e.horsepower ?? '—' }}</td>
-              <td class="mono">{{ e.cc | number }}</td>
-              <td>{{ e.fuel_type || '—' }}</td>
-              <td class="compat-cell" [title]="compatibleTypeNames(e)">{{ compatibleTypeNames(e) }}</td>
-              <td>
-                @if (e.is_in_stock) {
-                  <span class="badge badge--ok">{{ 'engines.statusInStock' | translate }}</span>
-                } @else {
-                  <span class="badge badge--warn">{{ 'engines.statusFitted' | translate }}</span>
-                }
-              </td>
-              <td class="notes-cell" [title]="e.notes || ''">{{ e.notes || '—' }}</td>
-              <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openProfile(e)">{{ 'common.view' | translate }}</button>
-                <button type="button" class="link-btn" (click)="openEditForm(e)">{{ 'common.edit' | translate }}</button>
-                <button type="button" class="link-btn link-btn--danger" (click)="deleteEngine(e)">{{ 'common.delete' | translate }}</button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="10" class="empty-row">{{ 'engines.noResults' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
   }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [searchPlaceholder]="'engines.searchPlaceholder' | translate"
+    [emptyMessage]="'engines.noResults' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>
 
 <app-engine-form

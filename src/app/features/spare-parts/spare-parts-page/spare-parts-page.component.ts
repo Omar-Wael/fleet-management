@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy} from '@angular/core';
 
 import { SparePartsCatalogComponent } from '../spare-parts-catalog/spare-parts-catalog.component';
 import { DisbursementRequestsComponent } from '../disbursement-requests/disbursement-requests.component';
@@ -20,6 +20,7 @@ type SparePartsTab = 'catalog' | 'disbursements' | 'price-intelligence' | 'vendo
   ],
   templateUrl: './spare-parts-page.component.html',
   styleUrls: ['./spare-parts-page.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SparePartsPageComponent {
   activeTab: SparePartsTab = 'catalog';

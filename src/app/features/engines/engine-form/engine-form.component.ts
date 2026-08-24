@@ -5,8 +5,7 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, Observable, of } from 'rxjs';
 
@@ -23,6 +22,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './engine-form.component.html',
   styleUrls: ['./engine-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EngineFormComponent implements OnInit, OnChanges {
   @Input() open = false;

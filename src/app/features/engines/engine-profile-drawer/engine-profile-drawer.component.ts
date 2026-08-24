@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { EnginesService } from '../../../core/services/engines.service';
@@ -20,6 +20,7 @@ interface EngineProfile {
   imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './engine-profile-drawer.component.html',
   styleUrls: ['./engine-profile-drawer.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EngineProfileDrawerComponent implements OnChanges {
   @Input() engine: Engine | null = null;

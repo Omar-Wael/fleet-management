@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { SparePartsService } from '../../../core/services/spare-parts.service';
@@ -12,6 +12,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './spare-part-form.component.html',
   styleUrls: ['./spare-part-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SparePartFormComponent implements OnChanges {
   @Input() open = false;

@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import {
   Engine,
   GarageLodging,
@@ -69,6 +70,87 @@ export class VehiclesService {
     }
 
     return fromSupabase<VehicleWithLookups[]>(query.order('plate_number', { ascending: true }));
+  }
+
+  /**
+   * Shared filter/search/sort builder for the Vehicles grid, used by both
+   * listPaged() (grid rows) and listAllMatching() (full-result export).
+   * `filters['alertPlates']` is a special, non-dropdown filter: a
+   * comma-joined list of plate numbers set when the grid is opened from
+   * the alert banner's "Review" link (licenses/maintenance due this
+   * month), restricting the grid to just those vehicles.
+   */
+  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('vehicles')
+      .select(VEHICLE_LOOKUP_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['operating_department_id']) {
+      q = q.eq('operating_department_id', query.filters['operating_department_id']);
+    }
+    if (query.filters['maintenance_workshop_id']) {
+      q = q.eq('maintenance_workshop_id', query.filters['maintenance_workshop_id']);
+    }
+    if (query.filters['status']) {
+      q = q.eq('status', query.filters['status']);
+    }
+    if (query.filters['vehicle_type_id']) {
+      q = q.eq('vehicle_type_id', query.filters['vehicle_type_id']);
+    }
+    if (query.filters['make']) {
+      q = q.ilike('make', query.filters['make']);
+    }
+    if (query.filters['manufacture_year']) {
+      q = q.eq('manufacture_year', Number(query.filters['manufacture_year']));
+    }
+    if (query.filters['fuel_type']) {
+      q = q.eq('engines.fuel_type', query.filters['fuel_type']);
+    }
+    if (query.filters['alertPlates']) {
+      q = q.in('plate_number', query.filters['alertPlates'].split(','));
+    }
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.or(
+        `plate_number.ilike.%${escaped}%,chassis_number.ilike.%${escaped}%,make.ilike.%${escaped}%,model.ilike.%${escaped}%`,
+      );
+    }
+
+    const sortField = query.sort?.field ?? 'plate_number';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : true;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+
+  /** Distinct non-empty make values for filter dropdowns. */
+  listDistinctMakes(): Observable<string[]> {
+    return fromSupabase<{ make: string | null }[]>(
+      this.client.from('vehicles').select('make').not('make', 'is', null).order('make'),
+    ).pipe(
+      map((rows) => {
+        const set = new Set<string>();
+        for (const r of rows) {
+          const m = (r.make || '').trim();
+          if (m) set.add(m);
+        }
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+      }),
+    );
+  }
+
+  /** Server-side counterpart to list() for the Vehicles grid — drives SharedDataTableComponent. */
+  listPaged(query: DataTableQuery): Observable<PagedResult<VehicleWithLookups>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<VehicleWithLookups>(q);
+  }
+
+  /** Every row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF so exports aren't clipped to one page. */
+  listAllMatching(query: DataTableQuery): Observable<VehicleWithLookups[]> {
+    return fromSupabase<VehicleWithLookups[]>(this.buildGridQuery(query, false));
   }
 
   getById(vehicleId: string): Observable<VehicleWithLookups> {

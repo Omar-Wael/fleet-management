@@ -1,31 +1,34 @@
 <div class="tab-nav">
-  <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'vehicle-types'" (click)="setTab('vehicle-types')">
+  <a
+    routerLink="vehicle-types"
+    routerLinkActive="tab-btn--active"
+    class="tab-btn"
+  >
     {{ 'settings.vehicleTypes.title' | translate }}
-  </button>
-  <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'departments'" (click)="setTab('departments')">
+  </a>
+  <a
+    routerLink="departments"
+    routerLinkActive="tab-btn--active"
+    class="tab-btn"
+  >
     {{ 'settings.departments.title' | translate }}
-  </button>
-  <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'workshops'" (click)="setTab('workshops')">
+  </a>
+  <a
+    routerLink="workshops"
+    routerLinkActive="tab-btn--active"
+    class="tab-btn"
+  >
     {{ 'settings.workshops.title' | translate }}
-  </button>
-  <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'garage-locations'" (click)="setTab('garage-locations')">
+  </a>
+  <a
+    routerLink="garage-locations"
+    routerLinkActive="tab-btn--active"
+    class="tab-btn"
+  >
     {{ 'settings.garageLocations.title' | translate }}
-  </button>
+  </a>
 </div>
 
 <div class="tab-content">
-  @switch (activeTab) {
-    @case ('vehicle-types') {
-      <app-vehicle-types-tab></app-vehicle-types-tab>
-    }
-    @case ('departments') {
-      <app-departments-tab></app-departments-tab>
-    }
-    @case ('workshops') {
-      <app-workshops-tab></app-workshops-tab>
-    }
-    @case ('garage-locations') {
-      <app-garage-locations-tab></app-garage-locations-tab>
-    }
-  }
+  <router-outlet></router-outlet>
 </div>

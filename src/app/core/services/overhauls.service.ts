@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import { Overhaul, OverhaulStage, OverhaulStageName } from '../models/fleet.models';
 
 /** Row shape for the "Overhauls" grid. */
@@ -33,6 +34,39 @@ export class OverhaulsService {
     return fromSupabase<OverhaulGridRow[]>(
       this.client.from('overhauls').select(OVERHAUL_SELECT).order('entry_date', { ascending: false })
     );
+  }
+
+  /** Search matches scope_description only (see maintenance.service.ts buildGridQuery for why joined columns like vehicle plate / machine shop name aren't included). */
+  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('overhauls')
+      .select(OVERHAUL_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['vehicle_id']) q = q.eq('vehicle_id', query.filters['vehicle_id']);
+    if (query.filters['openOnly'] === 'true') q = q.neq('current_stage', 'completed');
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.ilike('scope_description', `%${escaped}%`);
+    }
+
+    const sortField = query.sort?.field ?? 'entry_date';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : false;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to list() for the Overhauls grid — drives SharedDataTableComponent. */
+  listPaged(query: DataTableQuery): Observable<PagedResult<OverhaulGridRow>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<OverhaulGridRow>(q);
+  }
+
+  /** Every row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF. */
+  listAllMatching(query: DataTableQuery): Observable<OverhaulGridRow[]> {
+    return fromSupabase<OverhaulGridRow[]>(this.buildGridQuery(query, false));
   }
 
   getById(overhaulId: string): Observable<OverhaulGridRow> {

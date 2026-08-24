@@ -6,8 +6,7 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -45,6 +44,7 @@ interface DraftItem {
   imports: [ReactiveFormsModule, FormsModule, SlicePipe, TranslatePipe],
   templateUrl: './disbursement-form.component.html',
   styleUrls: ['./disbursement-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisbursementFormComponent implements OnInit, OnChanges {
   @Input() open = false;

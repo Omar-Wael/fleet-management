@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -25,6 +25,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule, TranslatePipe],
   templateUrl: './price-intelligence.component.html',
   styleUrls: ['./price-intelligence.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PriceIntelligenceComponent implements OnInit {
   parts: SparePart[] = [];

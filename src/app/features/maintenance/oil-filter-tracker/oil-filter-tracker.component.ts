@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -26,6 +26,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule, TranslatePipe],
   templateUrl: './oil-filter-tracker.component.html',
   styleUrls: ['./oil-filter-tracker.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OilFilterTrackerComponent implements OnInit {
   vehicles: VehicleWithLookups[] = [];

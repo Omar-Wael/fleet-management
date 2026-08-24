@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import { Engine, EngineSwap, SparePart, VehicleType } from '../models/fleet.models';
 
 /** Row shape for the "Engines" catalog grid. */
@@ -32,6 +33,39 @@ export class EnginesService {
     let query = this.client.from('engines').select(ENGINE_GRID_SELECT);
     if (inStockOnly) query = query.eq('is_in_stock', true);
     return fromSupabase<EngineGridRow[]>(query.order('model_name', { ascending: true }));
+  }
+
+  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('engines')
+      .select(ENGINE_GRID_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['inStockOnly'] === 'true') q = q.eq('is_in_stock', true);
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.or(
+        `engine_serial_number.ilike.%${escaped}%,model_name.ilike.%${escaped}%,manufacturer.ilike.%${escaped}%,fuel_type.ilike.%${escaped}%`,
+      );
+    }
+
+    const sortField = query.sort?.field ?? 'model_name';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : true;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to list() for the Engines grid — drives SharedDataTableComponent. */
+  listPaged(query: DataTableQuery): Observable<PagedResult<EngineGridRow>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<EngineGridRow>(q);
+  }
+
+  /** Every row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF. */
+  listAllMatching(query: DataTableQuery): Observable<EngineGridRow[]> {
+    return fromSupabase<EngineGridRow[]>(this.buildGridQuery(query, false));
   }
 
   getById(engineId: string): Observable<EngineGridRow> {

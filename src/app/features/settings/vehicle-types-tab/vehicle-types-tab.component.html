@@ -3,7 +3,7 @@
     <div>
       <h2>{{ 'settings.vehicleTypes.title' | translate }}</h2>
       <p class="panel-subtitle">
-        {{ rows.length }} {{ 'settings.vehicleTypes.countUnit' | translate }}
+        {{ total }} {{ 'settings.vehicleTypes.countUnit' | translate }}
       </p>
     </div>
     <div class="page-actions">
@@ -23,7 +23,7 @@
         (click)="onImportButtonClick(importFileInput)"
         [disabled]="importing"
       >
-        {{ importing ? ('common.importing | translate'): ('common.import' | translate) }}
+        {{ (importing ? 'common.importing' : 'common.import') | translate }}
       </button>
       <button type="button" class="btn btn--ghost" (click)="exportExcel()">
         {{ 'common.exportExcel' | translate }}
@@ -34,109 +34,62 @@
     </div>
   </header>
 
+  @if (addingNew) {
+    <div class="add-row-form">
+      <input
+        type="text"
+        [(ngModel)]="newDraft.name_ar"
+        [placeholder]="'settings.vehicleTypes.nameArabicPlaceholder' | translate"
+      />
+      <input
+        type="text"
+        [(ngModel)]="newDraft.name_en"
+        [placeholder]="'settings.vehicleTypes.nameEnglishPlaceholder' | translate"
+      />
+      <input
+        type="text"
+        [(ngModel)]="newDraft.default_workshop_type"
+        [placeholder]="'settings.vehicleTypes.workshopTypePlaceholder' | translate"
+      />
+      <button type="button" class="btn btn--ghost" (click)="cancelAdd()" [disabled]="saving">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn--primary" (click)="confirmAdd()" [disabled]="saving">
+        {{ (saving ? 'common.saving' : 'common.save') | translate }}
+      </button>
+    </div>
+  }
+
   @if (saveError) {
     <div class="state-message state-message--error">{{ saveError }}</div>
   }
 
-  @if (loading) {
-    <div class="state-message">{{ 'settings.vehicleTypes.loading' | translate }}</div>
-  } @else if (loadError) {
-    <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'settings.vehicleTypes.nameArabic' | translate }}</th>
-            <th>{{ 'settings.vehicleTypes.nameEnglish' | translate }}</th>
-            <th>{{ 'settings.vehicleTypes.colDefaultWorkshopType' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (addingNew) {
-            <tr class="editing-row">
-              <td>
-                <input
-                  type="text"
-                  [(ngModel)]="newDraft.name_ar"
-                  [placeholder]="'settings.vehicleTypes.nameArabicPlaceholder' | translate"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  [(ngModel)]="newDraft.name_en"
-                  [placeholder]="'settings.vehicleTypes.nameEnglishPlaceholder' | translate"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  [(ngModel)]="newDraft.default_workshop_type"
-                  [placeholder]="'settings.vehicleTypes.workshopTypePlaceholder' | translate"
-                />
-              </td>
-              <td class="actions-cell">
-                <div class="actions-cell-btns">
-                  <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
-                    {{ 'common.save' | translate }}
-                  </button>
-                  <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
-                    {{ 'common.cancel' | translate }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-          @for (row of rows; track row.id) {
-            @if (row._draft) {
-              <tr class="editing-row">
-                <td><input type="text" [(ngModel)]="row._draft.name_ar" /></td>
-                <td><input type="text" [(ngModel)]="row._draft.name_en" /></td>
-                <td><input type="text" [(ngModel)]="row._draft.default_workshop_type" /></td>
-                <td class="actions-cell">
-                  <div class="actions-cell-btns">
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="confirmEdit(row)"
-                      [disabled]="saving"
-                    >
-                      {{ 'common.save' | translate }}
-                    </button>
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="cancelEdit(row)"
-                      [disabled]="saving"
-                    >
-                      {{ 'common.cancel' | translate }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @else {
-              <tr>
-                <td>{{ row.name_ar }}</td>
-                <td>{{ row.name_en || '—' }}</td>
-                <td>{{ row.default_workshop_type }}</td>
-                <td class="actions-cell">
-                  <div class="actions-cell-btns">
-                    <button type="button" class="link-btn" (click)="startEdit(row)">
-                      {{ 'common.edit' | translate }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          } @empty {
-            <tr>
-              <td colspan="4" class="empty-row">{{ 'settings.vehicleTypes.empty' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+  @if (importError) {
+    <div class="state-message state-message--error">{{ importError }}</div>
+  }
+
+  @if (importSummary) {
+    <div class="state-message state-message--ok">
+      {{ importSummary.savedCount }} {{ 'settings.vehicleTypes.importedUnit' | translate }}
+      @if (importSummary.unresolvedCount) {
+        {{ importSummary.unresolvedCount }} {{ 'settings.vehicleTypes.skippedRows' | translate }}
+      }
     </div>
   }
+
+  @if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [pageSizeOptions]="[10, 25, 50]"
+    [pageSize]="10"
+    [emptyMessage]="'settings.vehicleTypes.empty' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>

@@ -5,7 +5,8 @@
   padding: 0.5rem;
 }
 
-.engines-page {
+.technicians-page {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -58,35 +59,9 @@
   color: var(--fleet-ink, #1f2430);
 }
 
-.filters {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.filters-search {
-  flex: 1;
-  min-width: 260px;
-  font-family: inherit;
-  font-size: 0.875rem;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--fleet-line, #dfe3e8);
-  border-radius: 0.375rem;
-  background: #fff;
-  color: var(--fleet-ink, #1f2430);
-}
-
-.filter-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.875rem;
-  color: var(--fleet-ink-muted, #5b6472);
-
-  input {
-    width: auto;
-  }
+.btn--ghost:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .state-message {
@@ -102,48 +77,9 @@
   color: var(--fleet-rust, #c4432b);
 }
 
-.grid-wrapper {
-  overflow-x: auto;
-  border: 1px solid var(--fleet-line, #dfe3e8);
-  border-radius: 0.5rem;
-  background: var(--fleet-surface, #fff);
-}
-
-.grid-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8125rem;
-  white-space: nowrap;
-
-  th,
-  td {
-    padding: 0.625rem 0.875rem;
-    border-bottom: 1px solid var(--fleet-line, #dfe3e8);
-    text-align: start;
-  }
-
-  th {
-    background: var(--fleet-bg, #f4f6f8);
-    color: var(--fleet-ink-muted, #5b6472);
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    position: sticky;
-    top: 0;
-  }
-
-  tbody tr:hover {
-    background: rgba(30, 58, 95, 0.03);
-  }
-
-  .compat-cell,
-  .notes-cell {
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.state-message--ok {
+  background: rgba(47, 158, 88, 0.1);
+  color: var(--fleet-green, #2f9e58);
 }
 
 .mono {
@@ -171,6 +107,7 @@
 .actions-cell-btns {
   display: flex;
   gap: 0.625rem;
+  justify-content: flex-end;
 }
 
 .link-btn {
@@ -186,36 +123,4 @@
 
 .link-btn--danger {
   color: var(--fleet-rust, #c4432b);
-}
-
-.empty-row {
-  text-align: center;
-  color: var(--fleet-ink-muted, #5b6472);
-  padding: 2rem 0;
-}
-
-.technicians-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.state-message--ok {
-  background: rgba(47, 158, 88, 0.1);
-  color: var(--fleet-green, #2f9e58);
-}
-
-.filters select {
-  font-family: inherit;
-  font-size: 0.875rem;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--fleet-line, #dfe3e8);
-  border-radius: 0.375rem;
-  background: #fff;
-  color: var(--fleet-ink, #1f2430);
-}
-
-.btn--ghost:disabled {
-  opacity: 0.6;
-  cursor: default;
 }

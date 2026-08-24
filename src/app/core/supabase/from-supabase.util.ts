@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 interface PostgrestLikeResponse {
   data: any;
   error: { message: string; details?: string; hint?: string; code?: string } | null;
+  count?: number | null;
 }
 
 /**
@@ -32,6 +33,37 @@ export function fromSupabase<T>(query: PromiseLike<PostgrestLikeResponse>): Obse
         throw new Error(res.error.message);
       }
       return res.data as T;
+    }),
+  );
+}
+
+/** Result shape for a server-side paged grid query — rows for the current page plus the total row count across all pages (post-filter, pre-pagination). */
+export interface PagedResult<T> {
+  rows: T[];
+  total: number;
+}
+
+/**
+ * Same unwrapping as fromSupabase(), but also surfaces the `count` that
+ * comes back from a query built with `.select(cols, { count: 'exact' })`.
+ * Used by every grid's `listPaged()` method to drive
+ * SharedDataTableComponent's server-side pagination (it needs the total
+ * row count to render page numbers / "X of Y" without fetching all rows).
+ *
+ * Usage:
+ *   fromSupabasePaged<Vehicle>(
+ *     supabase.from('vehicles').select('*', { count: 'exact' }).range(from, to)
+ *   )
+ */
+export function fromSupabasePaged<T>(
+  query: PromiseLike<PostgrestLikeResponse>,
+): Observable<PagedResult<T>> {
+  return from(Promise.resolve(query)).pipe(
+    map((res) => {
+      if (res.error) {
+        throw new Error(res.error.message);
+      }
+      return { rows: (res.data ?? []) as T[], total: res.count ?? 0 };
     }),
   );
 }

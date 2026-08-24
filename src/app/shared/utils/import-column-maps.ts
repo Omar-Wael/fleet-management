@@ -106,6 +106,9 @@ export function resolveVehicleForeignKeys(
       manufacture_year: row.manufacture_year,
       chassis_number: row.chassis_number,
       odometer_km: row.odometer_km ?? 0,
+      color: row.color ?? null,
+      notes: row.notes ?? null,
+      engine_number: row.engine_serial_number ?? null,
     });
   }
 

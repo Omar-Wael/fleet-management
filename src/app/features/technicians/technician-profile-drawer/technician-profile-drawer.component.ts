@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { TechniciansService, TechnicianGridRow } from '../../../core/services/technicians.service';
@@ -20,6 +20,7 @@ interface TechnicianProfile {
   imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './technician-profile-drawer.component.html',
   styleUrls: ['./technician-profile-drawer.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TechnicianProfileDrawerComponent implements OnChanges {
   @Input() technician: TechnicianGridRow | null = null;

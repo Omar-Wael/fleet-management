@@ -5,8 +5,7 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
-  ViewChild,
-} from '@angular/core';
+  ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import Chart from 'chart.js/auto';
 import { forkJoin } from 'rxjs';
@@ -42,6 +41,7 @@ const CHART_COLORS = ['#1e3a5f', '#2f547f', '#5b7ca0', '#8fa8c2', '#c3d2e0'];
   imports: [CommonModule, AlertBanner, FleetGauge, TranslatePipe],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
   // The canvas is always present in the template (not behind *ngIf), so

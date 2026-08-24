@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy} from '@angular/core';
 
 import {
   FinancialTransactionsService,
@@ -27,6 +27,7 @@ const APPROVAL_STEPS: { key: ApprovalStep; labelKey: string }[] = [
   imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './check-detail-drawer.component.html',
   styleUrls: ['./check-detail-drawer.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckDetailDrawerComponent {
   @Input() check: CheckGridRow | null = null;

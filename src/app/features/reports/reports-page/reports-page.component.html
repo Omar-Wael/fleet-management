@@ -1,0 +1,105 @@
+<div class="reports-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'reports.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'reports.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  <section class="report-controls">
+    <label>
+      <span>{{ 'reports.reportType' | translate }}</span>
+      <select [(ngModel)]="kind">
+        @for (k of kinds; track k.value) {
+          <option [value]="k.value">{{ k.labelKey | translate }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      <span>{{ 'reports.groupByLabel' | translate }}</span>
+      <select [(ngModel)]="groupBy">
+        @for (g of groupBys; track g.value) {
+          <option [value]="g.value">{{ g.labelKey | translate }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" [(ngModel)]="allTime" />
+      <span>{{ 'reports.allTime' | translate }}</span>
+    </label>
+
+    @if (!allTime) {
+      <label>
+        <span>{{ 'reports.from' | translate }}</span>
+        <input type="date" [(ngModel)]="periodFrom" />
+      </label>
+      <label>
+        <span>{{ 'reports.to' | translate }}</span>
+        <input type="date" [(ngModel)]="periodTo" />
+      </label>
+    }
+
+    <button type="button" class="btn btn--primary" (click)="runReport()" [disabled]="loading">
+      {{ loading ? ('common.loading' | translate) : ('reports.generate' | translate) }}
+    </button>
+  </section>
+
+  @if (error) {
+    <p class="state-message state-message--error">{{ error }}</p>
+  }
+
+  @if (rows.length) {
+    <div class="report-actions">
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">
+        {{ 'reports.exportExcel' | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">
+        {{ 'reports.exportPdf' | translate }}
+      </button>
+    </div>
+
+    <h2 class="report-title">{{ title }}</h2>
+
+    @if (chart) {
+      <div class="chart">
+        @for (label of chart.labels; track label; let i = $index) {
+          <div class="chart-row">
+            <span class="chart-label" [title]="label">{{ label }}</span>
+            <div class="chart-bar-track">
+              <div
+                class="chart-bar"
+                [style.width.%]="(chart.values[i] / chartMax()) * 100"
+              ></div>
+            </div>
+            <span class="chart-value">{{ chart.values[i] }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            @for (c of columns; track c.key) {
+              <th>{{ c.header }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track $index) {
+            <tr>
+              @for (c of columns; track c.key) {
+                <td>{{ row[c.key] ?? '—' }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (!loading && !error) {
+    <p class="state-message">{{ 'reports.emptyHint' | translate }}</p>
+  }
+</div>

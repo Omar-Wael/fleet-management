@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy} from '@angular/core';
 
 import { CostByVehicleComponent } from '../cost-by-vehicle/cost-by-vehicle.component';
 import { CostByDepartmentComponent } from '../cost-by-department/cost-by-department.component';
@@ -20,6 +20,7 @@ type AnalyticsTab = 'vehicle-cost' | 'department-cost' | 'technician-kpis' | 've
   ],
   templateUrl: './analytics-page.component.html',
   styleUrls: ['./analytics-page.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyticsPageComponent {
   activeTab: AnalyticsTab = 'vehicle-cost';

@@ -7,6 +7,7 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import Chart from 'chart.js/auto';
@@ -30,6 +31,7 @@ const CHART_TOP_N = 15;
   imports: [DecimalPipe, FormsModule, TranslatePipe],
   templateUrl: './cost-by-vehicle.component.html',
   styleUrls: ['./cost-by-vehicle.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CostByVehicleComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('costChartCanvas') costChartCanvasRef?: ElementRef<HTMLCanvasElement>;
@@ -78,7 +80,8 @@ export class CostByVehicleComponent implements OnInit, AfterViewInit, OnDestroy 
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('analytics.failedLoadVehicleCost');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('analytics.failedLoadVehicleCost');
         this.loading = false;
         this.cdr.markForCheck();
       },

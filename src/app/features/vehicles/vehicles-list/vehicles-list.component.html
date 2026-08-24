@@ -2,10 +2,7 @@
   <header class="page-header">
     <div>
       <h1>{{ 'vehicles.title' | translate }}</h1>
-      <p class="page-subtitle">
-        {{ filteredVehicles.length }}/{{ vehicles.length }}
-        {{ 'vehicles.shown' | translate }}
-      </p>
+      <p class="page-subtitle">{{ total }} {{ 'vehicles.shown' | translate }}</p>
     </div>
 
     <div class="page-actions">
@@ -17,7 +14,7 @@
         (change)="onFileSelected($event)"
       />
       <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">{{ 'common.downloadTemplate' | translate }}</button>
-      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">{{ importing ? ('common.importing | translate'): ('common.import' | translate) }}</button>
+      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">{{ (importing ? 'common.importing' : 'common.import') | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
       <button type="button" class="btn btn--primary" (click)="openAddForm()">{{ 'vehicles.addButton' | translate }}</button>
@@ -40,9 +37,7 @@
 
   @if (importPickerOpen) {
     <div class="import-picker">
-      <p>
-        {{ 'vehicles.importPickerHint' | translate }}
-      </p>
+      <p>{{ 'vehicles.importPickerHint' | translate }}</p>
       <div class="import-picker-row">
         <select [(ngModel)]="importWorkshopId">
           <option value="" disabled>{{ 'vehicles.selectWorkshop' | translate }}</option>
@@ -72,97 +67,21 @@
     </div>
   }
 
-  <div class="filters">
-    <input
-      type="text"
-      class="filters-search"
-      [placeholder]="'vehicles.searchPlaceholder' | translate"
-      [(ngModel)]="searchTerm"
-    />
-
-    <select [(ngModel)]="departmentFilter">
-      <option value="">{{ 'vehicles.allDepartments' | translate }}</option>
-      @for (d of departments; track d.id) {
-        <option [value]="d.id">{{ d.name_en || d.name_ar }}</option>
-      }
-    </select>
-
-    <select [(ngModel)]="workshopFilter">
-      <option value="">{{ 'vehicles.allRepairDepts' | translate }}</option>
-      @for (w of workshops; track w.id) {
-        <option [value]="w.id">{{ w.name_en || w.name_ar }} ({{ w.workshop_type }})</option>
-      }
-    </select>
-
-    <select [(ngModel)]="statusFilter">
-      <option value="">{{ 'vehicles.allStatuses' | translate }}</option>
-      @for (s of statusOptions; track s) {
-        <option [value]="s">{{ statusLabelKey(s) | translate }}</option>
-      }
-    </select>
-  </div>
-
-  @if (loading) {
-    <div class="state-message">{{ 'vehicles.loadingList' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>{{ 'vehicles.plateNumber' | translate }}</th>
-            <th>{{ 'vehicles.vehicleType' | translate }}</th>
-            <th>{{ 'vehicles.make' | translate }}</th>
-            <th>{{ 'vehicles.model' | translate }}</th>
-            <th>{{ 'vehicles.operatingDept' | translate }}</th>
-            <th>{{ 'vehicles.fuelType' | translate }}</th>
-            <th>{{ 'vehicles.repairDept' | translate }}</th>
-            <th>{{ 'vehicles.odometerStatus' | translate }}</th>
-            <th>{{ 'vehicles.color' | translate }}</th>
-            <th>{{ 'vehicles.chassisNumber' | translate }}</th>
-            <th>{{ 'vehicles.engineNumber' | translate }}</th>
-            <th>{{ 'common.notes' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (v of filteredVehicles; track v.id; let i = $index) {
-            <tr>
-              <td class="mono">{{ i + 1 }}</td>
-              <td class="mono">{{ v.plate_number }}</td>
-              <td>{{ v.vehicle_types?.name_en || v.vehicle_types?.name_ar || '—' }}</td>
-              <td>{{ v.make || '—' }}</td>
-              <td>{{ v.model || '—' }}</td>
-              <td>{{ v.operating_departments?.name_en || v.operating_departments?.name_ar || '—' }}</td>
-              <td>{{ v.engines?.fuel_type || '—' }}</td>
-              <td>{{ v.maintenance_workshops?.workshop_type || '—' }}</td>
-              <td>
-                <span class="mono">{{ v.odometer_km | number }} {{ v.odometer_unit }}</span>
-                @if (!v.odometer_working) {
-                  <span class="badge badge--warn">{{ 'vehicles.odometerNotWorking' | translate }}</span>
-                }
-              </td>
-              <td>{{ v.color || '—' }}</td>
-              <td class="mono">{{ v.chassis_number || '—' }}</td>
-              <td class="mono">{{ v.engines?.engine_serial_number || '—' }}</td>
-              <td class="notes-cell" [title]="v.notes || ''">{{ v.notes || '—' }}</td>
-              <td class="actions-cell">
-                <button type="button" class="link-btn" (click)="openProfile(v)">{{ 'common.view' | translate }}</button>
-                <button type="button" class="link-btn" (click)="openEditForm(v)">{{ 'common.edit' | translate }}</button>
-                <button type="button" class="link-btn link-btn--danger" (click)="deleteVehicle(v)">{{ 'common.delete' | translate }}</button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="14" class="empty-row">{{ 'vehicles.noResults' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
   }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [searchPlaceholder]="'vehicles.searchPlaceholder' | translate"
+    [emptyMessage]="'vehicles.noResults' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>
 
 <app-vehicle-form

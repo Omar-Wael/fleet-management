@@ -2,122 +2,58 @@
   <header class="panel-header">
     <div>
       <h2>{{ 'settings.garageLocations.title' | translate }}</h2>
-      <p class="panel-subtitle">{{ rows.length }} {{ 'settings.garageLocations.countUnit' | translate }}</p>
+      <p class="panel-subtitle">{{ total }} {{ 'settings.garageLocations.countUnit' | translate }}</p>
     </div>
     <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
       {{ 'settings.garageLocations.addButton' | translate }}
     </button>
   </header>
 
+  @if (addingNew) {
+    <div class="add-row-form">
+      <input
+        type="text"
+        [(ngModel)]="newDraft.garage_name"
+        [placeholder]="'settings.garageLocations.colGarageName' | translate"
+      />
+      <app-searchable-select
+        [options]="workshopOptions"
+        [(ngModel)]="newDraft.workshop_id"
+        [placeholder]="'common.none' | translate"
+      ></app-searchable-select>
+      <input
+        type="text"
+        [(ngModel)]="newDraft.zone_label"
+        [placeholder]="'settings.garageLocations.zoneLabelPlaceholder' | translate"
+      />
+      <input type="text" [(ngModel)]="newDraft.notes" [placeholder]="'common.notes' | translate" />
+      <button type="button" class="btn btn--ghost" (click)="cancelAdd()" [disabled]="saving">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn--primary" (click)="confirmAdd()" [disabled]="saving">
+        {{ (saving ? 'common.saving' : 'common.save') | translate }}
+      </button>
+    </div>
+  }
+
   @if (saveError) {
     <div class="state-message state-message--error">{{ saveError }}</div>
   }
 
-  @if (loading) {
-    <div class="state-message">{{ 'settings.garageLocations.loading' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'settings.garageLocations.colGarageName' | translate }}</th>
-            <th>{{ 'settings.garageLocations.colWorkshop' | translate }}</th>
-            <th>{{ 'settings.garageLocations.colZoneLabel' | translate }}</th>
-            <th>{{ 'common.notes' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (addingNew) {
-            <tr class="editing-row">
-              <td><input type="text" [(ngModel)]="newDraft.garage_name" /></td>
-              <td>
-                <select [(ngModel)]="newDraft.workshop_id">
-                  <option [ngValue]="null">{{ 'common.none' | translate }}</option>
-                  @for (w of workshops; track w.id) {
-                    <option [ngValue]="w.id">{{ w.name_en || w.name_ar }}</option>
-                  }
-                </select>
-              </td>
-              <td>
-                <input
-                  type="text"
-                  [(ngModel)]="newDraft.zone_label"
-                  [placeholder]="'settings.garageLocations.zoneLabelPlaceholder' | translate"
-                />
-              </td>
-              <td><input type="text" [(ngModel)]="newDraft.notes" /></td>
-              <td class="actions-cell">
-                <div class="actions-cell-btns">
-                  <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
-                    {{ 'common.save' | translate }}
-                  </button>
-                  <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
-                    {{ 'common.cancel' | translate }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-          @for (row of rows; track row.id) {
-            @if (row._draft) {
-              <tr class="editing-row">
-                <td><input type="text" [(ngModel)]="row._draft.garage_name" /></td>
-                <td>
-                  <select [(ngModel)]="row._draft.workshop_id">
-                    <option [ngValue]="null">{{ 'common.none' | translate }}</option>
-                    @for (w of workshops; track w.id) {
-                      <option [ngValue]="w.id">{{ w.name_en || w.name_ar }}</option>
-                    }
-                  </select>
-                </td>
-                <td><input type="text" [(ngModel)]="row._draft.zone_label" /></td>
-                <td><input type="text" [(ngModel)]="row._draft.notes" /></td>
-                <td class="actions-cell">
-                  <div class="actions-cell-btns">
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="confirmEdit(row)"
-                      [disabled]="saving"
-                    >
-                      {{ 'common.save' | translate }}
-                    </button>
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="cancelEdit(row)"
-                      [disabled]="saving"
-                    >
-                      {{ 'common.cancel' | translate }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @else {
-              <tr>
-                <td>{{ row.garage_name }}</td>
-                <td>{{ workshopName(row.workshop_id) }}</td>
-                <td>{{ row.zone_label }}</td>
-                <td>{{ row.notes || '—' }}</td>
-                <td class="actions-cell">
-                  <div class="actions-cell-btns">
-                    <button type="button" class="link-btn" (click)="startEdit(row)">
-                      {{ 'common.edit' | translate }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          } @empty {
-            <tr>
-              <td colspan="5" class="empty-row">{{ 'settings.garageLocations.empty' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
   }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [pageSizeOptions]="[10, 25, 50]"
+    [pageSize]="10"
+    [emptyMessage]="'settings.garageLocations.empty' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>

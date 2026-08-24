@@ -12,6 +12,7 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'nav.engines': { en: 'Engines', ar: 'المحركات' },
   'nav.technicians': { en: 'Technicians', ar: 'الفنيون' },
   'nav.analytics': { en: 'Analytics', ar: 'التحليلات' },
+  'nav.reports': { en: 'Reports', ar: 'التقارير' },
   'nav.settings': { en: 'Settings', ar: 'الإعدادات' },
   'nav.langToggle': { en: 'العربية', ar: 'English' },
 };

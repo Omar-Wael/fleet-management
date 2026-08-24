@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 
 import { InvoicesService, InvoiceGridRow } from '../../../core/services/invoices.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -11,6 +11,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './invoice-detail-drawer.component.html',
   styleUrls: ['./invoice-detail-drawer.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InvoiceDetailDrawerComponent implements OnChanges {
   @Input() invoice: InvoiceGridRow | null = null;

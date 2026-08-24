@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy} from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslationService } from './core/i18n/translation.service';
 import { TranslatePipe } from './core/i18n/translate.pipe';
@@ -13,6 +13,7 @@ interface NavItem {
   imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './app.html',
   styleUrl: './app.scss',
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   constructor(readonly i18n: TranslationService) {}
@@ -29,6 +30,7 @@ export class App {
     { path: 'engines', labelKey: 'nav.engines' },
     { path: 'technicians', labelKey: 'nav.technicians' },
     { path: 'analytics', labelKey: 'nav.analytics' },
+    { path: 'reports', labelKey: 'nav.reports' },
     { path: 'settings', labelKey: 'nav.settings' },
   ];
 }

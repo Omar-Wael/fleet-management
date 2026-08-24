@@ -1,0 +1,347 @@
+// min-width: 0 is the actual fix for "the table grows the whole page
+// wider than the viewport": this host element is a flex ITEM inside
+// most pages' `.xxx-page { display: flex; flex-direction: column }`
+// wrapper. Flex items default to `min-width: auto`, which means their
+// minimum size is their *content's* natural (unwrapped) width — not the
+// parent's available width. A wide table's intrinsic content size then
+// becomes a hard floor the whole flex column can't shrink below, so the
+// entire page grows to fit it instead of the overflow staying contained
+// in .dt-scroll below. Setting min-width: 0 here removes that floor and
+// lets .dt-scroll's own overflow-x: auto do its job.
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  font-family: var(--fleet-font-body, 'IBM Plex Sans', sans-serif);
+  color: var(--fleet-ink, #1f2430);
+}
+
+.dt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+// ---- toolbar: search + filters + projected buttons ----
+
+.dt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dt-search {
+  // flex: 1 1 240px;
+  // min-width: 200px;
+  flex-grow: 1;
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--fleet-line, #dfe3e8);
+  border-radius: 0.375rem;
+  background: #fff;
+  color: var(--fleet-ink, #1f2430);
+}
+
+.dt-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  flex-grow: 1;
+}
+
+// app-searchable-select handles its own border/padding/font styling
+// internally (see searchable-select.component.scss) — these just size
+// and position the host element within the toolbar/pagination bar.
+.dt-filter-select {
+  min-width: 160px;
+  flex: 0 1 200px;
+}
+
+.dt-page-size-select {
+  border: 1px solid var(--fleet-line, #dfe3e8);
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  background: #fff;
+  color: var(--fleet-ink, #1f2430);
+}
+
+.dt-toolbar-projected,
+.dt-toolbar-actions {
+  display: contents;
+}
+
+// ---- scroll wrapper: this is what keeps the table from ever exceeding
+// the page width. The wrapper is bounded by the flex column above it
+// (now that :host/.dt can actually shrink — see the min-width note at
+// the top of this file), and any overflow from a wide table scrolls
+// horizontally *inside* it instead of pushing the page layout wider. ----
+
+.dt-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1px solid var(--fleet-line, #dfe3e8);
+  border-radius: 0.5rem;
+  background: var(--fleet-surface, #fff);
+}
+
+.dt-table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+
+  th,
+  td {
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid var(--fleet-line, #dfe3e8);
+    text-align: start;
+  }
+
+  th {
+    background: var(--fleet-bg, #f4f6f8);
+    color: var(--fleet-ink-muted, #5b6472);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover td {
+    background: rgba(30, 58, 95, 0.03);
+  }
+}
+
+.dt-col-align-center {
+  text-align: center;
+}
+
+.dt-col-align-end {
+  text-align: end;
+}
+
+.dt-col-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.dt-th-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+// Fixed width + centered so toggling between ▴/▾ never shifts the
+// header's layout (a secondary contributor to "sorting makes the table
+// wider" — worth pinning down even though :host's min-width: 0 is the
+// real fix for the page-width overflow itself).
+.dt-sort-icon {
+  display: inline-block;
+  width: 0.7em;
+  text-align: center;
+  font-size: 0.65rem;
+  opacity: 0.35;
+}
+
+.dt-sort-icon--active {
+  opacity: 1;
+  color: var(--fleet-primary, #1e3a5f);
+}
+
+// ---- sticky actions column: pinned to the trailing edge of the table
+// while the rest of the row scrolls underneath it. `inset-inline-end`
+// (rather than `right`) means this pins to the correct side automatically
+// in both LTR and RTL layouts without any extra direction handling. ----
+
+.dt-col-sticky {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 1;
+  box-shadow: -6px 0 6px -6px rgba(15, 23, 42, 0.12);
+}
+
+[dir='rtl'] .dt-col-sticky {
+  box-shadow: 6px 0 6px -6px rgba(15, 23, 42, 0.12);
+}
+
+th.dt-col-sticky {
+  background: var(--fleet-bg, #f4f6f8);
+  z-index: 2;
+}
+
+td.dt-col-sticky {
+  background: var(--fleet-surface, #fff);
+}
+
+tbody tr:hover td.dt-col-sticky {
+  background: #f7f9fb; // solid (not the translucent hover tint) so it stays opaque over scrolled content
+}
+
+// ---- cell content: text + badges ----
+
+.dt-cell-text {
+  vertical-align: middle;
+}
+
+.dt-cell-text--truncate {
+  display: inline-block;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.dt-badge {
+  display: inline-block;
+  margin-inline-start: 0.4rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dt-badge--ok {
+  background: rgba(47, 158, 88, 0.12);
+  color: var(--fleet-green, #2f9e58);
+}
+
+.dt-badge--warn {
+  background: rgba(242, 169, 59, 0.15);
+  color: #8a5c10;
+}
+
+.dt-badge--danger {
+  background: rgba(196, 67, 43, 0.12);
+  color: var(--fleet-rust, #c4432b);
+}
+
+.dt-badge--neutral {
+  background: var(--fleet-bg, #f4f6f8);
+  color: var(--fleet-ink-muted, #5b6472);
+}
+
+// ---- row actions (Edit / Delete / View / etc.) ----
+
+.dt-actions-btns {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.dt-link-btn {
+  border: none;
+  background: none;
+  color: var(--fleet-primary, #1e3a5f);
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.dt-link-btn--danger {
+  color: var(--fleet-rust, #c4432b);
+}
+
+// ---- inline-edit cells (Settings lookup tables) ----
+
+.dt-edit-input {
+  width: 100%;
+  min-width: 120px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--fleet-line, #dfe3e8);
+  border-radius: 0.25rem;
+  background: #fff;
+  color: var(--fleet-ink, #1f2430);
+}
+
+// app-searchable-select's own :host already sets width: 100% and its own
+// font-size/padding — this just gives it the same minimum width as
+// .dt-edit-input above so dropdown editable cells don't collapse
+// narrower than text-input editable cells in the same row.
+.dt-edit-select {
+  min-width: 160px;
+}
+
+// ---- state rows (loading / error / empty) ----
+
+.dt-state {
+  text-align: center;
+  color: var(--fleet-ink-muted, #5b6472);
+  padding: 2rem 0;
+  white-space: normal;
+}
+
+.dt-state--error {
+  color: var(--fleet-rust, #c4432b);
+}
+
+.mono {
+  font-family: var(--fleet-font-mono, 'IBM Plex Mono', monospace);
+}
+
+// ---- pagination footer ----
+
+.dt-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--fleet-ink-muted, #5b6472);
+}
+
+.dt-page-size {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dt-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.dt-page-btn {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--fleet-line, #dfe3e8);
+  background: #fff;
+  color: var(--fleet-ink, #1f2430);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+.dt-page-current {
+  white-space: nowrap;
+}

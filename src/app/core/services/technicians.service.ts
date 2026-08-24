@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import { RepairBounce, Technician, VTechnicianKpiRollup } from '../models/fleet.models';
 
 /** Row shape for the Technicians grid — joins the workshop name in so the list doesn't need a per-row lookup. */
@@ -30,6 +31,52 @@ export class TechniciansService {
     let query = this.client.from('technicians').select(TECHNICIAN_GRID_SELECT);
     if (activeOnly) query = query.eq('is_active', true);
     return fromSupabase<TechnicianGridRow[]>(query.order('full_name', { ascending: true }));
+  }
+
+  /**
+   * Shared filter/search/sort builder for the Technicians grid — applies
+   * everything except pagination, so both listPaged() (grid rows) and
+   * listAllMatching() (full-result export, ignoring the current page) stay
+   * in sync with the same filter rules.
+   */
+  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('technicians')
+      .select(TECHNICIAN_GRID_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['status'] === 'active') q = q.eq('is_active', true);
+    if (query.filters['status'] === 'inactive') q = q.eq('is_active', false);
+    if (query.filters['workshop_id']) q = q.eq('workshop_id', query.filters['workshop_id']);
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.or(
+        `full_name.ilike.%${escaped}%,national_id.ilike.%${escaped}%,specialty.ilike.%${escaped}%,phone.ilike.%${escaped}%`,
+      );
+    }
+
+    const sortField = query.sort?.field ?? 'full_name';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : true;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /**
+   * Server-side counterpart to list() for the Technicians grid — drives
+   * SharedDataTableComponent. Search matches full_name/national_id/
+   * specialty/phone; `filters['workshop_id']` and `filters['activeOnly']`
+   * map to the same two controls the old client-side grid had.
+   */
+  listPaged(query: DataTableQuery): Observable<PagedResult<TechnicianGridRow>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<TechnicianGridRow>(q);
+  }
+
+  /** Every row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF so exports aren't clipped to one page. */
+  listAllMatching(query: DataTableQuery): Observable<TechnicianGridRow[]> {
+    return fromSupabase<TechnicianGridRow[]>(this.buildGridQuery(query, false));
   }
 
   create(technician: Partial<Technician>): Observable<Technician> {

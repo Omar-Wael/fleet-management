@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
-import { fromSupabase } from '../supabase/from-supabase.util';
+import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
+import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
 import { MaintenanceCategory, OilAndFilterChange, WorkOrder } from '../models/fleet.models';
 
 /** Row shape for the "Maintenance" grid. */
@@ -35,6 +36,47 @@ export class MaintenanceService {
     let query = this.client.from('work_orders').select(WORK_ORDER_GRID_SELECT);
     if (vehicleId) query = query.eq('vehicle_id', vehicleId);
     return fromSupabase<WorkOrderGridRow[]>(query.order('opened_at', { ascending: false }));
+  }
+
+  /**
+   * Shared filter/search/sort builder for the Work Orders grid, used by
+   * both listPaged() and listAllMatching(). Search only matches
+   * description/maintenance_type (columns on work_orders itself) — not
+   * the joined vehicle's plate_number, since PostgREST can't reliably
+   * `ilike` an embedded/joined column without forcing that embed to an
+   * inner join (which would silently drop work orders whose vehicle
+   * lookup fails). Use the vehicle filter dropdown to narrow by plate.
+   */
+  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    let q = this.client
+      .from('work_orders')
+      .select(WORK_ORDER_GRID_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (query.filters['vehicle_id']) q = q.eq('vehicle_id', query.filters['vehicle_id']);
+    if (query.filters['openOnly'] === 'true') q = q.is('closed_at', null);
+
+    const term = query.search.trim();
+    if (term) {
+      const escaped = term.replace(/[%,]/g, '');
+      q = q.or(`description.ilike.%${escaped}%,maintenance_type.ilike.%${escaped}%`);
+    }
+
+    const sortField = query.sort?.field ?? 'opened_at';
+    const sortAscending = query.sort ? query.sort.dir === 'asc' : false;
+    return q.order(sortField, { ascending: sortAscending });
+  }
+
+  /** Server-side counterpart to list() for the Work Orders grid — drives SharedDataTableComponent. */
+  listPaged(query: DataTableQuery): Observable<PagedResult<WorkOrderGridRow>> {
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
+    const q = this.buildGridQuery(query, true).range(from, to);
+    return fromSupabasePaged<WorkOrderGridRow>(q);
+  }
+
+  /** Every row matching the grid's current search/filters, unpaginated — used for Export Excel/PDF. */
+  listAllMatching(query: DataTableQuery): Observable<WorkOrderGridRow[]> {
+    return fromSupabase<WorkOrderGridRow[]>(this.buildGridQuery(query, false));
   }
 
   create(workOrder: {

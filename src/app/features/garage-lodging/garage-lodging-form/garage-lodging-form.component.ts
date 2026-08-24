@@ -5,8 +5,7 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges,
-} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -27,6 +26,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './garage-lodging-form.component.html',
   styleUrls: ['./garage-lodging-form.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GarageLodgingFormComponent implements OnInit, OnChanges {
   @Input() open = false;

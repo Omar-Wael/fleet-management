@@ -1,5 +1,4 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { CheckFormComponent } from '../check-form/check-form.component';
@@ -14,20 +13,33 @@ import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pd
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+
 @Component({
   selector: 'app-checks-list',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, TranslatePipe, CheckFormComponent, CheckDetailDrawerComponent],
+  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, CheckFormComponent, CheckDetailDrawerComponent],
   templateUrl: './checks-list.component.html',
   styleUrls: ['./checks-list.component.scss'],
+changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecksListComponent implements OnInit {
-  checks: CheckGridRow[] = [];
+  rows: CheckGridRow[] = [];
+  total = 0;
   loading = true;
   loadError: string | null = null;
 
-  searchTerm = '';
-  pendingOnly = false;
+  columns: DataTableColumn<CheckGridRow>[] = [];
+  filters: DataTableFilter[] = [];
+
+  private currentQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: { field: 'created_at', dir: 'desc' },
+    filters: { pendingOnly: '' },
+  };
 
   formOpen = false;
 
@@ -41,16 +53,71 @@ export class ChecksListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadChecks();
+    this.buildColumns();
+    this.buildFilters();
+    this.loadChecks(this.currentQuery);
   }
 
-  loadChecks(): void {
+  private buildColumns(): void {
+    this.columns = [
+      { key: 'check_number', header: this.i18n.t('checks.checkNumber'), mono: true, render: (c) => c.check_number || '—' },
+      { key: 'recipient_name', header: this.i18n.t('checks.recipient'), render: (c) => c.recipient_name || '—' },
+      {
+        key: 'amount',
+        header: this.i18n.t('checks.amount'),
+        sortable: true,
+        mono: true,
+        render: (c) => (c.amount == null ? '—' : c.amount.toFixed(2)),
+      },
+      { key: 'check_stage', header: this.i18n.t('checks.stage'), render: (c) => c.check_stage || '—' },
+      {
+        key: 'vehicle',
+        header: this.i18n.t('checks.vehicle'),
+        mono: true,
+        render: (c) => this.linkedVehiclePlate(c) || '—',
+      },
+      {
+        key: 'status',
+        header: this.i18n.t('common.status'),
+        render: () => '',
+        badge: (c) =>
+          c.disbursed_at
+            ? { text: this.i18n.t('checks.stepDisbursed'), variant: 'ok' }
+            : { text: this.i18n.t('checks.pending'), variant: 'warn' },
+      },
+      {
+        key: 'actions',
+        header: this.i18n.t('common.actions'),
+        align: 'end',
+        actions: (c) => [{ label: this.i18n.t('common.view'), onClick: (c) => this.openDetail(c) }],
+      },
+    ];
+  }
+
+  private buildFilters(): void {
+    this.filters = [
+      {
+        key: 'pendingOnly',
+        label: this.i18n.t('shared.dataTable.allFilter'),
+        value: this.currentQuery.filters['pendingOnly'] ?? '',
+        options: [{ value: 'true', label: this.i18n.t('checks.notYetDisbursed') }],
+      },
+    ];
+  }
+
+  onQueryChange(query: DataTableQuery): void {
+    this.currentQuery = query;
+    this.loadChecks(query);
+  }
+
+  loadChecks(query: DataTableQuery): void {
     this.loading = true;
     this.loadError = null;
 
-    this.financialTransactionsService.listChecks().subscribe({
-      next: (checks) => {
-        this.checks = checks;
+    this.financialTransactionsService.listChecksPaged(query).subscribe({
+      next: ({ rows, total }) => {
+        this.rows = rows;
+        this.total = total;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -62,26 +129,16 @@ export class ChecksListComponent implements OnInit {
     });
   }
 
+  private reloadChecksOnly(): void {
+    this.loadChecks(this.currentQuery);
+  }
+
   linkedVehiclePlate(check: CheckGridRow): string | null {
     return (
       check.work_orders?.vehicles?.plate_number ??
       check.external_repairs?.vehicles?.plate_number ??
       null
     );
-  }
-
-  get filteredChecks(): CheckGridRow[] {
-    const term = this.searchTerm.trim().toLowerCase();
-
-    return this.checks.filter((c) => {
-      if (this.pendingOnly && c.disbursed_at) return false;
-      if (!term) return true;
-      const haystack = [c.check_number, c.recipient_name, this.linkedVehiclePlate(c)]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
   }
 
   openCreateForm(): void {
@@ -94,7 +151,7 @@ export class ChecksListComponent implements OnInit {
 
   onFormSaved(): void {
     this.formOpen = false;
-    this.loadChecks();
+    this.reloadChecksOnly();
   }
 
   openDetail(check: CheckGridRow): void {
@@ -107,24 +164,40 @@ export class ChecksListComponent implements OnInit {
   }
 
   onDrawerUpdated(): void {
-    this.loadChecks();
+    this.reloadChecksOnly();
   }
 
+  // -------------------------------------------------------------
+  // Export — pulls every row matching the grid's current search/filters
+  // (not just the current page) via listChecksAllMatching().
+  // -------------------------------------------------------------
+
   exportExcel(): void {
-    exportToExcel(this.filteredChecks, this.excelColumns(), 'checks-export');
+    this.financialTransactionsService.listChecksAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'checks-export'),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
   }
 
   exportPdf(): void {
-    downloadGridReportPdf(
-      this.filteredChecks,
-      this.pdfColumns(),
-      {
-        title: 'Checks Report',
-        subtitle: `Generated ${new Date().toLocaleDateString()}`,
-        orientation: 'landscape',
+    this.financialTransactionsService.listChecksAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Checks Report',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'checks-report',
+        ),
+      error: (err) => {
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
-      'checks-report',
-    );
+    });
   }
 
   private excelColumns(): ExcelExportColumn<CheckGridRow>[] {

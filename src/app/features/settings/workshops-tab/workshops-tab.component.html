@@ -2,128 +2,58 @@
   <header class="panel-header">
     <div>
       <h2>{{ 'settings.workshops.title' | translate }}</h2>
-      <p class="panel-subtitle">{{ rows.length }} {{ 'settings.workshops.countUnit' | translate }}</p>
+      <p class="panel-subtitle">{{ total }} {{ 'settings.workshops.countUnit' | translate }}</p>
     </div>
     <button type="button" class="btn btn--primary" (click)="startAdd()" [disabled]="addingNew">
       {{ 'settings.workshops.addButton' | translate }}
     </button>
   </header>
 
+  @if (addingNew) {
+    <div class="add-row-form">
+      <input
+        type="text"
+        [(ngModel)]="newDraft.name_ar"
+        [placeholder]="'settings.workshops.nameArabicPlaceholder' | translate"
+      />
+      <input
+        type="text"
+        [(ngModel)]="newDraft.name_en"
+        [placeholder]="'settings.workshops.nameEnglishPlaceholder' | translate"
+      />
+      <select [(ngModel)]="newDraft.workshop_type">
+        <option value="" disabled>{{ 'settings.workshops.selectType' | translate }}</option>
+        @for (type of workshopTypes; track type) {
+          <option [value]="type">{{ type }}</option>
+        }
+      </select>
+      <input type="text" [(ngModel)]="newDraft.location_notes" />
+      <button type="button" class="btn btn--ghost" (click)="cancelAdd()" [disabled]="saving">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn--primary" (click)="confirmAdd()" [disabled]="saving">
+        {{ (saving ? 'common.saving' : 'common.save') | translate }}
+      </button>
+    </div>
+  }
+
   @if (saveError) {
     <div class="state-message state-message--error">{{ saveError }}</div>
   }
 
-  @if (loading) {
-    <div class="state-message">{{ 'settings.workshops.loading' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
-  } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'settings.workshops.nameArabic' | translate }}</th>
-            <th>{{ 'settings.workshops.nameEnglish' | translate }}</th>
-            <th>{{ 'settings.workshops.colType' | translate }}</th>
-            <th>{{ 'settings.workshops.colLocationNotes' | translate }}</th>
-            <th>{{ 'common.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (addingNew) {
-            <tr class="editing-row">
-              <td>
-                <input
-                  type="text"
-                  [(ngModel)]="newDraft.name_ar"
-                  [placeholder]="'settings.workshops.nameArabicPlaceholder' | translate"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  [(ngModel)]="newDraft.name_en"
-                  [placeholder]="'settings.workshops.nameEnglishPlaceholder' | translate"
-                />
-              </td>
-              <td>
-                <select [(ngModel)]="newDraft.workshop_type">
-                  <option value="" disabled>{{ 'settings.workshops.selectType' | translate }}</option>
-                  @for (type of workshopTypes; track type) {
-                    <option [value]="type">{{ type }}</option>
-                  }
-                </select>
-              </td>
-              <td><input type="text" [(ngModel)]="newDraft.location_notes" /></td>
-              <td class="actions-cell">
-                <div class="actions-cell-btns">
-                  <button type="button" class="link-btn" (click)="confirmAdd()" [disabled]="saving">
-                    {{ 'common.save' | translate }}
-                  </button>
-                  <button type="button" class="link-btn" (click)="cancelAdd()" [disabled]="saving">
-                    {{ 'common.cancel' | translate }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-          @for (row of rows; track row.id) {
-            @if (row._draft) {
-              <tr class="editing-row">
-                <td><input type="text" [(ngModel)]="row._draft.name_ar" /></td>
-                <td><input type="text" [(ngModel)]="row._draft.name_en" /></td>
-                <td>
-                  <select [(ngModel)]="row._draft.workshop_type">
-                    <option value="" disabled>{{ 'settings.workshops.selectType' | translate }}</option>
-                    @for (type of workshopTypes; track type) {
-                      <option [value]="type">{{ type }}</option>
-                    }
-                  </select>
-                </td>
-                <td><input type="text" [(ngModel)]="row._draft.location_notes" /></td>
-                <td class="actions-cell">
-                  <div class="actions-cell-btns">
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="confirmEdit(row)"
-                      [disabled]="saving"
-                    >
-                      {{ 'common.save' | translate }}
-                    </button>
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="cancelEdit(row)"
-                      [disabled]="saving"
-                    >
-                      {{ 'common.cancel' | translate }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @else {
-              <tr>
-                <td>{{ row.name_ar }}</td>
-                <td>{{ row.name_en || '—' }}</td>
-                <td>{{ row.workshop_type }}</td>
-                <td>{{ row.location_notes || '—' }}</td>
-                <td class="actions-cell">
-                  <div class="actions-cell-btns">
-                    <button type="button" class="link-btn" (click)="startEdit(row)">
-                      {{ 'common.edit' | translate }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          } @empty {
-            <tr>
-              <td colspan="5" class="empty-row">{{ 'settings.workshops.empty' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
   }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [pageSizeOptions]="[10, 25, 50]"
+    [pageSize]="10"
+    [emptyMessage]="'settings.workshops.empty' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
 </div>
