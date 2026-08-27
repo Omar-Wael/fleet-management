@@ -37,6 +37,7 @@ export class TechnicianKpisComponent implements OnInit {
 
   loadRows(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.techniciansService.getKpiRollup().subscribe({

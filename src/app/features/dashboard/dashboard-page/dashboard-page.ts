@@ -89,6 +89,7 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
 
   loadDashboard(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     forkJoin({

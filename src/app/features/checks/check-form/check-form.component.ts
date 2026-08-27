@@ -5,7 +5,9 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -60,6 +62,8 @@ export class CheckFormComponent implements OnInit, OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private financialTransactionsService: FinancialTransactionsService,
     private maintenanceService: MaintenanceService,
@@ -93,6 +97,7 @@ export class CheckFormComponent implements OnInit, OnChanges {
 
   private loadLookups(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     this.lookupsError = null;
 
     forkJoin({
@@ -107,10 +112,12 @@ export class CheckFormComponent implements OnInit, OnChanges {
         this.overhauls = overhauls;
         this.disbursements = disbursements;
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.lookupsError = err instanceof Error ? err.message : this.i18n.t('checks.failedLoadFormOptions');
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -131,6 +138,7 @@ export class CheckFormComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     const payload: Partial<FinancialTransaction> = {
@@ -147,11 +155,13 @@ export class CheckFormComponent implements OnInit, OnChanges {
       .subscribe({
         next: (transaction) => {
           this.saving = false;
+          this.cdr.markForCheck();
           this.saved.emit(transaction);
           this.close();
         },
         error: (err) => {
           this.saving = false;
+          this.cdr.markForCheck();
           this.saveError = err instanceof Error ? err.message : this.i18n.t('checks.failedCreate');
         },
       });

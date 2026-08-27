@@ -170,6 +170,7 @@ export class GarageLocationsTabComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.lookupsService.listGarageLocations().subscribe({
@@ -224,6 +225,7 @@ export class GarageLocationsTabComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.lookupsService
@@ -268,6 +270,7 @@ export class GarageLocationsTabComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.lookupsService

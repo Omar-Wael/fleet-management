@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 
 import { InvoicesService, InvoiceGridRow } from '../../../core/services/invoices.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -29,9 +31,13 @@ export class InvoiceDetailDrawerComponent implements OnChanges {
   deleteError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private invoicesService: InvoicesService,
     readonly i18n: TranslationService,
-  ) {}
+  ) {
+
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -44,17 +50,22 @@ export class InvoiceDetailDrawerComponent implements OnChanges {
   private loadVehicles(): void {
     if (!this.invoice) return;
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
+    this.cdr.markForCheck();
     this.deleteError = null;
 
     this.invoicesService.getVehiclesForInvoice(this.invoice.id).subscribe({
       next: (vehicles) => {
         this.vehicles = vehicles;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loadError = err instanceof Error ? err.message : this.i18n.t('invoices.failedLoadVehicles');
+        this.cdr.markForCheck();
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }

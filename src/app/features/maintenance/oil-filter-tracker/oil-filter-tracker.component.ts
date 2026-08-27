@@ -66,6 +66,7 @@ export class OilFilterTrackerComponent implements OnInit {
 
   ngOnInit(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     forkJoin({
       vehicles: this.vehiclesService.list(),
       technicians: this.techniciansService.list(),
@@ -130,6 +131,7 @@ export class OilFilterTrackerComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.maintenanceService
@@ -137,11 +139,13 @@ export class OilFilterTrackerComponent implements OnInit {
       .subscribe({
         next: () => {
           this.saving = false;
+          this.cdr.markForCheck();
           this.formOpen = false;
           this.loadChanges();
         },
         error: (err) => {
           this.saving = false;
+          this.cdr.markForCheck();
           this.saveError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedRecordChange');
         },
       });

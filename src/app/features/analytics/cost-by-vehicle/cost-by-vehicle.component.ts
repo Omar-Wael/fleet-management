@@ -70,6 +70,7 @@ export class CostByVehicleComponent implements OnInit, AfterViewInit, OnDestroy 
 
   loadRows(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.analyticsService.getVehicleCostSummary(this.departmentFilter || undefined).subscribe({

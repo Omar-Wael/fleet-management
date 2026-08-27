@@ -138,6 +138,7 @@ export class WorkshopsTabComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.lookupsService.listMaintenanceWorkshops().subscribe({
@@ -186,6 +187,7 @@ export class WorkshopsTabComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.lookupsService
@@ -230,6 +232,7 @@ export class WorkshopsTabComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.lookupsService

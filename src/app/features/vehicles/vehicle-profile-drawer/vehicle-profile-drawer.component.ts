@@ -51,6 +51,7 @@ export class VehicleProfileDrawerComponent implements OnChanges {
   private loadProfile(): void {
     if (!this.vehicleId) return;
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
     this.profile = null;
 

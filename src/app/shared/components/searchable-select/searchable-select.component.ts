@@ -93,6 +93,10 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
     if (changes['options']) {
       this.highlightedIndex = 0;
     }
+    // OnPush: parent may replace options / loading after an async fetch
+    if (changes['options'] || changes['loading'] || changes['placeholder'] || changes['multiple']) {
+      this.cdr.markForCheck();
+    }
   }
 
   // ---- ControlValueAccessor ----

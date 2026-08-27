@@ -18,32 +18,32 @@
         <div class="field-grid">
           <label class="field">
             <span>{{ 'spareParts.disbursementForm.fieldVehicle' | translate }}</span>
-            <select formControlName="vehicle_id" (change)="onVehicleChange()">
-              <option [ngValue]="''" disabled>{{ 'spareParts.disbursementForm.selectVehiclePlaceholder' | translate }}</option>
-              @for (v of vehicles; track v.id) {
-                <option [ngValue]="v.id">{{ v.plate_number }}</option>
-              }
-            </select>
+            <app-searchable-select
+              [options]="vehicleOptions"
+              [ngModel]="form.value.vehicle_id"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onVehicleChange($event)"
+              [placeholder]="'spareParts.disbursementForm.selectVehiclePlaceholder' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
             <span>{{ 'spareParts.disbursementForm.fieldRequestedBy' | translate }}</span>
-            <select formControlName="requested_by_technician_id">
-              <option [ngValue]="''" disabled>{{ 'spareParts.disbursementForm.selectTechnicianPlaceholder' | translate }}</option>
-              @for (t of technicians; track t.id) {
-                <option [ngValue]="t.id">{{ t.full_name }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="requested_by_technician_id"
+              [options]="technicianOptions"
+              [placeholder]="'spareParts.disbursementForm.selectTechnicianPlaceholder' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field field--wide">
             <span>{{ 'spareParts.disbursementForm.fieldWorkOrder' | translate }}</span>
-            <select formControlName="work_order_id">
-              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
-              @for (w of workOrders; track w.id) {
-                <option [ngValue]="w.id">{{ w.description }} ({{ w.opened_at | slice : 0 : 10 }})</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="work_order_id"
+              [options]="workOrderOptions"
+              [placeholder]="'common.none' | translate"
+              [clearable]="true"
+            ></app-searchable-select>
           </label>
 
           <label class="field field--wide">
@@ -60,14 +60,42 @@
 
           @for (row of items; track $index; let i = $index) {
             <div class="item-row">
-              <select [(ngModel)]="row.spare_part_id" [ngModelOptions]="{ standalone: true }" (change)="onItemPartChange(row)">
-                <option value="" disabled>{{ 'spareParts.disbursementForm.selectPartPlaceholder' | translate }}</option>
-                @for (p of spareParts; track p.id) {
-                  <option [value]="p.id">
-                    {{ p.name_en || p.name_ar }}{{ isCompatible(p.id) ? ' ✓ ' + ('spareParts.disbursementForm.compatibleBadge' | translate) : '' }}
-                  </option>
-                }
-              </select>
+              <div class="item-mode-toggle">
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.mode-btn--active]="row.mode === 'catalog'"
+                  (click)="setItemMode(row, 'catalog')"
+                >
+                  {{ 'spareParts.disbursementForm.modeCatalog' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.mode-btn--active]="row.mode === 'custom'"
+                  (click)="setItemMode(row, 'custom')"
+                >
+                  {{ 'spareParts.disbursementForm.modeCustom' | translate }}
+                </button>
+              </div>
+
+              @if (row.mode === 'catalog') {
+                <app-searchable-select
+                  [options]="partOptions"
+                  [ngModel]="row.spare_part_id"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onItemPartChange(row, $event)"
+                  [placeholder]="'spareParts.disbursementForm.selectPartPlaceholder' | translate"
+                ></app-searchable-select>
+              } @else {
+                <input
+                  type="text"
+                  class="free-text-input"
+                  [(ngModel)]="row.free_text_name"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="'spareParts.disbursementForm.customPartPlaceholder' | translate"
+                />
+              }
 
               <input
                 type="number"
@@ -79,7 +107,9 @@
 
               <button type="button" class="icon-btn" (click)="removeItemRow(i)" [attr.aria-label]="'spareParts.disbursementForm.removeLineAria' | translate">✕</button>
 
-              @if (row.lastDisbursementNote) {
+              @if (row.loadingNote) {
+                <div class="item-note">{{ 'shared.dataTable.loading' | translate }}</div>
+              } @else if (row.lastDisbursementNote) {
                 <div class="item-note">{{ row.lastDisbursementNote }}</div>
               }
             </div>

@@ -7,6 +7,7 @@ import {
   Output,
   SimpleChanges,
   ChangeDetectionStrategy,
+  ChangeDetectorRef
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -70,6 +71,8 @@ export class VehicleFormComponent implements OnInit, OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private vehiclesService: VehiclesService,
     private lookupsService: LookupsService,
@@ -155,6 +158,7 @@ export class VehicleFormComponent implements OnInit, OnChanges {
 
   private loadLookups(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     this.lookupsError = null;
 
     forkJoin({
@@ -171,11 +175,13 @@ export class VehicleFormComponent implements OnInit, OnChanges {
         this.garageLocations = garageLocations;
         this.engines = engines;
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.lookupsError =
           err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -187,6 +193,7 @@ export class VehicleFormComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
     const payload: Partial<Vehicle> = this.form.value;
 
@@ -197,11 +204,13 @@ export class VehicleFormComponent implements OnInit, OnChanges {
     request$.subscribe({
       next: (savedVehicle) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saved.emit(savedVehicle);
         this.close();
       },
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saveError =
           err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },

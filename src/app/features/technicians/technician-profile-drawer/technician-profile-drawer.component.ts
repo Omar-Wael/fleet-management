@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { TechniciansService, TechnicianGridRow } from '../../../core/services/technicians.service';
@@ -33,10 +35,14 @@ export class TechnicianProfileDrawerComponent implements OnChanges {
   loadError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private techniciansService: TechniciansService,
     private maintenanceService: MaintenanceService,
     readonly i18n: TranslationService,
-  ) {}
+  ) {
+
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -51,7 +57,9 @@ export class TechnicianProfileDrawerComponent implements OnChanges {
     const technicianId = this.technician.id;
 
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
+    this.cdr.markForCheck();
     this.profile = null;
 
     forkJoin({
@@ -69,10 +77,13 @@ export class TechnicianProfileDrawerComponent implements OnChanges {
           bounces,
         };
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }

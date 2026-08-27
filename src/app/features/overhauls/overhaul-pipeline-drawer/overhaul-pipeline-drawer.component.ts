@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 
 import { OverhaulsService, OverhaulGridRow } from '../../../core/services/overhauls.service';
 import { OverhaulStage, OverhaulStageName } from '../../../core/models/fleet.models';
@@ -54,9 +56,13 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
   advanceError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private overhaulsService: OverhaulsService,
     readonly i18n: TranslationService,
-  ) {}
+  ) {
+
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -69,17 +75,22 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
   private loadHistory(): void {
     if (!this.overhaul) return;
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
+    this.cdr.markForCheck();
     this.advanceError = null;
 
     this.overhaulsService.getStageHistory(this.overhaul.id).subscribe({
       next: (history) => {
         this.stageHistory = history;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loadError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedLoadStageHistory');
+        this.cdr.markForCheck();
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -111,17 +122,20 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
     if (!this.overhaul) return;
 
     this.advancing = true;
+    this.cdr.markForCheck();
     this.advanceError = null;
 
     this.overhaulsService.advanceStage(this.overhaul.id, stage).subscribe({
       next: (updated) => {
         this.advancing = false;
+        this.cdr.markForCheck();
         this.overhaul = { ...this.overhaul!, ...updated };
         this.loadHistory();
         this.updated.emit();
       },
       error: (err) => {
         this.advancing = false;
+        this.cdr.markForCheck();
         this.advanceError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedAdvanceStage');
       },
     });

@@ -55,6 +55,7 @@ export class CostByDepartmentComponent implements OnInit, AfterViewInit, OnDestr
 
   loadRows(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.analyticsService.getDepartmentCostSummary().subscribe({

@@ -366,6 +366,7 @@ export class VehiclesListComponent implements OnInit {
   loadVehicles(query: DataTableQuery): void {
     this.loading = true;
     this.loadError = null;
+    this.cdr.markForCheck();
 
     this.vehiclesService.listPaged(query).subscribe({
       next: ({ rows, total }) => {

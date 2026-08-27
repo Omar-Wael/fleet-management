@@ -6,7 +6,9 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -62,6 +64,8 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private invoicesService: InvoicesService,
     private sparePartsService: SparePartsService,
@@ -117,16 +121,19 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
 
   private loadLookups(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     this.lookupsError = null;
 
     this.sparePartsService.list().subscribe({
       next: (spareParts) => {
         this.spareParts = spareParts;
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.lookupsError = err instanceof Error ? err.message : this.i18n.t('invoices.failedLoadSpareParts');
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
     });
 
@@ -175,6 +182,7 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
     const {
       invoice_no,
@@ -200,11 +208,13 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
         .subscribe({
           next: (invoice) => {
             this.saving = false;
+            this.cdr.markForCheck();
             this.saved.emit(invoice);
             this.close();
           },
           error: (err) => {
             this.saving = false;
+            this.cdr.markForCheck();
             this.saveError = err instanceof Error ? err.message : this.i18n.t('invoices.failedUpdateInvoice');
           },
         });
@@ -232,11 +242,13 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
     this.invoicesService.createWithItems(header, itemRows).subscribe({
       next: (invoice) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saved.emit(invoice);
         this.close();
       },
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saveError = err instanceof Error ? err.message : this.i18n.t('invoices.failedCreateInvoice');
       },
     });

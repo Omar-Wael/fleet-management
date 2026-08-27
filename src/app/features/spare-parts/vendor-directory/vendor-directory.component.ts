@@ -188,6 +188,7 @@ export class VendorDirectoryComponent implements OnInit {
 
   loadVendors(query: DataTableQuery): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.sparePartsService.listVendorsPaged(query).subscribe({
@@ -226,6 +227,7 @@ export class VendorDirectoryComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.sparePartsService.createVendor(this.form.value).subscribe({

@@ -302,4 +302,17 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   },
   'spareParts.vendors.loadError': { en: 'Failed to load vendors.', ar: 'فشل تحميل الموردين.' },
   'spareParts.vendors.saveError': { en: 'Failed to add vendor.', ar: 'فشل إضافة المورد.' },
+
+  'spareParts.disbursement.vehicle': { en: 'Vehicle', ar: 'السيارة' },
+  'spareParts.disbursement.requestedBy': { en: 'Requested By', ar: 'مقدم الطلب' },
+  'spareParts.disbursement.requestedAt': { en: 'Requested At', ar: 'تاريخ الطلب' },
+  'spareParts.disbursement.issuedAt': { en: 'Issued At', ar: 'تاريخ الصرف' },
+  'spareParts.disbursement.searchPlaceholder': { en: 'Search notes…', ar: 'بحث في الملاحظات…' },
+  'spareParts.disbursement.importedCount': { en: 'Imported requests:', ar: 'طلبات مستوردة:' },
+  'spareParts.disbursement.importSkipped': { en: 'row(s) skipped (missing vehicle/technician/parts).', ar: 'صف(وف) تم تخطيها (ناقص مركبة/فني/قطع).' },
+  'spareParts.disbursement.importParseFailed': { en: 'Could not parse the import file.', ar: 'تعذر قراءة ملف الاستيراد.' },
+  'spareParts.disbursement.importFailed': { en: 'Bulk import failed.', ar: 'فشل الاستيراد الجماعي.' },
+  'spareParts.disbursementForm.modeCatalog': { en: 'From catalogue', ar: 'من الكتالوج' },
+  'spareParts.disbursementForm.modeCustom': { en: 'Free text', ar: 'نص حر' },
+  'spareParts.disbursementForm.customPartPlaceholder': { en: 'Part name (not in catalogue)', ar: 'اسم القطعة (ليست في الكتالوج)' },
 };

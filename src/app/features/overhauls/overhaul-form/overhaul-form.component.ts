@@ -5,7 +5,9 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -42,6 +44,8 @@ export class OverhaulFormComponent implements OnInit, OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private overhaulsService: OverhaulsService,
     private vehiclesService: VehiclesService,
@@ -69,6 +73,7 @@ export class OverhaulFormComponent implements OnInit, OnChanges {
 
   private loadLookups(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     this.lookupsError = null;
 
     forkJoin({
@@ -79,10 +84,12 @@ export class OverhaulFormComponent implements OnInit, OnChanges {
         this.vehicles = vehicles;
         this.machineShops = machineShops;
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.lookupsError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedLoadFormOptions');
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -94,16 +101,19 @@ export class OverhaulFormComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.overhaulsService.create(this.form.value).subscribe({
       next: (overhaul) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saved.emit(overhaul);
         this.close();
       },
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saveError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedCreate');
       },
     });

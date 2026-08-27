@@ -1,4 +1,6 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { SparePartsService } from '../../../core/services/spare-parts.service';
@@ -28,6 +30,8 @@ export class SparePartFormComponent implements OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private sparePartsService: SparePartsService,
     readonly i18n: TranslationService,
@@ -81,6 +85,7 @@ export class SparePartFormComponent implements OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
     const payload: Partial<SparePart> = this.form.value;
 
@@ -91,11 +96,13 @@ export class SparePartFormComponent implements OnChanges {
     request$.subscribe({
       next: (savedPart) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saved.emit(savedPart);
         this.close();
       },
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saveError = err instanceof Error ? err.message : this.i18n.t('spareParts.partForm.saveError');
       },
     });

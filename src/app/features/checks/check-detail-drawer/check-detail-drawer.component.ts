@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy} from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 
 import {
   FinancialTransactionsService,
@@ -42,9 +44,13 @@ export class CheckDetailDrawerComponent {
   advanceError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private financialTransactionsService: FinancialTransactionsService,
     readonly i18n: TranslationService,
-  ) {}
+  ) {
+
+  }
 
   get linkedVehiclePlate(): string | null {
     return (
@@ -64,6 +70,7 @@ export class CheckDetailDrawerComponent {
     if (!this.check || !this.nextStep) return;
 
     this.advancing = true;
+    this.cdr.markForCheck();
     this.advanceError = null;
     const id = this.check.id;
 
@@ -79,11 +86,13 @@ export class CheckDetailDrawerComponent {
     call$.subscribe({
       next: (updated) => {
         this.advancing = false;
+        this.cdr.markForCheck();
         this.check = { ...this.check!, ...updated };
         this.updated.emit();
       },
       error: (err) => {
         this.advancing = false;
+        this.cdr.markForCheck();
         this.advanceError =
           err instanceof Error ? err.message : this.i18n.t('checks.failedUpdateApproval');
       },

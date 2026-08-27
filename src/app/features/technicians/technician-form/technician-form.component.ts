@@ -5,7 +5,9 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TechniciansService, TechnicianGridRow } from '../../../core/services/technicians.service';
@@ -40,6 +42,8 @@ export class TechnicianFormComponent implements OnInit, OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private techniciansService: TechniciansService,
     private lookupsService: LookupsService,
@@ -93,16 +97,19 @@ export class TechnicianFormComponent implements OnInit, OnChanges {
 
   private loadLookups(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     this.lookupsError = null;
 
     this.lookupsService.listMaintenanceWorkshops().subscribe({
       next: (workshops) => {
         this.workshops = workshops;
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.lookupsError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -114,6 +121,7 @@ export class TechnicianFormComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
     const payload: Partial<Technician> = this.form.value;
 
@@ -124,11 +132,13 @@ export class TechnicianFormComponent implements OnInit, OnChanges {
     request$.subscribe({
       next: (savedTechnician) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saved.emit(savedTechnician);
         this.close();
       },
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saveError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });

@@ -61,6 +61,7 @@ export class PriceIntelligenceComponent implements OnInit {
 
   ngOnInit(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     forkJoin({
       parts: this.sparePartsService.list(),
       vendors: this.sparePartsService.listVendors(),
@@ -133,6 +134,7 @@ export class PriceIntelligenceComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.sparePartsService

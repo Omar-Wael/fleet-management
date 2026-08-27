@@ -141,6 +141,7 @@ export class VehicleTypesTabComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.lookupsService.listVehicleTypes().subscribe({
@@ -190,6 +191,7 @@ export class VehicleTypesTabComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.lookupsService
@@ -233,6 +235,7 @@ export class VehicleTypesTabComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.lookupsService
@@ -269,6 +272,7 @@ export class VehicleTypesTabComponent implements OnInit {
     if (!file) return;
 
     this.importing = true;
+    this.cdr.markForCheck();
     this.importError = null;
     this.importSummary = null;
 

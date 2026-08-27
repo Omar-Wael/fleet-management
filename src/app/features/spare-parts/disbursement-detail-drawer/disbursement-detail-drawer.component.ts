@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -69,9 +71,13 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
   receiverName = '';
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private disbursementService: DisbursementService,
     readonly i18n: TranslationService,
-  ) {}
+  ) {
+
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -84,7 +90,9 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
   private loadHistory(): void {
     if (!this.request) return;
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
+    this.cdr.markForCheck();
     this.receiverName = '';
     this.advanceError = null;
 
@@ -92,10 +100,13 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
       next: (history) => {
         this.history = history;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loadError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementDrawer.historyLoadError');
+        this.cdr.markForCheck();
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -120,6 +131,7 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
     }
 
     this.advancing = true;
+    this.cdr.markForCheck();
     this.advanceError = null;
 
     this.disbursementService
@@ -129,12 +141,14 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
       .subscribe({
         next: (updated) => {
           this.advancing = false;
+          this.cdr.markForCheck();
           this.request = { ...this.request!, ...updated };
           this.loadHistory();
           this.updated.emit();
         },
         error: (err) => {
           this.advancing = false;
+          this.cdr.markForCheck();
           this.advanceError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementDrawer.updateStatusError');
         },
       });

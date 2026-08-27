@@ -5,7 +5,9 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, Observable, of } from 'rxjs';
 
@@ -49,6 +51,8 @@ export class EngineFormComponent implements OnInit, OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private enginesService: EnginesService,
     private lookupsService: LookupsService,
@@ -106,6 +110,7 @@ export class EngineFormComponent implements OnInit, OnChanges {
 
   private loadLookups(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     this.lookupsError = null;
 
     forkJoin({
@@ -116,10 +121,12 @@ export class EngineFormComponent implements OnInit, OnChanges {
         this.vehicleTypes = vehicleTypes;
         this.spareParts = spareParts;
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.lookupsError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -167,6 +174,7 @@ export class EngineFormComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
     const payload: Partial<Engine> = this.form.value;
 
@@ -178,6 +186,7 @@ export class EngineFormComponent implements OnInit, OnChanges {
       next: (savedEngine) => this.syncCompatibility(savedEngine),
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saveError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
@@ -208,11 +217,13 @@ export class EngineFormComponent implements OnInit, OnChanges {
     forkJoin(calls).subscribe({
       next: () => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saved.emit(savedEngine);
         this.close();
       },
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saveError =
           err instanceof Error
             ? `${this.i18n.t('engines.savedButCompatFailed')}: ${err.message}`

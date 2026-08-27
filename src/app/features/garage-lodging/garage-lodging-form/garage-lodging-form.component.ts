@@ -5,7 +5,9 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -46,6 +48,8 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private garageLodgingService: GarageLodgingService,
     private vehiclesService: VehiclesService,
@@ -73,6 +77,7 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
 
   private loadLookups(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     this.lookupsError = null;
 
     forkJoin({
@@ -83,10 +88,12 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
         this.vehicles = vehicles;
         this.garageLocations = garageLocations;
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.lookupsError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -98,16 +105,19 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.garageLodgingService.checkIn(this.form.value).subscribe({
       next: (lodging) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saved.emit(lodging);
         this.close();
       },
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saveError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });

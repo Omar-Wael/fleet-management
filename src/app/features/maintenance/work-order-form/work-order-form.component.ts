@@ -5,7 +5,9 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+  SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 
@@ -52,6 +54,8 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
   saveError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private fb: FormBuilder,
     private maintenanceService: MaintenanceService,
     private vehiclesService: VehiclesService,
@@ -86,6 +90,7 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
 
   private loadLookups(): void {
     this.lookupsLoading = true;
+    this.cdr.markForCheck();
     this.lookupsError = null;
 
     forkJoin({
@@ -96,10 +101,12 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
         this.vehicles = vehicles;
         this.technicians = technicians;
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.lookupsError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadFormOptions');
         this.lookupsLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -121,6 +128,7 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
     const { vehicle_id, maintenance_type, description, repair_types, odometer_km_at_service } =
       this.form.value;
@@ -143,6 +151,7 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
         next: (workOrder) => this.assignTechnicians(workOrder),
         error: (err) => {
           this.saving = false;
+          this.cdr.markForCheck();
           this.saveError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedCreateWorkOrder');
         },
       });
@@ -157,11 +166,13 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
     request$.subscribe({
       next: () => {
         this.saving = false;
+        this.cdr.markForCheck();
         this.saved.emit(workOrder);
         this.close();
       },
       error: (err) => {
         this.saving = false;
+        this.cdr.markForCheck();
         const base = this.i18n.t('maintenance.workOrderCreatedAssignFailed');
         this.saveError = err instanceof Error ? `${base}: ${err.message}` : base;
       },

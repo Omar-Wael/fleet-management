@@ -6,6 +6,11 @@
     </div>
 
     <div class="page-actions">
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">{{ 'common.downloadTemplate' | translate }}</button>
+      <button type="button" class="btn btn--ghost" [disabled]="importing" (click)="onImportButtonClick(fileInput)">
+        {{ (importing ? 'common.importing' : 'common.bulkImport') | translate }}
+      </button>
+      <input #fileInput type="file" accept=".xlsx,.xls,.csv" hidden (change)="onImportFile($event)" />
       <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
       <button type="button" class="btn btn--primary" (click)="openCreateForm()">
@@ -16,6 +21,17 @@
 
   @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
+  }
+  @if (importError) {
+    <div class="state-message state-message--error">{{ importError }}</div>
+  }
+  @if (importSummary) {
+    <div class="state-message">
+      {{ 'spareParts.disbursement.importedCount' | translate }} {{ importSummary.savedCount }}
+      @if (importSummary.skippedCount) {
+        — {{ importSummary.skippedCount }} {{ 'spareParts.disbursement.importSkipped' | translate }}
+      }
+    </div>
   }
 
   <app-data-table

@@ -154,6 +154,7 @@ export class DepartmentsTabComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     // Always fetch the full set (not just active) — the "active only"
@@ -205,6 +206,7 @@ export class DepartmentsTabComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.lookupsService
@@ -243,6 +245,7 @@ export class DepartmentsTabComponent implements OnInit {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
     this.saveError = null;
 
     this.lookupsService
@@ -296,6 +299,7 @@ export class DepartmentsTabComponent implements OnInit {
     if (!file) return;
 
     this.importing = true;
+    this.cdr.markForCheck();
     this.importError = null;
     this.importSummary = null;
 

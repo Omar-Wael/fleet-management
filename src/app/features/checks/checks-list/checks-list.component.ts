@@ -112,6 +112,7 @@ export class ChecksListComponent implements OnInit {
 
   loadChecks(query: DataTableQuery): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.financialTransactionsService.listChecksPaged(query).subscribe({

@@ -28,6 +28,7 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
   'common.allWorkshops': { en: 'All Workshops', ar: 'كل الورش' },
   'common.none': { en: '— None —', ar: '— لا يوجد —' },
   'common.import': { en: 'Import', ar: 'استيراد' },
+  'common.bulkImport': { en: 'Bulk Import', ar: 'استيراد جماعي' },
   'common.importing': { en: 'Importing…', ar: 'جارٍ الاستيراد…' },
   'common.downloadTemplate': { en: 'Download Template', ar: 'تحميل النموذج' },
   'common.exportExcel': { en: 'Export Excel', ar: 'تصدير إكسل' },

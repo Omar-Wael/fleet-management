@@ -198,6 +198,7 @@ export class OverhaulsListComponent implements OnInit {
 
   loadOverhauls(query: DataTableQuery): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.overhaulsService.listPaged(query).subscribe({
@@ -277,6 +278,7 @@ export class OverhaulsListComponent implements OnInit {
     if (!file) return;
 
     this.importing = true;
+    this.cdr.markForCheck();
     this.importError = null;
     this.importSummary = null;
 

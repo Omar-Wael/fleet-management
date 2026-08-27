@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { EnginesService } from '../../../core/services/engines.service';
@@ -33,9 +35,13 @@ export class EngineProfileDrawerComponent implements OnChanges {
   loadError: string | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private enginesService: EnginesService,
     readonly i18n: TranslationService,
-  ) {}
+  ) {
+
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -50,7 +56,9 @@ export class EngineProfileDrawerComponent implements OnChanges {
     const engineId = this.engine.id;
 
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
+    this.cdr.markForCheck();
     this.profile = null;
 
     forkJoin({
@@ -62,10 +70,13 @@ export class EngineProfileDrawerComponent implements OnChanges {
       next: (profile) => {
         this.profile = profile;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }

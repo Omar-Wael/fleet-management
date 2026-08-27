@@ -66,6 +66,7 @@ export class VendorPriceComparisonComponent implements OnInit, AfterViewInit, On
 
   loadRows(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.sparePartsService.getVendorPerformance().subscribe({

@@ -198,6 +198,7 @@ export class TechniciansListComponent implements OnInit {
 
   loadTechnicians(query: DataTableQuery): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.techniciansService.listPaged(query).subscribe({
@@ -291,6 +292,7 @@ export class TechniciansListComponent implements OnInit {
     if (!file) return;
 
     this.importing = true;
+    this.cdr.markForCheck();
     this.importError = null;
     this.importSummary = null;
 

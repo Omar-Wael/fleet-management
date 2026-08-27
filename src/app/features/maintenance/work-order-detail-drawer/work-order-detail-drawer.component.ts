@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { MaintenanceService, WorkOrderGridRow } from '../../../core/services/maintenance.service';
@@ -26,9 +28,13 @@ export class WorkOrderDetailDrawerComponent implements OnChanges {
   totalCostInput: number | null = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
+
     private maintenanceService: MaintenanceService,
     readonly i18n: TranslationService,
-  ) {}
+  ) {
+
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['workOrder'] && this.workOrder) {

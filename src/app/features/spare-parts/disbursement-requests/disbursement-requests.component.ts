@@ -9,8 +9,13 @@ import {
   DisbursementService,
   DisbursementGridRow,
 } from '../../../core/services/disbursement.service';
+import { VehiclesService } from '../../../core/services/vehicles.service';
+import { TechniciansService } from '../../../core/services/technicians.service';
+import { SparePartsService } from '../../../core/services/spare-parts.service';
+import { forkJoin, of, from } from 'rxjs';
+import { switchMap, concatMap, toArray } from 'rxjs/operators';
 import { DisbursementStatus } from '../../../core/models/fleet.models';
-import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
+import { exportToExcel, ExcelExportColumn, downloadImportTemplate, readExcelFile } from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -77,11 +82,18 @@ export class DisbursementRequestsComponent implements OnInit {
 
   formOpen = false;
 
+  importing = false;
+  importError: string | null = null;
+  importSummary: { savedCount: number; skippedCount: number } | null = null;
+
   drawerOpen = false;
   selectedRequest: DisbursementGridRow | null = null;
 
   constructor(
     private disbursementService: DisbursementService,
+    private vehiclesService: VehiclesService,
+    private techniciansService: TechniciansService,
+    private sparePartsService: SparePartsService,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
@@ -157,6 +169,7 @@ export class DisbursementRequestsComponent implements OnInit {
 
   loadRequests(query: DataTableQuery): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.loadError = null;
 
     this.disbursementService.listPaged(query).subscribe({
@@ -215,6 +228,194 @@ export class DisbursementRequestsComponent implements OnInit {
 
   onDrawerUpdated(): void {
     this.reloadRequestsOnly();
+  }
+
+
+  // -------------------------------------------------------------
+  // Bulk import — template download + multi-row create
+  // Template columns: Vehicle Plate | Technician Name | Part Code or Name | Qty | Notes
+  // Multiple rows with the same vehicle+technician+notes are grouped into one request.
+  // -------------------------------------------------------------
+
+  downloadTemplate(): void {
+    downloadImportTemplate(
+      ['Vehicle Plate', 'Technician Name', 'Part Code or Name', 'Qty', 'Notes'],
+      'disbursement-requests-import-template',
+      {
+        'Vehicle Plate': 'ABC-1234',
+        'Technician Name': 'Ahmed Ali',
+        'Part Code or Name': 'Oil Filter',
+        Qty: 2,
+        Notes: 'optional',
+      },
+    );
+  }
+
+  onImportButtonClick(fileInput: HTMLInputElement): void {
+    fileInput.value = '';
+    fileInput.click();
+  }
+
+  onImportFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.importing = true;
+    this.cdr.markForCheck();
+    this.importError = null;
+    this.importSummary = null;
+    this.cdr.markForCheck();
+
+    readExcelFile(file)
+      .then((rawRows) => {
+        const normalized = rawRows.map((r) => {
+          const get = (...keys: string[]) => {
+            for (const k of keys) {
+              const found = Object.keys(r).find((hk) => hk.trim().toLowerCase() === k.toLowerCase());
+              if (found != null && r[found] != null && String(r[found]).trim() !== '') {
+                return String(r[found]).trim();
+              }
+            }
+            return '';
+          };
+          return {
+            plate: get('Vehicle Plate', 'plate', 'plate_number'),
+            technician: get('Technician Name', 'technician', 'requested_by'),
+            part: get('Part Code or Name', 'part', 'part_name', 'part_code'),
+            qty: Number(get('Qty', 'quantity', 'qty') || '1') || 1,
+            notes: get('Notes', 'notes') || null,
+          };
+        }).filter((r) => r.plate && r.technician && r.part);
+
+        if (!normalized.length) {
+          this.importing = false;
+          this.importError = this.i18n.t('spareParts.disbursement.importParseFailed');
+          this.cdr.markForCheck();
+          return;
+        }
+
+        forkJoin({
+          vehicles: this.vehiclesService.list(),
+          technicians: this.techniciansService.list(),
+          parts: this.sparePartsService.list(),
+        }).subscribe({
+          next: ({ vehicles, technicians, parts }) => {
+            const plateMap = new Map(vehicles.map((v) => [v.plate_number.trim().toLowerCase(), v.id]));
+            const techMap = new Map(technicians.map((t) => [t.full_name.trim().toLowerCase(), t.id]));
+            const partByCode = new Map(
+              parts.filter((p) => p.part_code).map((p) => [p.part_code!.trim().toLowerCase(), p.id]),
+            );
+            const partByName = new Map(
+              parts.flatMap((p) => {
+                const entries: [string, string][] = [];
+                if (p.name_ar) entries.push([p.name_ar.trim().toLowerCase(), p.id]);
+                if (p.name_en) entries.push([p.name_en.trim().toLowerCase(), p.id]);
+                return entries;
+              }),
+            );
+
+            // Group rows into requests by plate+technician+notes
+            type GroupKey = string;
+            const groups = new Map<GroupKey, { vehicle_id: string; technician_id: string; notes: string | null; items: { spare_part_id: string | null; free_name: string; qty: number }[] }>();
+            let skipped = 0;
+
+            for (const row of normalized) {
+              const vehicle_id = plateMap.get(row.plate.toLowerCase());
+              const technician_id = techMap.get(row.technician.toLowerCase());
+              if (!vehicle_id || !technician_id) {
+                skipped++;
+                continue;
+              }
+              const key = `${vehicle_id}||${technician_id}||${row.notes ?? ''}`;
+              let group = groups.get(key);
+              if (!group) {
+                group = { vehicle_id, technician_id, notes: row.notes, items: [] };
+                groups.set(key, group);
+              }
+              const partKey = row.part.toLowerCase();
+              const spare_part_id = partByCode.get(partKey) ?? partByName.get(partKey) ?? null;
+              group.items.push({ spare_part_id, free_name: row.part, qty: row.qty });
+            }
+
+            const groupList = Array.from(groups.values());
+            if (!groupList.length) {
+              this.importing = false;
+              this.importSummary = { savedCount: 0, skippedCount: skipped + normalized.length };
+              this.cdr.markForCheck();
+              return;
+            }
+
+            from(groupList)
+              .pipe(
+                concatMap((g) =>
+                  this.disbursementService
+                    .create({
+                      vehicle_id: g.vehicle_id,
+                      requested_by_technician_id: g.technician_id,
+                      notes: g.notes,
+                    })
+                    .pipe(
+                      switchMap((req) => {
+                        const itemCalls = g.items.map((item) => {
+                          if (item.spare_part_id) {
+                            return this.disbursementService.addItem({
+                              disbursement_request_id: req.id,
+                              spare_part_id: item.spare_part_id,
+                              qty: item.qty,
+                            });
+                          }
+                          return this.sparePartsService
+                            .create({
+                              name_ar: item.free_name,
+                              name_en: item.free_name,
+                              current_stock_qty: 0,
+                            })
+                            .pipe(
+                              switchMap((part) =>
+                                this.disbursementService.addItem({
+                                  disbursement_request_id: req.id,
+                                  spare_part_id: part.id,
+                                  qty: item.qty,
+                                }),
+                              ),
+                            );
+                        });
+                        return forkJoin(itemCalls.length ? itemCalls : [of(null)]).pipe(switchMap(() => of(req)));
+                      }),
+                    ),
+                ),
+                toArray(),
+              )
+              .subscribe({
+                next: (created) => {
+                  this.importing = false;
+                  this.importSummary = { savedCount: created.length, skippedCount: skipped };
+                  this.cdr.markForCheck();
+                  this.reloadRequestsOnly();
+                },
+                error: (err) => {
+                  this.importing = false;
+                  this.importError =
+                    err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.importFailed');
+                  this.cdr.markForCheck();
+                },
+              });
+          },
+          error: (err) => {
+            this.importing = false;
+            this.importError =
+              err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.importFailed');
+            this.cdr.markForCheck();
+          },
+        });
+      })
+      .catch((err) => {
+        this.importing = false;
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.importParseFailed');
+        this.cdr.markForCheck();
+      });
   }
 
   // -------------------------------------------------------------
