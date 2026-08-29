@@ -1,0 +1,27 @@
+<header class="app-header">
+  <button
+    type="button"
+    class="menu-toggle"
+    (click)="toggleSidebar()"
+    [attr.aria-expanded]="layout.sidebarOpen()"
+    [attr.aria-label]="'nav.menu' | translate"
+  >
+    <span class="menu-toggle-bar"></span>
+    <span class="menu-toggle-bar"></span>
+    <span class="menu-toggle-bar"></span>
+  </button>
+
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a routerLink="/dashboard" class="breadcrumb-crumb" [class.current]="isHome()">
+      {{ 'nav.dashboard' | translate }}
+    </a>
+    @if (!isHome() && currentSection()) {
+      <span class="breadcrumb-sep" aria-hidden="true">/</span>
+      <span class="breadcrumb-crumb current">{{ currentSection()!.labelKey | translate }}</span>
+    }
+  </nav>
+
+  <button type="button" class="lang-toggle" (click)="i18n.toggle()">
+    {{ 'nav.langToggle' | translate }}
+  </button>
+</header>

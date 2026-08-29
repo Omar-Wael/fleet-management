@@ -12,55 +12,164 @@
   @if (loadError) {
     <div class="dashboard-error">
       {{ 'dashboard.loadErrorPrefix' | translate }} {{ loadError }}
-      <button type="button" (click)="loadDashboard()">{{ 'dashboard.tryAgain' | translate }}</button>
+      <button type="button" (click)="loadDashboard()">
+        {{ 'dashboard.tryAgain' | translate }}
+      </button>
     </div>
   }
 
-  <!--
-    NOTE: this content is always rendered (not gated behind @if (!loading)),
-    so the <canvas> below is available to Chart.js from ngAfterViewInit
-    onward regardless of how long the data takes to arrive — see
-    renderCostChart() in the component. `[class.is-loading]` just dims it
-    slightly while a (re)load is in flight, rather than unmounting it.
-  -->
   <div class="dashboard-content" [class.is-loading]="loading">
-    <!-- Top alert banners: licenses due / maintenance due this month -->
+    <section class="welcome-banner">
+      <div class="welcome-text">
+        <h2>{{ 'dashboard.welcomeTitle' | translate }}</h2>
+        <p class="welcome-date">{{ today | date: 'fullDate' }}</p>
+      </div>
+      <div class="welcome-chips">
+        <span class="chip"
+          >🚗 {{ overview.counts.vehicles }} {{ 'dashboard.chipVehicles' | translate }}</span
+        >
+        <span class="chip"
+          >👷 {{ overview.counts.techniciansActive }}
+          {{ 'dashboard.chipTechnicians' | translate }}</span
+        >
+        <span class="chip"
+          >🏢 {{ overview.counts.departments }} {{ 'dashboard.chipDepartments' | translate }}</span
+        >
+      </div>
+    </section>
+
     <app-alert-banner
-      [licenses]="summary.licensesDueThisMonth"
-      [maintenance]="summary.maintenanceDueThisMonth"
+      [licenses]="overview.licensesDueThisMonth"
+      [maintenance]="overview.maintenanceDueThisMonth"
       (viewLicenses)="onReviewLicenses()"
       (viewMaintenance)="onReviewMaintenance()"
     ></app-alert-banner>
 
-    <!-- KPI row: signature gauge + quick stat cards -->
-    <section class="kpi-row">
-      <div class="kpi-card kpi-card--gauge">
+    <section class="stat-grid">
+      <a routerLink="/vehicles" class="stat-card stat-card--blue">
+        <span class="stat-value">{{ overview.counts.vehicles }}</span>
+        <span class="stat-label">{{ 'dashboard.statVehicles' | translate }}</span>
+        <span class="stat-hint"
+          >{{ overview.counts.vehiclesActive }}
+          {{ 'dashboard.vehiclesActiveUnit' | translate }}</span
+        >
+      </a>
+      <a routerLink="/technicians" class="stat-card stat-card--mint">
+        <span class="stat-value">{{ overview.counts.techniciansActive }}</span>
+        <span class="stat-label">{{ 'dashboard.statTechnicians' | translate }}</span>
+        <span class="stat-hint"
+          >{{ overview.counts.technicians }} {{ 'dashboard.statTotal' | translate }}</span
+        >
+      </a>
+      <a routerLink="/spare-parts/disbursements" class="stat-card stat-card--peach">
+        <span class="stat-value">{{ overview.counts.disbursementRequests }}</span>
+        <span class="stat-label">{{ 'dashboard.statPartsRequests' | translate }}</span>
+        <span class="stat-hint"
+          >{{ overview.counts.disbursementRequested }} {{ 'dashboard.statTotal' | translate }}</span
+        >
+      </a>
+      <a routerLink="/spare-parts/catalog" class="stat-card stat-card--lavender">
+        <span class="stat-value">{{ overview.counts.spareParts }}</span>
+        <span class="stat-label">{{ 'dashboard.statCatalog' | translate }}</span>
+      </a>
+      <a routerLink="/maintenance" class="stat-card stat-card--green">
+        <span class="stat-value">{{ overview.counts.workOrders }}</span>
+        <span class="stat-label">{{ 'dashboard.statWorkOrders' | translate }}</span>
+      </a>
+      <a routerLink="/overhauls" class="stat-card stat-card--pink">
+        <span class="stat-value">{{ overview.counts.overhaulsOpen }}</span>
+        <span class="stat-label">{{ 'dashboard.overhaulsInProgressLabel' | translate }}</span>
+        <span class="stat-hint"
+          >{{ overview.counts.overhaulsTotal }} {{ 'dashboard.statTotal' | translate }}</span
+        >
+      </a>
+      <a routerLink="/settings/departments" class="stat-card">
+        <span class="stat-value">{{ overview.counts.departments }}</span>
+        <span class="stat-label">{{ 'dashboard.statDepartments' | translate }}</span>
+      </a>
+      <div class="stat-card stat-card--gauge">
         <app-fleet-gauge
           [value]="fleetHealthPercent"
           [label]="'dashboard.vehiclesActiveLabel' | translate"
         ></app-fleet-gauge>
         <p class="kpi-subline">
-          {{ activeVehicles }}/{{ totalVehicles }} {{ 'dashboard.vehiclesActiveUnit' | translate }}
+          {{ overview.counts.vehiclesActive }}/{{ overview.counts.vehicles }}
+          {{ 'dashboard.vehiclesActiveUnit' | translate }}
         </p>
-      </div>
-
-      <div class="kpi-card">
-        <span class="kpi-value">{{ summary.licensesDueThisMonth.length }}</span>
-        <span class="kpi-label">{{ 'dashboard.licensesDueLabel' | translate }}</span>
-      </div>
-
-      <div class="kpi-card">
-        <span class="kpi-value">{{ summary.maintenanceDueThisMonth.length }}</span>
-        <span class="kpi-label">{{ 'dashboard.maintenanceDueLabel' | translate }}</span>
-      </div>
-
-      <div class="kpi-card">
-        <span class="kpi-value">{{ openOverhaulsCount }}</span>
-        <span class="kpi-label">{{ 'dashboard.overhaulsInProgressLabel' | translate }}</span>
       </div>
     </section>
 
-    <!-- Cost analytics + technician ranking -->
+    <section class="mid-row">
+      <div class="panel panel--activity">
+        <h2 class="panel-title">{{ 'dashboard.recentActivityTitle' | translate }}</h2>
+        @if (overview.recentActivity.length) {
+          <ul class="activity-list">
+            @for (a of overview.recentActivity; track a.title + a.at) {
+              <li class="activity-row">
+                <span class="activity-icon">{{ activityIcon(a.kind) }}</span>
+                <div class="activity-body">
+                  <span class="activity-title">{{ a.title }} — {{ a.subtitle }}</span>
+                  <span class="activity-date">{{ a.at | date: 'mediumDate' }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="panel-empty">{{ 'dashboard.noRecentActivity' | translate }}</p>
+        }
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">{{ 'dashboard.partsRequestStatusTitle' | translate }}</h2>
+        <div class="bar-list">
+          @for (s of overview.disbursementStatus; track s.status) {
+            <div class="bar-row">
+              <div class="bar-meta">
+                <span>{{ s.status | translate }}</span>
+                <span class="bar-count"
+                  >{{ s.count }} · {{ statusPercent(overview.disbursementStatus, s.status) }}%</span
+                >
+              </div>
+              <div class="bar-track">
+                <div
+                  class="bar-fill"
+                  [style.width.%]="statusPercent(overview.disbursementStatus, s.status)"
+                ></div>
+              </div>
+            </div>
+          }
+          @if (!overview.disbursementStatus.length) {
+            <p class="panel-empty">{{ 'dashboard.noPartsRequests' | translate }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">{{ 'dashboard.vehicleStatusTitle' | translate }}</h2>
+        <div class="bar-list">
+          @for (s of overview.vehicleStatus; track s.status) {
+            <div class="bar-row">
+              <div class="bar-meta">
+                <span>{{ s.status | translate }}</span>
+                <span class="bar-count"
+                  >{{ s.count }} · {{ statusPercent(overview.vehicleStatus, s.status) }}%</span
+                >
+              </div>
+              <div class="bar-track">
+                <div
+                  class="bar-fill bar-fill--green"
+                  [style.width.%]="statusPercent(overview.vehicleStatus, s.status)"
+                ></div>
+              </div>
+            </div>
+          }
+          @if (!overview.vehicleStatus.length) {
+            <p class="panel-empty">{{ 'dashboard.noVehicleStatus' | translate }}</p>
+          }
+        </div>
+      </div>
+    </section>
+
     <section class="analytics-row">
       <div class="panel panel--chart">
         <h2 class="panel-title">{{ 'dashboard.costByDepartmentTitle' | translate }}</h2>
@@ -75,9 +184,9 @@
       <div class="panel panel--list">
         <h2 class="panel-title">{{ 'dashboard.technicianPerformanceTitle' | translate }}</h2>
         <p class="panel-subtitle">{{ 'dashboard.rankedByBounceRate' | translate }}</p>
-        @if (technicianKpis.length) {
+        @if (overview.technicianKpis.length) {
           <ol class="technician-list">
-            @for (t of technicianKpis; track t.technician_id) {
+            @for (t of overview.technicianKpis; track t.technician_id) {
               <li class="technician-row">
                 <span class="technician-name">{{ t.full_name }}</span>
                 <span class="technician-stats">

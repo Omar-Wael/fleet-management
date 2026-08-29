@@ -7,6 +7,13 @@ import { TranslationEntry } from './types';
  * from ballooning as more tabs get translated.
  */
 export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
+  'active': { en: 'Active', ar: 'نشط' },
+  'inactive': { en: 'Inactive', ar: 'غير نشط' },
+  'requested': { en: 'Requested', ar: 'تم الطلب' },
+  'issued': { en: 'Issued', ar: 'تم الصرف' },
+  'new': { en: 'New', ar: 'جديد' },
+  'total': { en: 'Total', ar: 'الإجمالى' },
+  'common.ok': { en: 'OK', ar: 'موافق' },
   'common.save': { en: 'Save', ar: 'حفظ' },
   'common.saveChanges': { en: 'Save Changes', ar: 'حفظ التغييرات' },
   'common.saving': { en: 'Saving…', ar: 'جارٍ الحفظ…' },

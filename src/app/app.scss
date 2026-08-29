@@ -23,15 +23,6 @@
   grid-template-columns: 240px 1fr;
   min-height: 100vh;
 }
-@media (max-width: 800px) {
-  .shell {
-    grid-template-columns: 1fr;
-  }
-  .shell-nav {
-    position: static;
-    height: auto;
-  }
-}
 
 .shell-nav {
   background: var(--fleet-primary);
@@ -44,6 +35,46 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.shell-backdrop {
+  display: none;
+}
+
+// Below this width the sidebar can no longer share space with the content
+// column (240px eats too much of a phone/tablet viewport), so it becomes
+// an off-canvas drawer instead — toggled by the hamburger button in
+// AppHeaderComponent via LayoutService, and closed by tapping the
+// backdrop or a nav link. `inset-inline-start` (rather than `left`/
+// `transform: translateX`) keeps the slide-in direction correct for both
+// LTR and RTL without any extra overrides.
+@media (max-width: 1024px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .shell-nav {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: -300px;
+    width: min(280px, 82vw);
+    height: 100vh;
+    z-index: 40;
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.25);
+    transition: inset-inline-start 0.25s ease;
+  }
+
+  .shell.sidebar-open .shell-nav {
+    inset-inline-start: 0;
+  }
+
+  .shell.sidebar-open .shell-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 32, 0.45);
+    z-index: 30;
+  }
 }
 
 .shell-brand {
@@ -110,25 +141,6 @@
   // font-size: 0.75rem;
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.55);
-}
-
-.lang-toggle {
-  margin-top: auto;
-  font-family: var(--fleet-font-body);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.85);
-  cursor: pointer;
-  align-self: flex-start;
-}
-
-.lang-toggle:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
 }
 
 .shell-main {
