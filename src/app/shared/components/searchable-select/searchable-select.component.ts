@@ -163,7 +163,16 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
   }
 
   get filteredOptions(): SearchableSelectOption[] {
-    if (this.serverSearch) return this.options;
+    const base = this.serverSearch ? this.options : this.searchFilteredOptions();
+    if (!this.multiple) return base;
+
+    // Selected options float to the top. Array.prototype.sort is stable
+    // (ES2019+), so ties (both selected or both unselected) keep their
+    // original relative order.
+    return [...base].sort((a, b) => Number(this.isSelected(b)) - Number(this.isSelected(a)));
+  }
+
+  private searchFilteredOptions(): SearchableSelectOption[] {
     const term = this.searchTerm.trim().toLowerCase();
     if (!term) return this.options;
     return this.options.filter(
@@ -198,12 +207,15 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
     this.cdr.markForCheck();
   }
 
-  removeChip(value: string, event: Event): void {
-    event.stopPropagation();
-    if (!Array.isArray(this.value)) return;
-    this.value = this.value.filter((v) => v !== value);
-    this.onChange(this.value);
-    this.cdr.markForCheck();
+  /** Handles clicks on the whole trigger surface. Chip "×" buttons already
+   *  stop their own click from bubbling here — this is the mirror-image
+   *  guard: even if a click's *target* somehow resolves onto a chip (dense
+   *  chip rows leave little empty space to click, especially with several
+   *  selections), toggling the dropdown is explicitly skipped rather than
+   *  relying on bubbling order alone. */
+  onTriggerClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).closest('.ss-chip')) return;
+    this.toggleOpen();
   }
 
   clearSelection(event: Event): void {
@@ -259,10 +271,10 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
     return this.multiple ? Array.isArray(this.value) && this.value.length > 0 : !!this.value;
   }
 
-  get selectedChips(): SearchableSelectOption[] {
-    if (!this.multiple || !Array.isArray(this.value)) return [];
-    return this.value
-      .map((v) => this.options.find((o) => o.value === v))
-      .filter((o): o is SearchableSelectOption => !!o);
+  /** Multi-select trigger text — comma-joined labels, truncated by CSS
+   *  (ellipsis) rather than JS, so it always fills exactly the available
+   *  input width regardless of container size. */
+  get selectedLabelsText(): string {
+    return this.selectedLabels.join(', ');
   }
 }

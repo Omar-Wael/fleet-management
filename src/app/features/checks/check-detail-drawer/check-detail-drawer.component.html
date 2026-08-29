@@ -21,7 +21,7 @@
             <dt>{{ 'checks.linkedVehicle' | translate }}</dt>
             <dd class="mono">{{ linkedVehiclePlate || '—' }}</dd>
             <dt>{{ 'checks.created' | translate }}</dt>
-            <dd>{{ check.created_at | date : 'medium' }}</dd>
+            <dd>{{ check.created_at | date : 'mediumDate' }}</dd>
           </dl>
         </section>
 
@@ -41,7 +41,7 @@
                 <div class="approval-text">
                   <span class="approval-label">{{ step.labelKey | translate }}</span>
                   @if (check[step.key]) {
-                    <span class="approval-date">{{ check[step.key] | date : 'medium' }}</span>
+                    <span class="approval-date">{{ check[step.key] | date : 'mediumDate' }}</span>
                   } @else {
                     <span class="approval-date approval-date--pending">{{ 'checks.pending' | translate }}</span>
                   }

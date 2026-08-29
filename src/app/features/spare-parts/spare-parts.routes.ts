@@ -10,7 +10,7 @@ export const SPARE_PARTS_ROUTES: Routes = [
     path: '',
     component: SparePartsPageComponent,
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'catalog' },
+      { path: '', pathMatch: 'full', redirectTo: 'disbursements' },
       { path: 'catalog', component: SparePartsCatalogComponent },
       { path: 'disbursements', component: DisbursementRequestsComponent },
       { path: 'price-intelligence', component: PriceIntelligenceComponent },

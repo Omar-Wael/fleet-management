@@ -318,6 +318,7 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.disbursementForm.modeCatalog': { en: 'From catalogue', ar: 'من الكتالوج' },
   'spareParts.disbursementForm.modeCustom': { en: 'Free text', ar: 'نص حر' },
   'spareParts.disbursementForm.customPartPlaceholder': { en: 'Part name (not in catalogue)', ar: 'اسم القطعة (ليست في الكتالوج)' },
+  'spareParts.disbursementForm.selectTechniciansPlaceholder': { en: 'Select technician(s)…', ar: 'اختر الفني(ون)…' },
 
   'spareParts.requestNumber': { en: 'Request #', ar: 'رقم الطلب' },
   'spareParts.technicians': { en: 'Technicians', ar: 'الفنيون' },

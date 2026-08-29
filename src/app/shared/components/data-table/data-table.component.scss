@@ -253,6 +253,9 @@ tbody tr:hover td.dt-col-sticky {
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 
   &:disabled {
     opacity: 0.5;
@@ -260,8 +263,49 @@ tbody tr:hover td.dt-col-sticky {
   }
 }
 
+.dt-link-btn--icon-only {
+  text-decoration: none; // no underline on a bare symbol
+  // padding: 0.15rem;
+}
+
+.dt-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1.5px solid transparent;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.12s;
+  background: none;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dt-link-btn--default {
+  color: var(--fleet-primary, #1e3a5f);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  border-radius: 0.25rem;
+}
+
+.dt-link-btn--info {
+  color: var(--fleet-primary, #1e3a5f);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  border-radius: 0.25rem;
+}
+
 .dt-link-btn--danger {
   color: var(--fleet-rust, #c4432b);
+  background: #fff1f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 0.25rem;
 }
 
 // ---- inline-edit cells (Settings lookup tables) ----
@@ -347,4 +391,25 @@ tbody tr:hover td.dt-col-sticky {
 
 .dt-page-current {
   white-space: nowrap;
+}
+
+.dt-page-jump {
+  width: 3rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  text-align: center;
+  padding: 0.25rem 0.375rem;
+  border: 1px solid var(--fleet-line, #dfe3e8);
+  border-radius: 0.25rem;
+  background: #fff;
+  color: var(--fleet-ink, #1f2430);
+  margin: 0 0.25rem;
+
+  // hide native spinner arrows so it reads like plain text-with-a-box, not a stepper
+  -moz-appearance: textfield;
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }

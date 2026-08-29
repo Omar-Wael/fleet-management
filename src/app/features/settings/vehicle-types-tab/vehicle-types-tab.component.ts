@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { LookupsService } from '../../../core/services/lookups.service';
@@ -19,7 +19,10 @@ import {
 } from '../../../shared/utils/import-column-maps';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 import { applyQueryInMemory } from '../../../shared/components/data-table/apply-query-in-memory.util';
 
 interface EditableRow extends VehicleType {
@@ -42,7 +45,7 @@ const EMPTY_DRAFT = { name_ar: '', name_en: '', default_workshop_type: '' };
   imports: [FormsModule, TranslatePipe, SharedDataTableComponent],
   templateUrl: './vehicle-types-tab.component.html',
   styleUrls: ['./vehicle-types-tab.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VehicleTypesTabComponent implements OnInit {
   /** Already fully loaded elsewhere (dropdown source) — search/sort/pagination run in-memory. See apply-query-in-memory.util.ts. */
@@ -131,10 +134,26 @@ export class VehicleTypesTabComponent implements OnInit {
         actions: (row) =>
           row._draft
             ? [
-                { label: this.i18n.t('common.save'), onClick: (row) => this.confirmEdit(row), disabled: () => this.saving },
-                { label: this.i18n.t('common.cancel'), onClick: (row) => this.cancelEdit(row), disabled: () => this.saving },
+                {
+                  label: this.i18n.t('common.save'),
+                  onClick: (row) => this.confirmEdit(row),
+                  disabled: () => this.saving,
+                },
+                {
+                  label: this.i18n.t('common.cancel'),
+                  onClick: (row) => this.cancelEdit(row),
+                  disabled: () => this.saving,
+                },
               ]
-            : [{ label: this.i18n.t('common.edit'), onClick: (row) => this.startEdit(row) }],
+            : [
+                {
+                  label: this.i18n.t('common.edit'),
+                  icon: '✏️',
+                  variant: 'default',
+                  display: 'icon',
+                  onClick: (row) => this.startEdit(row),
+                },
+              ],
       },
     ];
   }

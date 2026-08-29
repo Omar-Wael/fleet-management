@@ -159,8 +159,20 @@ export class TechniciansListComponent implements OnInit {
         header: this.i18n.t('common.actions'),
         align: 'end',
         actions: (t) => [
-          { label: this.i18n.t('common.view'), onClick: (t) => this.openProfile(t) },
-          { label: this.i18n.t('common.edit'), onClick: (t) => this.openEditForm(t) },
+          {
+            label: this.i18n.t('common.view'),
+            icon: '👁️️',
+            variant: 'info',
+            display: 'icon',
+            onClick: (t) => this.openProfile(t),
+          },
+          {
+            label: this.i18n.t('common.edit'),
+            icon: '✏️',
+            variant: 'default',
+            display: 'icon',
+            onClick: (t) => this.openEditForm(t),
+          },
           {
             label: this.i18n.t(t.is_active ? 'technicians.deactivate' : 'technicians.reactivate'),
             onClick: (t) => this.toggleActive(t),

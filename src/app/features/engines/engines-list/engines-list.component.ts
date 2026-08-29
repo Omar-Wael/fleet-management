@@ -1,11 +1,15 @@
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { EngineFormComponent } from '../engine-form/engine-form.component';
 import { EngineProfileDrawerComponent } from '../engine-profile-drawer/engine-profile-drawer.component';
 
 import { EnginesService, EngineGridRow } from '../../../core/services/engines.service';
-import { exportToExcel, ExcelExportColumn, downloadImportTemplate } from '../../../shared/utils/excel-import-export.util';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { importFileWithMapping } from '../../../shared/utils/document-import.util';
 import {
@@ -18,15 +22,25 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 @Component({
   selector: 'app-engines-list',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, EngineFormComponent, EngineProfileDrawerComponent],
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    SharedDataTableComponent,
+    EngineFormComponent,
+    EngineProfileDrawerComponent,
+  ],
   templateUrl: './engines-list.component.html',
   styleUrls: ['./engines-list.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EnginesListComponent implements OnInit {
   rows: EngineGridRow[] = [];
@@ -83,15 +97,28 @@ export class EnginesListComponent implements OnInit {
         sortable: true,
         render: (e) => e.model_name || '—',
       },
-      { key: 'manufacturer', header: this.i18n.t('engines.manufacturer'), render: (e) => e.manufacturer || '—' },
-      { key: 'horsepower', header: this.i18n.t('engines.hp'), mono: true, render: (e) => (e.horsepower ?? '—') + '' },
+      {
+        key: 'manufacturer',
+        header: this.i18n.t('engines.manufacturer'),
+        render: (e) => e.manufacturer || '—',
+      },
+      {
+        key: 'horsepower',
+        header: this.i18n.t('engines.hp'),
+        mono: true,
+        render: (e) => (e.horsepower ?? '—') + '',
+      },
       {
         key: 'cc',
         header: this.i18n.t('engines.cc'),
         mono: true,
         render: (e) => (e.cc == null ? '—' : new Intl.NumberFormat().format(e.cc)),
       },
-      { key: 'fuel_type', header: this.i18n.t('engines.fuelType'), render: (e) => e.fuel_type || '—' },
+      {
+        key: 'fuel_type',
+        header: this.i18n.t('engines.fuelType'),
+        render: (e) => e.fuel_type || '—',
+      },
       {
         key: 'compatible_types',
         header: this.i18n.t('engines.colCompatibleTypes'),
@@ -107,15 +134,33 @@ export class EnginesListComponent implements OnInit {
             ? { text: this.i18n.t('engines.statusInStock'), variant: 'ok' }
             : { text: this.i18n.t('engines.statusFitted'), variant: 'warn' },
       },
-      { key: 'notes', header: this.i18n.t('common.notes'), truncate: true, render: (e) => e.notes || '—' },
+      {
+        key: 'notes',
+        header: this.i18n.t('common.notes'),
+        truncate: true,
+        render: (e) => e.notes || '—',
+      },
       {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
         actions: (e) => [
-          { label: this.i18n.t('common.view'), onClick: (e) => this.openProfile(e) },
-          { label: this.i18n.t('common.edit'), onClick: (e) => this.openEditForm(e) },
-          { label: this.i18n.t('common.delete'), onClick: (e) => this.deleteEngine(e), variant: 'danger' },
+          { label: this.i18n.t('common.view'), icon: '👁️️',
+            variant: 'info', display: 'icon', onClick: (e) => this.openProfile(e) },
+          {
+            label: this.i18n.t('common.edit'),
+            icon: '✏️',
+            variant: 'default',
+            display: 'icon',
+            onClick: (e) => this.openEditForm(e),
+          },
+          {
+            label: this.i18n.t('common.delete'),
+            icon: '🗑️',
+            display: 'icon',
+            variant: 'danger',
+            onClick: (e) => this.deleteEngine(e),
+          },
         ],
       },
     ];
@@ -150,7 +195,8 @@ export class EnginesListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -213,7 +259,8 @@ export class EnginesListComponent implements OnInit {
     this.enginesService.delete(engine.id).subscribe({
       next: () => this.loadEngines(this.currentQuery),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -256,13 +303,15 @@ export class EnginesListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+            this.importError =
+              err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       });
   }
 
@@ -287,7 +336,8 @@ export class EnginesListComponent implements OnInit {
     this.enginesService.listAllMatching(this.currentQuery).subscribe({
       next: (rows) => exportToExcel(rows, this.excelColumns(), 'engines-export'),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -306,7 +356,8 @@ export class EnginesListComponent implements OnInit {
           'engines-report',
         ),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

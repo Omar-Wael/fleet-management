@@ -14,7 +14,13 @@ import { TechniciansService } from '../../../core/services/technicians.service';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { forkJoin, of, from } from 'rxjs';
 import { switchMap, concatMap, toArray } from 'rxjs/operators';
-import { DisbursementStatus } from '../../../core/models/fleet.models';
+import {
+  DisbursementStatus,
+  MaintenanceWorkshop,
+  OperatingDepartment,
+  Technician,
+  Vehicle,
+} from '../../../core/models/fleet.models';
 import {
   exportToExcel,
   ExcelExportColumn,
@@ -31,6 +37,8 @@ import {
   DataTableFilter,
   DataTableQuery,
 } from '../../../shared/components/data-table/data-table.models';
+import { EnginesService } from '../../../core/services/engines.service';
+import { LookupsService } from '../../../core/services/lookups.service';
 
 // English-only labels — used for Excel/PDF export accessors, which stay in
 // English regardless of app language (matches the technicians export
@@ -96,7 +104,7 @@ export class DisbursementRequestsComponent implements OnInit {
     pageSize: 10,
     search: '',
     sort: { field: 'requested_at', dir: 'desc' },
-    filters: { status: '' },
+    filters: { status: '', vehicleId: '', technicianId: '', departmentId: '', workshopId: '' },
   };
 
   formOpen = false;
@@ -108,11 +116,23 @@ export class DisbursementRequestsComponent implements OnInit {
   drawerOpen = false;
   selectedRequest: DisbursementGridRow | null = null;
 
+  departments: OperatingDepartment[] = [];
+  workshops: MaintenanceWorkshop[] = [];
+  vehicles: Vehicle[] = [];
+  technicians: Technician[] = [];
+
+  // private departmentIdByName = new Map<string, string>();
+  // private workshopIdByName = new Map<string, string>();
+  // private vehicleIdByName = new Map<string, string>();
+  // private technicianIdByName = new Map<string, string>();
+
   constructor(
     private disbursementService: DisbursementService,
     private vehiclesService: VehiclesService,
     private techniciansService: TechniciansService,
     private sparePartsService: SparePartsService,
+    private enginesService: EnginesService,
+    private lookupsService: LookupsService,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
@@ -122,6 +142,42 @@ export class DisbursementRequestsComponent implements OnInit {
     this.buildColumns();
     this.buildFilters();
     this.loadRequests(this.currentQuery);
+
+    forkJoin({
+      technicians: this.techniciansService.list(),
+      vehicles: this.vehiclesService.list(),
+      departments: this.lookupsService.listOperatingDepartments(),
+      workshops: this.lookupsService.listMaintenanceWorkshops(),
+      engines: this.enginesService.list(),
+    }).subscribe({
+      next: ({ technicians, vehicles, departments, workshops, engines }) => {
+        this.technicians = technicians;
+        this.vehicles = vehicles;
+        this.departments = departments;
+        this.workshops = workshops;
+
+        // this.departmentIdByName = new Map(
+        //   departments.map((d) => [(d.name_en || d.name_ar).trim().toLowerCase(), d.id]),
+        // );
+        // this.workshopIdByName = new Map(
+        //   workshops.map((w) => [(w.name_en || w.name_ar).trim().toLowerCase(), w.id]),
+        // );
+        // this.vehicleIdByName = new Map(
+        //   vehicles.map((v) => [(v.plate_number || '-').trim().toLowerCase(), v.id]),
+        // );
+        // this.technicianIdByName = new Map(
+        //   technicians.map((t) => [(t.full_name || '-').trim().toLowerCase(), t.id]),
+        // );
+
+        this.buildFilters();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   private buildColumns(): void {
@@ -153,13 +209,13 @@ export class DisbursementRequestsComponent implements OnInit {
         key: 'requested_at',
         header: this.i18n.t('spareParts.disbursement.requestedAt'),
         sortable: true,
-        render: (r) => this.datePipe.transform(r.requested_at, 'medium') || '—',
+        render: (r) => this.datePipe.transform(r.requested_at, 'mediumDate') || '—',
       },
       {
         key: 'issued_at',
         header: this.i18n.t('spareParts.disbursement.issuedAt'),
         sortable: true,
-        render: (r) => (r.issued_at ? this.datePipe.transform(r.issued_at, 'medium') || '—' : '—'),
+        render: (r) => (r.issued_at ? this.datePipe.transform(r.issued_at, 'mediumDate') || '—' : '—'),
       },
       {
         key: 'parts',
@@ -171,7 +227,15 @@ export class DisbursementRequestsComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (r) => [{ label: this.i18n.t('common.view'), onClick: (r) => this.openDetail(r) }],
+        actions: (r) => [
+          {
+            label: this.i18n.t('common.view'),
+            icon: '👁️️',
+            variant: 'info',
+            display: 'icon',
+            onClick: (r) => this.openDetail(r),
+          },
+        ],
       },
     ];
   }
@@ -203,25 +267,28 @@ export class DisbursementRequestsComponent implements OnInit {
         key: 'vehicleId',
         label: this.i18n.t('spareParts.disbursement.vehicle'),
         value: this.currentQuery.filters['vehicleId'] ?? '',
-        options: [], // populated dynamically by SharedDataTableComponent via listAllMatching() call
+        options: this.vehicles.map((v) => ({ value: v.id, label: v.plate_number || '—' })),
       },
       {
         key: 'departmentId',
         label: this.i18n.t('spareParts.department'),
         value: this.currentQuery.filters['departmentId'] ?? '',
-        options: [], // populated dynamically by SharedDataTableComponent via listAllMatching() call
+        options: this.departments.map((d) => ({
+          value: d.id,
+          label: d.name_ar || d.name_en || '—',
+        })),
       },
       {
         key: 'workshopId',
         label: this.i18n.t('spareParts.repairDepartment'),
         value: this.currentQuery.filters['workshopId'] ?? '',
-        options: [], // populated dynamically by SharedDataTableComponent via listAllMatching() call
+        options: this.workshops.map((w) => ({ value: w.id, label: w.name_ar || w.name_en || '—' })),
       },
       {
         key: 'technicianId',
         label: this.i18n.t('spareParts.technician'),
         value: this.currentQuery.filters['technicianId'] ?? '',
-        options: [], // populated dynamically by SharedDataTableComponent via listAllMatching() call
+        options: this.technicians.map((t) => ({ value: t.id, label: t.full_name || '—' })),
       },
     ];
   }
@@ -310,8 +377,11 @@ export class DisbursementRequestsComponent implements OnInit {
   }
 
   // -------------------------------------------------------------
-  // Bulk import — 1 REQUEST per row
-  // Columns: Request Number | Vehicle Plate | Technician Names | Notes | PartN Code/Qty/Condition/Has Sample
+  // Bulk import — 1 ITEM per row
+  // Rows sharing the same Request Number (or Vehicle+Technicians+Notes)
+  // are grouped into one disbursement request.
+  // Columns: Request Number | Vehicle Plate | Technician Names |
+  //          Part Code or Name | Qty | Condition | Has Sample | Notes
   // -------------------------------------------------------------
 
   downloadTemplate(): void {
@@ -320,30 +390,24 @@ export class DisbursementRequestsComponent implements OnInit {
         'Request Number',
         'Vehicle Plate',
         'Technician Names',
+        'Part Code or Name',
+        'Qty',
+        'Condition',
+        'Has Sample',
+        'Requested At', // NEW — ISO date or Excel date, e.g. 2026-08-29
         'Notes',
-        'Part1 Code',
-        'Part1 Qty',
-        'Part1 Condition',
-        'Part1 Has Sample',
-        'Part2 Code',
-        'Part2 Qty',
-        'Part2 Condition',
-        'Part2 Has Sample',
       ],
       'disbursement-requests-import-template',
       {
         'Request Number': '',
         'Vehicle Plate': 'ABC-1234',
         'Technician Names': 'Ahmed Ali, Khaled Omar',
+        'Part Code or Name': 'Oil Filter',
+        Qty: 2,
+        Condition: 'new, used, imported',
+        'Has Sample': 'false',
+        'Requested At': '2026-08-29',
         Notes: 'optional',
-        'Part1 Code': 'FLT-001',
-        'Part1 Qty': 2,
-        'Part1 Condition': 'new',
-        'Part1 Has Sample': 'false',
-        'Part2 Code': 'BRK-010',
-        'Part2 Qty': 1,
-        'Part2 Condition': 'used',
-        'Part2 Has Sample': 'true',
       },
     );
   }
@@ -362,32 +426,42 @@ export class DisbursementRequestsComponent implements OnInit {
     this.cdr.markForCheck();
     this.importError = null;
     this.importSummary = null;
-    this.cdr.markForCheck();
 
     readExcelFile(file)
       .then((rawRows) => {
+        const getCell = (r: Record<string, unknown>, ...keys: string[]) => {
+          for (const k of keys) {
+            const found = Object.keys(r).find((hk) => hk.trim().toLowerCase() === k.toLowerCase());
+            if (found != null && r[found] != null && String(r[found]).trim() !== '') {
+              return String(r[found]).trim();
+            }
+          }
+          return '';
+        };
+
+        // 1 item per row
         const normalized = rawRows
           .map((r) => {
-            const get = (...keys: string[]) => {
-              for (const k of keys) {
-                const found = Object.keys(r).find(
-                  (hk) => hk.trim().toLowerCase() === k.toLowerCase(),
-                );
-                if (found != null && r[found] != null && String(r[found]).trim() !== '') {
-                  return String(r[found]).trim();
-                }
-              }
-              return '';
-            };
+            const rawSample = getCell(r, 'Has Sample', 'has_sample', 'sample').toLowerCase();
             return {
-              plate: get('Vehicle Plate', 'plate', 'plate_number'),
-              technician: get('Technician Name', 'technician', 'requested_by'),
-              part: get('Part Code or Name', 'part', 'part_name', 'part_code'),
-              qty: Number(get('Qty', 'quantity', 'qty') || '1') || 1,
-              notes: get('Notes', 'notes') || null,
+              request_number: getCell(r, 'Request Number', 'request_number') || undefined,
+              plate: getCell(r, 'Vehicle Plate', 'plate', 'plate_number'),
+              technicians: getCell(
+                r,
+                'Technician Names',
+                'Technician Name',
+                'technician_names',
+                'technician',
+              ),
+              part: getCell(r, 'Part Code or Name', 'part', 'part_name', 'part_code'),
+              qty: Number(getCell(r, 'Qty', 'quantity', 'qty') || '1') || 1,
+              condition: (getCell(r, 'Condition', 'condition') || 'new').toLowerCase(),
+              has_sample: rawSample === 'true' || rawSample === '1' || rawSample === 'yes',
+              requested_at: getCell(r, 'Requested At', 'requested_at', 'requested at') || null,
+              notes: getCell(r, 'Notes', 'notes') || null,
             };
           })
-          .filter((r) => r.plate && r.technician && r.part);
+          .filter((r) => r.plate && r.part);
 
         if (!normalized.length) {
           this.importing = false;
@@ -422,35 +496,64 @@ export class DisbursementRequestsComponent implements OnInit {
               }),
             );
 
-            // Group rows into requests by plate+technician+notes
-            type GroupKey = string;
-            const groups = new Map<
-              GroupKey,
-              {
-                vehicle_id: string;
-                technician_id: string;
-                notes: string | null;
-                items: { spare_part_id: string | null; free_name: string; qty: number }[];
-              }
-            >();
+            type Group = {
+              request_number?: string;
+              vehicle_id: string;
+              technicianIds: string[];
+              notes: string | null;
+              requested_at: string | null; // NEW
+              items: {
+                spare_part_id: string | null;
+                free_name: string;
+                qty: number;
+                condition: string;
+                has_sample: boolean;
+              }[];
+            };
+            const groups = new Map<string, Group>();
             let skipped = 0;
 
             for (const row of normalized) {
               const vehicle_id = plateMap.get(row.plate.toLowerCase());
-              const technician_id = techMap.get(row.technician.toLowerCase());
-              if (!vehicle_id || !technician_id) {
+              if (!vehicle_id) {
                 skipped++;
                 continue;
               }
-              const key = `${vehicle_id}||${technician_id}||${row.notes ?? ''}`;
+              const techNames = (row.technicians || '')
+                .split(',')
+                .map((n) => n.trim())
+                .filter(Boolean);
+              const technicianIds = techNames
+                .map((n) => techMap.get(n.toLowerCase()))
+                .filter((id): id is string => !!id);
+
+              // Group key: prefer Request Number; else vehicle + techs + notes
+              const key =
+                row.request_number?.trim() ||
+                `${vehicle_id}||${technicianIds.slice().sort().join(',')}||${row.notes ?? ''}`;
+
               let group = groups.get(key);
               if (!group) {
-                group = { vehicle_id, technician_id, notes: row.notes, items: [] };
+                group = {
+                  request_number: row.request_number,
+                  vehicle_id,
+                  technicianIds,
+                  notes: row.notes,
+                  requested_at: row.requested_at, // NEW
+                  items: [],
+                };
                 groups.set(key, group);
               }
+
               const partKey = row.part.toLowerCase();
               const spare_part_id = partByCode.get(partKey) ?? partByName.get(partKey) ?? null;
-              group.items.push({ spare_part_id, free_name: row.part, qty: row.qty });
+              group.items.push({
+                spare_part_id,
+                free_name: row.part,
+                qty: row.qty,
+                condition: row.condition,
+                has_sample: row.has_sample,
+              });
             }
 
             const groupList = Array.from(groups.values());
@@ -461,65 +564,66 @@ export class DisbursementRequestsComponent implements OnInit {
               return;
             }
 
-            from(groupList)
-              .pipe(
-                concatMap((g) =>
-                  this.disbursementService
-                    .create({
+            const ensurePartId = async (item: {
+              spare_part_id: string | null;
+              free_name: string;
+            }): Promise<string> => {
+              if (item.spare_part_id) return item.spare_part_id;
+              const part = await this.sparePartsService
+                .create({
+                  name_ar: item.free_name,
+                  name_en: item.free_name,
+                  current_stock_qty: 0,
+                })
+                .toPromise();
+              return part!.id;
+            };
+
+            (async () => {
+              try {
+                const payloads: Parameters<DisbursementService['bulkCreateBatches']>[0] = [];
+
+                for (const g of groupList) {
+                  const items = [];
+                  for (const it of g.items) {
+                    const spare_part_id = await ensurePartId(it);
+                    items.push({
+                      spare_part_id,
+                      qty: it.qty,
+                      condition: it.condition as any,
+                      has_sample: it.has_sample,
+                    });
+                  }
+                  payloads.push({
+                    request: {
+                      request_number: g.request_number,
                       vehicle_id: g.vehicle_id,
-                      requested_by_technician_id: g.technician_id,
                       notes: g.notes,
-                    })
-                    .pipe(
-                      switchMap((req) => {
-                        const itemCalls = g.items.map((item) => {
-                          if (item.spare_part_id) {
-                            return this.disbursementService.addItem({
-                              disbursement_request_id: req.id,
-                              spare_part_id: item.spare_part_id,
-                              qty: item.qty,
-                            });
-                          }
-                          return this.sparePartsService
-                            .create({
-                              name_ar: item.free_name,
-                              name_en: item.free_name,
-                              current_stock_qty: 0,
-                            })
-                            .pipe(
-                              switchMap((part) =>
-                                this.disbursementService.addItem({
-                                  disbursement_request_id: req.id,
-                                  spare_part_id: part.id,
-                                  qty: item.qty,
-                                }),
-                              ),
-                            );
-                        });
-                        return forkJoin(itemCalls.length ? itemCalls : [of(null)]).pipe(
-                          switchMap(() => of(req)),
-                        );
-                      }),
-                    ),
-                ),
-                toArray(),
-              )
-              .subscribe({
-                next: (created) => {
-                  this.importing = false;
-                  this.importSummary = { savedCount: created.length, skippedCount: skipped };
-                  this.cdr.markForCheck();
-                  this.reloadRequestsOnly();
-                },
-                error: (err) => {
-                  this.importing = false;
-                  this.importError =
-                    err instanceof Error
-                      ? err.message
-                      : this.i18n.t('spareParts.disbursement.importFailed');
-                  this.cdr.markForCheck();
-                },
-              });
+                      status: 'requested',
+                      requested_at: g.requested_at
+                        ? new Date(g.requested_at).toISOString()
+                        : new Date().toISOString(),
+                    },
+                    technicianIds: g.technicianIds,
+                    items,
+                  });
+                }
+
+                const result = await this.disbursementService.bulkCreateBatches(payloads, 200);
+                this.importing = false;
+                this.importSummary = { savedCount: result.created, skippedCount: skipped };
+                if (result.errors.length) {
+                  this.importError = result.errors.slice(0, 5).join('; ');
+                }
+                this.cdr.markForCheck();
+                this.reloadRequestsOnly();
+              } catch (err: any) {
+                this.importing = false;
+                this.importError =
+                  err?.message || this.i18n.t('spareParts.disbursement.importFailed');
+                this.cdr.markForCheck();
+              }
+            })();
           },
           error: (err) => {
             this.importing = false;
@@ -540,11 +644,6 @@ export class DisbursementRequestsComponent implements OnInit {
         this.cdr.markForCheck();
       });
   }
-
-  // -------------------------------------------------------------
-  // Export — pulls every row matching the grid's current search/filters
-  // (not just the current page) via listAllMatching().
-  // -------------------------------------------------------------
 
   exportExcel(): void {
     this.disbursementService.listAllMatching(this.currentQuery).subscribe({

@@ -4,11 +4,20 @@
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
       <h2>{{ 'spareParts.disbursementForm.title' | translate }}</h2>
-      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="close()"
+        [attr.aria-label]="'common.close' | translate"
+      >
+        ✕
+      </button>
     </header>
 
     @if (lookupsLoading) {
-      <div class="state-message">{{ 'spareParts.disbursementForm.loadingOptions' | translate }}</div>
+      <div class="state-message">
+        {{ 'spareParts.disbursementForm.loadingOptions' | translate }}
+      </div>
     } @else {
       <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
         @if (lookupsError) {
@@ -33,12 +42,13 @@
           </label>
 
           <label class="field field--wide">
-            <span>{{ 'spareParts.technicians' | translate }} (multi)</span>
-            <select formControlName="technician_ids" multiple size="4" class="multi-select">
-              @for (opt of technicianOptions; track opt.value) {
-                <option [value]="opt.value">{{ opt.label }}</option>
-              }
-            </select>
+            <span>{{ 'spareParts.technicians' | translate }}</span>
+            <app-searchable-select
+              formControlName="technician_ids"
+              [multiple]="true"
+              [options]="technicianOptions"
+              [placeholder]="'spareParts.disbursementForm.selectTechniciansPlaceholder' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field field--wide">
@@ -60,27 +70,39 @@
         <section class="items-section">
           <div class="items-header">
             <h3>{{ 'spareParts.disbursementForm.partsRequested' | translate }}</h3>
-            <button type="button" class="link-btn" (click)="addItemRow()">{{ 'spareParts.disbursementForm.addLine' | translate }}</button>
+            <button type="button" class="link-btn" (click)="addItemRow()">
+              {{ 'spareParts.disbursementForm.addLine' | translate }}
+            </button>
           </div>
 
           @for (row of items; track $index; let i = $index) {
             <div class="item-row">
-              <div class="item-mode-toggle">
+              <div class="item-options">
+                <div class="item-mode-toggle">
+                  <button
+                    type="button"
+                    class="mode-btn"
+                    [class.mode-btn--active]="row.mode === 'catalog'"
+                    (click)="setItemMode(row, 'catalog')"
+                  >
+                    {{ 'spareParts.disbursementForm.modeCatalog' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="mode-btn"
+                    [class.mode-btn--active]="row.mode === 'custom'"
+                    (click)="setItemMode(row, 'custom')"
+                  >
+                    {{ 'spareParts.disbursementForm.modeCustom' | translate }}
+                  </button>
+                </div>
                 <button
                   type="button"
-                  class="mode-btn"
-                  [class.mode-btn--active]="row.mode === 'catalog'"
-                  (click)="setItemMode(row, 'catalog')"
+                  class="icon-btn icon-btn--danger"
+                  (click)="removeItemRow(i)"
+                  [attr.aria-label]="'spareParts.disbursementForm.removeLineAria' | translate"
                 >
-                  {{ 'spareParts.disbursementForm.modeCatalog' | translate }}
-                </button>
-                <button
-                  type="button"
-                  class="mode-btn"
-                  [class.mode-btn--active]="row.mode === 'custom'"
-                  (click)="setItemMode(row, 'custom')"
-                >
-                  {{ 'spareParts.disbursementForm.modeCustom' | translate }}
+                  ✕
                 </button>
               </div>
 
@@ -109,16 +131,24 @@
                 [(ngModel)]="row.qty"
                 [ngModelOptions]="{ standalone: true }"
               />
-              <select class="condition-select" [(ngModel)]="row.condition" [ngModelOptions]="{ standalone: true }">
+              <select
+                class="condition-select"
+                [(ngModel)]="row.condition"
+                [ngModelOptions]="{ standalone: true }"
+              >
                 <option value="new">{{ 'spareParts.condition.new' | translate }}</option>
                 <option value="used">{{ 'spareParts.condition.used' | translate }}</option>
                 <option value="imported">{{ 'spareParts.condition.imported' | translate }}</option>
               </select>
+
               <label class="sample-check">
-                <input type="checkbox" [(ngModel)]="row.has_sample" [ngModelOptions]="{ standalone: true }" />
+                <input
+                  type="checkbox"
+                  [(ngModel)]="row.has_sample"
+                  [ngModelOptions]="{ standalone: true }"
+                />
                 {{ 'spareParts.hasSample' | translate }}
               </label>
-              <button type="button" class="icon-btn" (click)="removeItemRow(i)" [attr.aria-label]="'spareParts.disbursementForm.removeLineAria' | translate">✕</button>
 
               @if (row.loadingNote) {
                 <div class="item-note">{{ 'shared.dataTable.loading' | translate }}</div>
@@ -134,9 +164,14 @@
         }
 
         <footer class="slide-over-footer">
-          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ (saving ? 'common.saving' : 'spareParts.disbursementForm.createRequestButton') | translate }}
+            {{
+              (saving ? 'common.saving' : 'spareParts.disbursementForm.createRequestButton')
+                | translate
+            }}
           </button>
         </footer>
       </form>

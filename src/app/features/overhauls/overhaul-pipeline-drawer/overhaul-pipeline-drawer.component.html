@@ -66,8 +66,8 @@
                 @for (s of stageHistory; track s.id) {
                   <tr>
                     <td>{{ stageLabels[s.stage] | translate }}</td>
-                    <td>{{ s.entered_at | date : 'medium' }}</td>
-                    <td>{{ s.exited_at ? (s.exited_at | date : 'medium') : '—' }}</td>
+                    <td>{{ s.entered_at | date : 'mediumDate' }}</td>
+                    <td>{{ s.exited_at ? (s.exited_at | date : 'mediumDate') : '—' }}</td>
                     <td class="mono">{{ formatDuration(s.duration_seconds) }}</td>
                   </tr>
                 }

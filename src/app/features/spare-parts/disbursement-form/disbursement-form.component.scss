@@ -14,7 +14,7 @@
   top: 0;
   right: 0;
   height: 100vh;
-  width: min(600px, 100vw);
+  width: min(50%, 100vw);
   background: var(--fleet-surface, #fff);
   box-shadow: -8px 0 24px rgba(15, 20, 30, 0.15);
   z-index: 41;
@@ -45,6 +45,15 @@
   cursor: pointer;
   padding: 0.25rem;
   line-height: 1;
+}
+
+.icon-btn--danger {
+  color: var(--fleet-rust, #c4432b);
+  background: #fff1f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 0.25rem;
+  width: min(5%, 40px);
 }
 
 .slide-over-body {
@@ -216,6 +225,14 @@
 .item-mode-toggle {
   display: flex;
   gap: 0.25rem;
+  grid-column: 1 / -1;
+}
+
+.item-options {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
   grid-column: 1 / -1;
 }
 

@@ -80,6 +80,7 @@ export interface BulkDisbursementRow {
   technician_names: string; // comma-separated full names
   notes?: string;
   work_order_id?: string;
+  requested_at?: string; // NEW — ISO date or Excel date, e.g. 2026-08-29
   // Up to N parts: partN_code / partN_qty / partN_condition / partN_has_sample
   [key: string]: string | number | boolean | undefined;
 }
@@ -108,9 +109,45 @@ export class DisbursementService {
    * - technicianId (junction – applied client-side after fetch)
    */
   private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    const filterDept = !!query.filters['departmentId'];
+    const filterWorkshop = !!query.filters['workshopId'];
+    const vehicleInner = filterDept || filterWorkshop;
+
+    // !inner when filtering on nested vehicle columns, otherwise left embed
+    const vehicleEmbed = vehicleInner
+      ? `vehicles!inner (
+        plate_number,
+        maintenance_workshop_id,
+        operating_department_id,
+        operating_departments (name_ar, name_en),
+        maintenance_workshops (name_ar, name_en)
+      )`
+      : `vehicles (
+        plate_number,
+        maintenance_workshop_id,
+        operating_department_id,
+        operating_departments (name_ar, name_en),
+        maintenance_workshops (name_ar, name_en)
+      )`;
+
+    const select = `
+    *,
+    ${vehicleEmbed},
+    technicians:requested_by_technician_id (full_name),
+    stock_disbursement_request_technicians (
+      technician_id,
+      role_on_request,
+      technicians (full_name)
+    ),
+    stock_disbursement_items (
+      *,
+      spare_parts (name_ar, name_en, part_code, classification)
+    )
+  `;
+
     let q = this.client
       .from('stock_disbursement_requests')
-      .select(DISBURSEMENT_GRID_SELECT, withCount ? { count: 'exact' } : undefined);
+      .select(select, withCount ? { count: 'exact' } : undefined);
 
     if (query.filters['status']) {
       q = q.eq('status', query.filters['status']);
@@ -121,13 +158,17 @@ export class DisbursementService {
     if (query.filters['dateTo']) {
       q = q.lte('requested_at', (query.filters['dateTo'] as string) + 'T23:59:59');
     }
+
+    // Root FK — keeps normal vehicles embed
     if (query.filters['vehicleId']) {
       q = q.eq('vehicle_id', query.filters['vehicleId']);
     }
-    if (query.filters['departmentId']) {
+
+    // Nested filters — only valid with vehicles!inner
+    if (filterDept) {
       q = q.eq('vehicles.operating_department_id', query.filters['departmentId']);
     }
-    if (query.filters['workshopId']) {
+    if (filterWorkshop) {
       q = q.eq('vehicles.maintenance_workshop_id', query.filters['workshopId']);
     }
 
@@ -153,11 +194,11 @@ export class DisbursementService {
           result.rows = result.rows.filter(
             (row) =>
               row.stock_disbursement_request_technicians?.some((t) => t.technician_id === techId) ||
-              row.requested_by_technician_id === techId
+              row.requested_by_technician_id === techId,
           );
         }
         return result;
-      })
+      }),
     );
   }
 
@@ -169,11 +210,11 @@ export class DisbursementService {
           return rows.filter(
             (row) =>
               row.stock_disbursement_request_technicians?.some((t) => t.technician_id === techId) ||
-              row.requested_by_technician_id === techId
+              row.requested_by_technician_id === techId,
           );
         }
         return rows;
-      })
+      }),
     );
   }
 
@@ -183,14 +224,14 @@ export class DisbursementService {
         .from('stock_disbursement_requests')
         .select(DISBURSEMENT_GRID_SELECT)
         .eq('id', requestId)
-        .single()
+        .single(),
     );
   }
 
   /** Simple create (legacy). Prefer createWithItems. */
   create(request: Partial<StockDisbursementRequest>): Observable<StockDisbursementRequest> {
     return fromSupabase<StockDisbursementRequest>(
-      this.client.from('stock_disbursement_requests').insert(request).select().single()
+      this.client.from('stock_disbursement_requests').insert(request).select().single(),
     );
   }
 
@@ -201,7 +242,7 @@ export class DisbursementService {
   createWithItems(payload: CreateDisbursementPayload): Observable<StockDisbursementRequest> {
     const { request, technicianIds, items } = payload;
     return fromSupabase<StockDisbursementRequest>(
-      this.client.from('stock_disbursement_requests').insert(request).select().single()
+      this.client.from('stock_disbursement_requests').insert(request).select().single(),
     ).pipe(
       switchMap((created) => {
         const ops: Promise<unknown>[] = [];
@@ -212,7 +253,7 @@ export class DisbursementService {
             technician_id: tid,
           }));
           ops.push(
-            this.client.from('stock_disbursement_request_technicians').insert(techRows) as any
+            this.client.from('stock_disbursement_request_technicians').insert(techRows) as any,
           );
         }
 
@@ -229,28 +270,33 @@ export class DisbursementService {
         }
 
         return from(Promise.all(ops)).pipe(map(() => created));
-      })
+      }),
     );
   }
 
   addItem(item: Partial<StockDisbursementItem>): Observable<StockDisbursementItem> {
     return fromSupabase<StockDisbursementItem>(
-      this.client.from('stock_disbursement_items').insert(item).select().single()
+      this.client.from('stock_disbursement_items').insert(item).select().single(),
     );
   }
 
   updateItem(
     itemId: string,
-    changes: Partial<StockDisbursementItem>
+    changes: Partial<StockDisbursementItem>,
   ): Observable<StockDisbursementItem> {
     return fromSupabase<StockDisbursementItem>(
-      this.client.from('stock_disbursement_items').update(changes).eq('id', itemId).select().single()
+      this.client
+        .from('stock_disbursement_items')
+        .update(changes)
+        .eq('id', itemId)
+        .select()
+        .single(),
     );
   }
 
   removeItem(itemId: string): Observable<null> {
     return fromSupabase<null>(
-      this.client.from('stock_disbursement_items').delete().eq('id', itemId)
+      this.client.from('stock_disbursement_items').delete().eq('id', itemId),
     );
   }
 
@@ -259,7 +305,7 @@ export class DisbursementService {
       this.client
         .from('stock_disbursement_request_technicians')
         .delete()
-        .eq('disbursement_request_id', requestId) as any
+        .eq('disbursement_request_id', requestId) as any,
     ).pipe(
       switchMap(() => {
         if (!technicianIds.length) return of(null);
@@ -268,9 +314,9 @@ export class DisbursementService {
           technician_id: tid,
         }));
         return from(
-          this.client.from('stock_disbursement_request_technicians').insert(rows) as any
+          this.client.from('stock_disbursement_request_technicians').insert(rows) as any,
         ).pipe(map(() => null));
-      })
+      }),
     );
   }
 
@@ -281,7 +327,7 @@ export class DisbursementService {
   advanceStatus(
     requestId: string,
     status: DisbursementStatus,
-    opts: { purchaseCommitteeReceiverName?: string } = {}
+    opts: { purchaseCommitteeReceiverName?: string } = {},
   ): Observable<StockDisbursementRequest> {
     const changes: Partial<StockDisbursementRequest> = { status };
     if (status === 'purchase_committee_received' && opts.purchaseCommitteeReceiverName) {
@@ -296,7 +342,7 @@ export class DisbursementService {
         .update(changes)
         .eq('id', requestId)
         .select()
-        .single()
+        .single(),
     );
   }
 
@@ -306,7 +352,7 @@ export class DisbursementService {
         .from('stock_disbursement_status_history')
         .select('*')
         .eq('disbursement_request_id', requestId)
-        .order('changed_at', { ascending: true })
+        .order('changed_at', { ascending: true }),
     );
   }
 
@@ -330,7 +376,7 @@ export class DisbursementService {
       vehiclesByPlate: Map<string, string>;
       techniciansByName: Map<string, string>;
       partsByCode: Map<string, string>;
-    }
+    },
   ): Promise<{ created: number; errors: string[] }> {
     const errors: string[] = [];
     let created = 0;
@@ -368,9 +414,7 @@ export class DisbursementService {
         const condition = ((row[`part${i}_condition`] as string) || 'new') as PartCondition;
         const rawSample = row[`part${i}_has_sample`];
         const hasSample =
-          String(rawSample ?? '').toLowerCase() === 'true' ||
-          rawSample === true ||
-          rawSample === 1;
+          String(rawSample ?? '').toLowerCase() === 'true' || rawSample === true || rawSample === 1;
         items.push({
           spare_part_id: partId,
           qty,
@@ -400,6 +444,100 @@ export class DisbursementService {
         created++;
       } catch (e: any) {
         errors.push(`Row ${idx + 1}: ${e?.message || 'insert failed'}`);
+      }
+    }
+
+    return { created, errors };
+  }
+
+  /**
+   * Batch-create many disbursement requests efficiently.
+   * Inserts requests / technicians / items in chunks (not per-row HTTP).
+   */
+  async bulkCreateBatches(
+    groups: Array<{
+      request: Partial<StockDisbursementRequest>;
+      technicianIds: string[];
+      items: Array<{
+        spare_part_id: string;
+        qty: number;
+        condition?: PartCondition | null;
+        has_sample?: boolean | null;
+      }>;
+    }>,
+    chunkSize = 200,
+  ): Promise<{ created: number; errors: string[] }> {
+    const errors: string[] = [];
+    let created = 0;
+    const client = this.client;
+
+    const chunk = <T>(arr: T[], size: number): T[][] => {
+      const out: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+      return out;
+    };
+
+    for (const batch of chunk(groups, chunkSize)) {
+      const requestPayloads = batch.map((g) => ({
+        request_number: g.request.request_number || undefined,
+        vehicle_id: g.request.vehicle_id,
+        work_order_id: g.request.work_order_id ?? null,
+        notes: g.request.notes ?? null,
+        status: g.request.status ?? 'requested',
+        requested_at: g.request.requested_at ?? new Date().toISOString(),
+        requested_by_technician_id:
+          g.technicianIds[0] ?? g.request.requested_by_technician_id ?? null,
+      }));
+
+      const { data: inserted, error: reqErr } = await client
+        .from('stock_disbursement_requests')
+        .insert(requestPayloads)
+        .select('id');
+
+      if (reqErr || !inserted?.length) {
+        errors.push(reqErr?.message || 'Failed to insert request batch');
+        continue;
+      }
+      created += inserted.length;
+
+      const techRows: { disbursement_request_id: string; technician_id: string }[] = [];
+      inserted.forEach((row, i) => {
+        for (const tid of batch[i].technicianIds) {
+          techRows.push({ disbursement_request_id: row.id, technician_id: tid });
+        }
+      });
+      if (techRows.length) {
+        for (const techChunk of chunk(techRows, 500)) {
+          const { error } = await client
+            .from('stock_disbursement_request_technicians')
+            .insert(techChunk);
+          if (error) errors.push(`technicians: ${error.message}`);
+        }
+      }
+
+      const itemRows: {
+        disbursement_request_id: string;
+        spare_part_id: string;
+        qty: number;
+        condition: string;
+        has_sample: boolean;
+      }[] = [];
+      inserted.forEach((row, i) => {
+        for (const it of batch[i].items) {
+          itemRows.push({
+            disbursement_request_id: row.id,
+            spare_part_id: it.spare_part_id,
+            qty: it.qty,
+            condition: it.condition ?? 'new',
+            has_sample: !!it.has_sample,
+          });
+        }
+      });
+      if (itemRows.length) {
+        for (const itemChunk of chunk(itemRows, 500)) {
+          const { error } = await client.from('stock_disbursement_items').insert(itemChunk);
+          if (error) errors.push(`items: ${error.message}`);
+        }
       }
     }
 

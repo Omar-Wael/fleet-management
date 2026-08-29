@@ -169,7 +169,8 @@ export class OverhaulsListComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (o) => [{ label: this.i18n.t('common.view'), onClick: (o) => this.openPipeline(o) }],
+        actions: (o) => [{ label: this.i18n.t('common.view'), icon: '👁️️',
+            variant: 'info', display: 'icon', onClick: (o) => this.openPipeline(o) }],
       },
     ];
   }

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { LookupsService } from '../../../core/services/lookups.service';
@@ -19,7 +19,11 @@ import {
 } from '../../../shared/utils/import-column-maps';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 import { applyQueryInMemory } from '../../../shared/components/data-table/apply-query-in-memory.util';
 
 interface EditableRow extends OperatingDepartment {
@@ -34,7 +38,7 @@ const EMPTY_DRAFT = { name_ar: '', name_en: '' };
   imports: [FormsModule, TranslatePipe, SharedDataTableComponent],
   templateUrl: './departments-tab.component.html',
   styleUrls: ['./departments-tab.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DepartmentsTabComponent implements OnInit {
   /**
@@ -126,13 +130,31 @@ export class DepartmentsTabComponent implements OnInit {
         actions: (row) =>
           row._draft
             ? [
-                { label: this.i18n.t('common.save'), onClick: (row) => this.confirmEdit(row), disabled: () => this.saving },
-                { label: this.i18n.t('common.cancel'), onClick: (row) => this.cancelEdit(row), disabled: () => this.saving },
+                {
+                  label: this.i18n.t('common.save'),
+                  onClick: (row) => this.confirmEdit(row),
+                  disabled: () => this.saving,
+                },
+                {
+                  label: this.i18n.t('common.cancel'),
+                  onClick: (row) => this.cancelEdit(row),
+                  disabled: () => this.saving,
+                },
               ]
             : [
-                { label: this.i18n.t('common.edit'), onClick: (row) => this.startEdit(row) },
                 {
-                  label: this.i18n.t(row.is_active ? 'settings.departments.deactivate' : 'settings.departments.reactivate'),
+                  label: this.i18n.t('common.edit'),
+                  icon: '✏️',
+                  variant: 'default',
+                  display: 'icon',
+                  onClick: (row) => this.startEdit(row),
+                },
+                {
+                  label: this.i18n.t(
+                    row.is_active
+                      ? 'settings.departments.deactivate'
+                      : 'settings.departments.reactivate',
+                  ),
                   onClick: (row) => this.toggleActive(row),
                   variant: 'danger',
                 },

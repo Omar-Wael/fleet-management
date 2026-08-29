@@ -7,39 +7,24 @@
   (keydown)="onKeydown($event)"
 >
   <div class="ss-trigger">
-    @if (multiple && selectedChips.length) {
-      <div class="ss-chips">
-        @for (chip of selectedChips; track chip.value) {
-          <span class="ss-chip">
-            {{ chip.label }}
-            <button
-              type="button"
-              class="ss-chip-remove"
-              (click)="removeChip(chip.value, $event)"
-              aria-label="Remove"
-            >
-              ×
-            </button>
-          </span>
-        }
-      </div>
-    } @else if (!multiple && hasSelection) {
-      <span class="ss-value">{{ selectedLabels[0] }}</span>
+    @if (hasSelection) {
+      <span class="ss-value">{{ multiple ? selectedLabelsText : selectedLabels[0] }}</span>
     } @else {
-      <span class="ss-placeholder">{{ placeholder || ('shared.searchableSelect.placeholder' | translate) }}</span>
+      <span class="ss-placeholder">{{
+        placeholder || ('shared.searchableSelect.placeholder' | translate)
+      }}</span>
     }
   </div>
 
   <div class="ss-trigger-icons">
     @if (clearable && hasSelection && !disabled) {
-      <button
-        type="button"
+      <span
         class="ss-clear-btn"
         (click)="clearSelection($event)"
         [attr.aria-label]="'shared.searchableSelect.clear' | translate"
       >
-        ×
-      </button>
+        &times;
+      </span>
     }
     <span class="ss-caret" [class.ss-caret--open]="isOpen">▾</span>
   </div>
@@ -49,7 +34,9 @@
       <input
         type="text"
         class="ss-search"
-        [placeholder]="searchPlaceholder || ('shared.searchableSelect.searchPlaceholder' | translate)"
+        [placeholder]="
+          searchPlaceholder || ('shared.searchableSelect.searchPlaceholder' | translate)
+        "
         [ngModel]="searchTerm"
         (ngModelChange)="onSearchInput($event)"
         (keydown)="onKeydown($event)"
@@ -60,7 +47,9 @@
         @if (loading) {
           <div class="ss-state">{{ 'shared.dataTable.loading' | translate }}</div>
         } @else if (filteredOptions.length === 0) {
-          <div class="ss-state">{{ noMatchesText || ('shared.searchableSelect.noMatches' | translate) }}</div>
+          <div class="ss-state">
+            {{ noMatchesText || ('shared.searchableSelect.noMatches' | translate) }}
+          </div>
         } @else {
           @for (option of filteredOptions; track option.value; let i = $index) {
             <button
@@ -69,10 +58,15 @@
               [class.ss-option--selected]="isSelected(option)"
               [class.ss-option--highlighted]="i === highlightedIndex"
               [class.ss-option--disabled]="option.disabled"
+              [attr.role]="multiple ? 'checkbox' : null"
+              [attr.aria-checked]="multiple ? isSelected(option) : null"
               (click)="selectOption(option)"
             >
               @if (multiple) {
-                <span class="ss-option-check" [class.ss-option-check--on]="isSelected(option)"></span>
+                <span
+                  class="ss-option-check"
+                  [class.ss-option-check--on]="isSelected(option)"
+                ></span>
               }
               <span class="ss-option-text">
                 <span class="ss-option-label">{{ option.label }}</span>
