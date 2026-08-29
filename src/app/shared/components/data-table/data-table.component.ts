@@ -101,13 +101,14 @@ export class SharedDataTableComponent<T = any> implements OnInit, OnDestroy, OnC
   searchTerm = '';
   sort: DataTableSort | null = null;
 
+  pageJumpValue = '';
+
   private readonly searchInput$ = new Subject<string>();
 
   constructor(
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
   ) {}
-
 
   ngOnChanges(changes: SimpleChanges): void {
     // OnPush: ensure async parent updates to rows/loading/total/filters re-render
@@ -126,11 +127,13 @@ export class SharedDataTableComponent<T = any> implements OnInit, OnDestroy, OnC
   }
 
   ngOnInit(): void {
-    this.searchInput$.pipe(debounceTime(this.searchDebounceMs), distinctUntilChanged()).subscribe((term) => {
-      this.searchTerm = term;
-      this.page = 1;
-      this.emitQuery();
-    });
+    this.searchInput$
+      .pipe(debounceTime(this.searchDebounceMs), distinctUntilChanged())
+      .subscribe((term) => {
+        this.searchTerm = term;
+        this.page = 1;
+        this.emitQuery();
+      });
   }
 
   ngOnDestroy(): void {
@@ -197,6 +200,33 @@ export class SharedDataTableComponent<T = any> implements OnInit, OnDestroy, OnC
     this.emitQuery();
   }
 
+  goToFirstPage(): void {
+    this.goToPage(1);
+  }
+
+  goToLastPage(): void {
+    this.goToPage(this.pageCount);
+  }
+
+  onPageJumpInput(value: string): void {
+    this.pageJumpValue = value;
+  }
+
+  /** Commits whatever's in the jump box (Enter or blur), then clears it — the input
+   *  is empty by default and just shows the current page as a placeholder, so the
+   *  displayed page number never fights with the value the user is typing. */
+  onPageJumpSubmit(): void {
+    const trimmed = this.pageJumpValue.trim();
+    if (trimmed) {
+      const parsed = Number(trimmed);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        this.goToPage(Math.trunc(parsed));
+      }
+    }
+    this.pageJumpValue = '';
+    this.cdr.markForCheck();
+  }
+
   /** `size` arrives as a string from app-searchable-select (option values are always strings). */
   onPageSizeChange(size: string): void {
     this.pageSize = Number(size) || this.pageSizeOptions[0];
@@ -237,5 +267,10 @@ export class SharedDataTableComponent<T = any> implements OnInit, OnDestroy, OnC
       filters: filterValues,
     });
     this.cdr.markForCheck();
+  }
+
+  actionDisplay(action: DataTableRowAction<T>): 'label' | 'icon-label' | 'icon' {
+    if (!action.icon) return 'label';
+    return action.display ?? 'label';
   }
 }

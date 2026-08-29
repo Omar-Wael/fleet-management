@@ -258,12 +258,27 @@ export class VehiclesListComponent implements OnInit {
         header: this.i18n.t('common.actions'),
         align: 'end',
         actions: (v) => [
-          { label: this.i18n.t('common.view'), onClick: (v) => this.openProfile(v) },
-          { label: this.i18n.t('common.edit'), onClick: (v) => this.openEditForm(v) },
+          {
+            label: this.i18n.t('common.view'),
+            icon: '👁️️',
+            variant: 'info',
+            display: 'icon',
+            onClick: (v) => this.openProfile(v),
+          },
+          {
+            label: this.i18n.t('common.edit'),
+            icon: '✏️',
+            variant: 'default',
+            display: 'icon',
+            onClick: (v) => this.openEditForm(v),
+          },
+
           {
             label: this.i18n.t('common.delete'),
-            onClick: (v) => this.deleteVehicle(v),
+            icon: '🗑️️',
+            display: 'icon',
             variant: 'danger',
+            onClick: (v) => this.deleteVehicle(v),
           },
         ],
       },

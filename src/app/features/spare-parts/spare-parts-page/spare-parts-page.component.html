@@ -1,51 +1,18 @@
 <div class="tab-nav">
-  <button
-    type="button"
-    class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'catalog'"
-    (click)="setTab('catalog')"
-  >
-    {{ 'spareParts.page.tabCatalog' | translate }}
-  </button>
-  <button
-    type="button"
-    class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'disbursements'"
-    (click)="setTab('disbursements')"
-  >
+  <a routerLink="disbursements" routerLinkActive="tab-btn--active" class="tab-btn">
     {{ 'spareParts.page.tabDisbursements' | translate }}
-  </button>
-  <button
-    type="button"
-    class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'price-intelligence'"
-    (click)="setTab('price-intelligence')"
-  >
+  </a>
+  <a routerLink="catalog" routerLinkActive="tab-btn--active" class="tab-btn">
+    {{ 'spareParts.page.tabCatalog' | translate }}
+  </a>
+  <a routerLink="price-intelligence" routerLinkActive="tab-btn--active" class="tab-btn">
     {{ 'spareParts.page.tabPriceIntelligence' | translate }}
-  </button>
-  <button
-    type="button"
-    class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'vendors'"
-    (click)="setTab('vendors')"
-  >
+  </a>
+  <a routerLink="vendors" routerLinkActive="tab-btn--active" class="tab-btn">
     {{ 'spareParts.page.tabVendors' | translate }}
-  </button>
+  </a>
 </div>
 
 <div class="tab-content">
-  @switch (activeTab) {
-    @case ('catalog') {
-      <app-spare-parts-catalog></app-spare-parts-catalog>
-    }
-    @case ('disbursements') {
-      <app-disbursement-requests></app-disbursement-requests>
-    }
-    @case ('price-intelligence') {
-      <app-price-intelligence></app-price-intelligence>
-    }
-    @case ('vendors') {
-      <app-vendor-directory></app-vendor-directory>
-    }
-  }
+  <router-outlet></router-outlet>
 </div>

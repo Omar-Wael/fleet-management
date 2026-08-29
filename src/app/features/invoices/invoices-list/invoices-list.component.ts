@@ -135,7 +135,8 @@ export class InvoicesListComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (inv) => [{ label: this.i18n.t('common.view'), onClick: (inv) => this.openDetail(inv) }],
+        actions: (inv) => [{ label: this.i18n.t('common.view'), icon: '👁️️',
+            variant: 'info', display: 'icon', onClick: (inv) => this.openDetail(inv) }],
       },
     ];
   }

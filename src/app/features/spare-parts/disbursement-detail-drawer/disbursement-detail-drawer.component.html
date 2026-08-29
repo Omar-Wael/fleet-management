@@ -17,9 +17,9 @@
             <dt>{{ 'spareParts.disbursement.colRequestedBy' | translate }}</dt>
             <dd>{{ request.technicians?.full_name || '—' }}</dd>
             <dt>{{ 'spareParts.disbursement.colRequestedAt' | translate }}</dt>
-            <dd>{{ request.requested_at | date : 'medium' }}</dd>
+            <dd>{{ request.requested_at | date : 'mediumDate' }}</dd>
             <dt>{{ 'spareParts.disbursementDrawer.issuedAt' | translate }}</dt>
-            <dd>{{ request.issued_at ? (request.issued_at | date : 'medium') : '—' }}</dd>
+            <dd>{{ request.issued_at ? (request.issued_at | date : 'mediumDate') : '—' }}</dd>
             @if (request.purchase_committee_receiver_name) {
               <dt>{{ 'spareParts.disbursementDrawer.committeeReceiver' | translate }}</dt>
               <dd>{{ request.purchase_committee_receiver_name }}</dd>
@@ -81,7 +81,7 @@
               <tbody>
                 @for (h of history; track h.id) {
                   <tr>
-                    <td>{{ h.changed_at | date : 'medium' }}</td>
+                    <td>{{ h.changed_at | date : 'mediumDate' }}</td>
                     <td>{{ statusLabelKeys[h.status] | translate }}</td>
                     <td>{{ h.changed_note || '—' }}</td>
                   </tr>

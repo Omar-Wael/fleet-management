@@ -156,7 +156,8 @@ export class WorkOrdersListComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (w) => [{ label: this.i18n.t('common.view'), onClick: (w) => this.openDetail(w) }],
+        actions: (w) => [{ label: this.i18n.t('common.view'), icon: '👁️️',
+            variant: 'info', display: 'icon', onClick: (w) => this.openDetail(w) }],
       },
     ];
   }

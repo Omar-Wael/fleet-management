@@ -1,6 +1,13 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
-  ChangeDetectorRef
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -30,6 +37,8 @@ const NEXT_STATUSES: Record<DisbursementStatus, DisbursementStatus[]> = {
   purchased: ['supplied'],
   supplied: ['issued_and_installed'],
   issued_and_installed: [],
+  rejected: [],
+  approved: [],
 };
 
 // Translation keys — see spareParts.disbursement.status.* in
@@ -43,6 +52,8 @@ const STATUS_LABEL_KEYS: Record<DisbursementStatus, string> = {
   supplied: 'spareParts.disbursement.status.supplied',
   issued: 'spareParts.disbursement.status.issued',
   issued_and_installed: 'spareParts.disbursement.status.issuedAndInstalled',
+  rejected: 'spareParts.disbursement.status.rejected',
+  approved: 'spareParts.disbursement.status.approved',
 };
 
 @Component({
@@ -51,7 +62,7 @@ const STATUS_LABEL_KEYS: Record<DisbursementStatus, string> = {
   imports: [DatePipe, DecimalPipe, FormsModule, TranslatePipe],
   templateUrl: './disbursement-detail-drawer.component.html',
   styleUrls: ['./disbursement-detail-drawer.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisbursementDetailDrawerComponent implements OnChanges {
   @Input() request: DisbursementGridRow | null = null;
@@ -75,9 +86,7 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
 
     private disbursementService: DisbursementService,
     readonly i18n: TranslationService,
-  ) {
-
-  }
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
@@ -103,7 +112,10 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementDrawer.historyLoadError');
+        this.loadError =
+          err instanceof Error
+            ? err.message
+            : this.i18n.t('spareParts.disbursementDrawer.historyLoadError');
         this.cdr.markForCheck();
         this.loading = false;
         this.cdr.markForCheck();
@@ -149,7 +161,10 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
         error: (err) => {
           this.advancing = false;
           this.cdr.markForCheck();
-          this.advanceError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementDrawer.updateStatusError');
+          this.advanceError =
+            err instanceof Error
+              ? err.message
+              : this.i18n.t('spareParts.disbursementDrawer.updateStatusError');
         },
       });
   }

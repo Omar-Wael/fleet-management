@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { LookupsService } from '../../../core/services/lookups.service';
@@ -7,7 +7,11 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 import { applyQueryInMemory } from '../../../shared/components/data-table/apply-query-in-memory.util';
 import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
@@ -31,7 +35,7 @@ const EMPTY_DRAFT: Draft = { garage_name: '', workshop_id: null, zone_label: '',
   imports: [FormsModule, TranslatePipe, SharedDataTableComponent, SharedSearchableSelectComponent],
   templateUrl: './garage-locations-tab.component.html',
   styleUrls: ['./garage-locations-tab.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GarageLocationsTabComponent implements OnInit {
   /** Already fully loaded elsewhere (dropdown source) — search/sort/pagination run in-memory. See apply-query-in-memory.util.ts. */
@@ -71,7 +75,10 @@ export class GarageLocationsTabComponent implements OnInit {
     this.lookupsService.listMaintenanceWorkshops().subscribe({
       next: (workshops) => {
         this.workshops = workshops;
-        this.workshopOptions = workshops.map((w) => ({ value: w.id, label: w.name_en || w.name_ar }));
+        this.workshopOptions = workshops.map((w) => ({
+          value: w.id,
+          label: w.name_en || w.name_ar,
+        }));
         // Rebuild columns too — the 'workshop' column's editable.options
         // captured workshopOptions by reference when buildColumns() first
         // ran (before this list loaded), so it's still pointing at the
@@ -149,10 +156,26 @@ export class GarageLocationsTabComponent implements OnInit {
         actions: (row) =>
           row._draft
             ? [
-                { label: this.i18n.t('common.save'), onClick: (row) => this.confirmEdit(row), disabled: () => this.saving },
-                { label: this.i18n.t('common.cancel'), onClick: (row) => this.cancelEdit(row), disabled: () => this.saving },
+                {
+                  label: this.i18n.t('common.save'),
+                  onClick: (row) => this.confirmEdit(row),
+                  disabled: () => this.saving,
+                },
+                {
+                  label: this.i18n.t('common.cancel'),
+                  onClick: (row) => this.cancelEdit(row),
+                  disabled: () => this.saving,
+                },
               ]
-            : [{ label: this.i18n.t('common.edit'), onClick: (row) => this.startEdit(row) }],
+            : [
+                {
+                  label: this.i18n.t('common.edit'),
+                  icon: '✏️',
+                  variant: 'default',
+                  display: 'icon',
+                  onClick: (row) => this.startEdit(row),
+                },
+              ],
       },
     ];
   }
@@ -181,7 +204,8 @@ export class GarageLocationsTabComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.loadError');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -195,7 +219,9 @@ export class GarageLocationsTabComponent implements OnInit {
 
   private applyCurrentQuery(): void {
     const { rows, total } = applyQueryInMemory(this.allRows, this.currentQuery, (r) =>
-      [r.garage_name, this.workshopName(r.workshop_id), r.zone_label, r.notes].filter(Boolean).join(' '),
+      [r.garage_name, this.workshopName(r.workshop_id), r.zone_label, r.notes]
+        .filter(Boolean)
+        .join(' '),
     );
     this.rows = rows;
     this.total = total;
@@ -243,7 +269,8 @@ export class GarageLocationsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.addError');
+          this.saveError =
+            err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.addError');
         },
       });
   }
@@ -287,7 +314,8 @@ export class GarageLocationsTabComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.saveError');
+          this.saveError =
+            err instanceof Error ? err.message : this.i18n.t('settings.garageLocations.saveError');
         },
       });
   }

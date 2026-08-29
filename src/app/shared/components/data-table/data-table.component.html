@@ -20,6 +20,7 @@
             (ngModelChange)="onFilterChange(f.key, $event)"
             [placeholder]="f.label"
             [clearable]="true"
+            [multiple]="f.multiple || false"
           ></app-searchable-select>
         }
       </div>
@@ -97,10 +98,20 @@
                           type="button"
                           class="dt-link-btn"
                           [class.dt-link-btn--danger]="action.variant === 'danger'"
+                          [class.dt-link-btn--info]="action.variant === 'info'"
+                          [class.dt-link-btn--default]="action.variant === 'default'"
+                          [class.dt-link-btn--icon-only]="actionDisplay(action) === 'icon'"
                           [disabled]="isActionDisabled(action, row)"
+                          [attr.title]="actionDisplay(action) === 'icon' ? action.label : null"
+                          [attr.aria-label]="actionDisplay(action) === 'icon' ? action.label : null"
                           (click)="action.onClick(row)"
                         >
-                          {{ action.label }}
+                          @if (actionDisplay(action) !== 'label') {
+                            <span class="dt-action-icon" aria-hidden="true">{{ action.icon }}</span>
+                          }
+                          @if (actionDisplay(action) !== 'icon') {
+                            <span class="dt-action-label">{{ action.label }}</span>
+                          }
                         </button>
                       }
                     </div>
@@ -173,14 +184,39 @@
         type="button"
         class="dt-page-btn"
         [disabled]="page <= 1"
+        (click)="goToFirstPage()"
+        [attr.title]="'shared.dataTable.first' | translate"
+        [attr.aria-label]="'shared.dataTable.first' | translate"
+      >
+        «
+      </button>
+      <button
+        type="button"
+        class="dt-page-btn"
+        [disabled]="page <= 1"
         (click)="goToPage(page - 1)"
         [attr.aria-label]="'shared.dataTable.previous' | translate"
       >
         ‹
       </button>
+
       <span class="dt-page-current">
-        {{ 'shared.dataTable.page' | translate }} {{ page }} / {{ pageCount }}
+        {{ 'shared.dataTable.page' | translate }}
+        <input
+          type="number"
+          class="dt-page-jump"
+          [ngModel]="pageJumpValue"
+          (ngModelChange)="onPageJumpInput($event)"
+          (keyup.enter)="onPageJumpSubmit()"
+          (blur)="onPageJumpSubmit()"
+          [placeholder]="page.toString()"
+          min="1"
+          [attr.max]="pageCount"
+          [attr.aria-label]="'shared.dataTable.jumpToPage' | translate"
+        />
+        / {{ pageCount }}
       </span>
+
       <button
         type="button"
         class="dt-page-btn"
@@ -189,6 +225,16 @@
         [attr.aria-label]="'shared.dataTable.next' | translate"
       >
         ›
+      </button>
+      <button
+        type="button"
+        class="dt-page-btn"
+        [disabled]="page >= pageCount"
+        (click)="goToLastPage()"
+        [attr.title]="'shared.dataTable.last' | translate"
+        [attr.aria-label]="'shared.dataTable.last' | translate"
+      >
+        »
       </button>
     </div>
   </div>

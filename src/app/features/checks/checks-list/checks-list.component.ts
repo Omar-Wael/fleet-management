@@ -89,7 +89,8 @@ export class ChecksListComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (c) => [{ label: this.i18n.t('common.view'), onClick: (c) => this.openDetail(c) }],
+        actions: (c) => [{ label: this.i18n.t('common.view'), icon: '👁️️',
+            variant: 'info', display: 'icon', onClick: (c) => this.openDetail(c) }],
       },
     ];
   }

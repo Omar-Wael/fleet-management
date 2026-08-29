@@ -49,10 +49,20 @@ export interface DataTableBadge {
 export interface DataTableRowAction<T = any> {
   label: string;
   onClick: (row: T) => void;
-  variant?: 'default' | 'danger';
-  /** Return true to hide this action for a given row (e.g. "Check out" only on rows still checked in). */
+  variant?: 'default' | 'info' | 'danger';
   hidden?: (row: T) => boolean;
   disabled?: (row: T) => boolean;
+
+  /** Short glyph/unicode symbol shown alongside or instead of the label (e.g. '✏️', '🗑️', '👁️'). Plain text only — no HTML/SVG, to avoid a sanitizer dependency. */
+  icon?: string;
+  /**
+   * How this action renders:
+   * - 'label' (default) — text only, unchanged from before.
+   * - 'icon-label' — icon + text side by side.
+   * - 'icon' — icon only; `label` becomes the native title/aria tooltip.
+   * Ignored (falls back to 'label') if `icon` isn't set.
+   */
+  display?: 'label' | 'icon-label' | 'icon';
 }
 
 export interface DataTableEditableConfig<T = any> {
@@ -73,6 +83,7 @@ export interface DataTableFilter {
   label: string;
   value: string;
   options: { value: string; label: string }[];
+  multiple?: boolean;
 }
 
 export interface DataTableSort {

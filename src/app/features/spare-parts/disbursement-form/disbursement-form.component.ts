@@ -38,13 +38,12 @@ import { SharedSearchableSelectComponent } from '../../../shared/components/sear
 import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
 
 interface DraftItem {
-  /** Catalogue part id when selected from the menu; empty when using free text. */
   spare_part_id: string;
-  /** Free-text part name when the part is not in the catalogue. */
   free_text_name: string;
-  /** 'catalog' | 'custom' — which input mode the row uses. */
   mode: 'catalog' | 'custom';
   qty: number;
+  condition: 'new' | 'used' | 'imported';
+  has_sample: boolean;
   lastDisbursementNote: string | null;
   loadingNote: boolean;
 }
@@ -55,7 +54,7 @@ interface DraftItem {
   imports: [
     ReactiveFormsModule,
     FormsModule,
-    SlicePipe,
+    // SlicePipe,
     TranslatePipe,
     SharedSearchableSelectComponent,
   ],
@@ -100,8 +99,10 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
+      request_number: [''],
       vehicle_id: ['', Validators.required],
-      requested_by_technician_id: ['', Validators.required],
+      technician_ids: [[] as string[]],
+      requested_by_technician_id: [''],
       work_order_id: [null as string | null],
       notes: [null as string | null],
     });
@@ -121,7 +122,9 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
   private resetForm(): void {
     this.saveError = null;
     this.form.reset({
+      request_number: '',
       vehicle_id: '',
+      technician_ids: [],
       requested_by_technician_id: '',
       work_order_id: null,
       notes: null,
@@ -139,6 +142,8 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
       free_text_name: '',
       mode: 'catalog',
       qty: 1,
+      condition: 'new',
+      has_sample: false,
       lastDisbursementNote: null,
       loadingNote: false,
     };
@@ -183,18 +188,18 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
   }
 
   private rebuildPartOptions(): void {
-    this.partOptions = this.spareParts.map((p) => {
-      const compatible = this.compatiblePartIds.has(p.id);
+    // Show only compatible parts when vehicle selected and matches exist
+    const source =
+      this.compatiblePartIds.size > 0
+        ? this.spareParts.filter((p) => this.compatiblePartIds.has(p.id))
+        : this.spareParts;
+    this.partOptions = source.map((p) => {
       const base = p.name_en || p.name_ar;
       const code = p.part_code ? ` (${p.part_code})` : '';
       return {
         value: p.id,
         label: `${base}${code}`,
-        sublabel: compatible
-          ? this.i18n.t('spareParts.disbursementForm.compatibleBadge')
-          : p.name_ar && p.name_en
-            ? p.name_ar
-            : undefined,
+        sublabel: p.name_ar && p.name_en ? p.name_ar : undefined,
       };
     });
   }
@@ -370,8 +375,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
       error: (err) => {
         this.saving = false;
         const prefix = this.i18n.t('spareParts.disbursementForm.itemsFailedPrefix');
-        this.saveError =
-          err instanceof Error ? `${prefix}: ${err.message}` : `${prefix}.`;
+        this.saveError = err instanceof Error ? `${prefix}: ${err.message}` : `${prefix}.`;
         this.cdr.markForCheck();
       },
     });

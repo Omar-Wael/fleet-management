@@ -1,10 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { SparePartFormComponent } from '../spare-part-form/spare-part-form.component';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { SparePart } from '../../../core/models/fleet.models';
-import { exportToExcel, ExcelExportColumn, downloadImportTemplate } from '../../../shared/utils/excel-import-export.util';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { importFileWithMapping } from '../../../shared/utils/document-import.util';
 import {
@@ -17,7 +21,11 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 @Component({
   selector: 'app-spare-parts-catalog',
@@ -25,7 +33,7 @@ import { DataTableColumn, DataTableQuery } from '../../../shared/components/data
   imports: [FormsModule, TranslatePipe, SharedDataTableComponent, SparePartFormComponent],
   templateUrl: './spare-parts-catalog.component.html',
   styleUrls: ['./spare-parts-catalog.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SparePartsCatalogComponent implements OnInit {
   rows: SparePart[] = [];
@@ -34,6 +42,7 @@ export class SparePartsCatalogComponent implements OnInit {
   loadError: string | null = null;
 
   columns: DataTableColumn<SparePart>[] = [];
+  filters: DataTableFilter[] = [];
 
   /**
    * No `filters` array — the old "low stock only" checkbox can't become a
@@ -69,7 +78,39 @@ export class SparePartsCatalogComponent implements OnInit {
 
   ngOnInit(): void {
     this.buildColumns();
+    this.buildFilters();
     this.loadParts(this.currentQuery);
+  }
+
+  private buildFilters(): void {
+    this.filters = [
+      {
+        key: 'classification',
+        label: this.i18n.t('spareParts.classification'),
+        value: this.currentQuery.filters['classification'] ?? '',
+        options: [
+          { value: 'engine', label: 'engine' },
+          { value: 'transmission', label: 'transmission' },
+          { value: 'power_train', label: 'power_train' },
+          { value: 'brakes', label: 'brakes' },
+          { value: 'electrical', label: 'electrical' },
+          { value: 'suspension', label: 'suspension' },
+          { value: 'body', label: 'body' },
+          { value: 'cooling', label: 'cooling' },
+          { value: 'fuel', label: 'fuel' },
+          { value: 'other', label: 'other' },
+        ],
+      },
+      {
+        key: 'hasStock',
+        label: this.i18n.t('spareParts.hasStock'),
+        value: this.currentQuery.filters['hasStock'] ?? '',
+        options: [
+          { value: 'true', label: this.i18n.t('common.yes') },
+          { value: 'false', label: this.i18n.t('common.no') },
+        ],
+      },
+    ];
   }
 
   private buildColumns(): void {
@@ -81,9 +122,27 @@ export class SparePartsCatalogComponent implements OnInit {
         mono: true,
         render: (p) => p.part_code || '—',
       },
-      { key: 'name_ar', header: this.i18n.t('spareParts.catalog.colNameAr'), sortable: true, render: (p) => p.name_ar },
-      { key: 'name_en', header: this.i18n.t('spareParts.catalog.colNameEn'), render: (p) => p.name_en || '—' },
-      { key: 'unit', header: this.i18n.t('spareParts.catalog.colUnit'), render: (p) => p.unit || '—' },
+      {
+        key: 'name_ar',
+        header: this.i18n.t('spareParts.catalog.colNameAr'),
+        sortable: true,
+        render: (p) => p.name_ar,
+      },
+      {
+        key: 'name_en',
+        header: this.i18n.t('spareParts.catalog.colNameEn'),
+        render: (p) => p.name_en || '—',
+      },
+      {
+        key: 'classification',
+        header: this.i18n.t('spareParts.classification'),
+        render: (p) => p.classification || '—',
+      },
+      {
+        key: 'unit',
+        header: this.i18n.t('spareParts.catalog.colUnit'),
+        render: (p) => p.unit || '—',
+      },
       {
         key: 'unit_cost',
         header: this.i18n.t('spareParts.catalog.colUnitCost'),
@@ -97,7 +156,10 @@ export class SparePartsCatalogComponent implements OnInit {
         sortable: true,
         mono: true,
         render: (p) => new Intl.NumberFormat().format(p.current_stock_qty),
-        badge: (p) => (this.isLowStock(p) ? { text: this.i18n.t('spareParts.catalog.lowBadge'), variant: 'warn' } : null),
+        badge: (p) =>
+          this.isLowStock(p)
+            ? { text: this.i18n.t('spareParts.catalog.lowBadge'), variant: 'warn' }
+            : null,
       },
       {
         key: 'reorder_threshold',
@@ -109,7 +171,15 @@ export class SparePartsCatalogComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (p) => [{ label: this.i18n.t('common.edit'), onClick: (p) => this.openEditForm(p) }],
+        actions: (p) => [
+          {
+            label: this.i18n.t('common.edit'),
+            icon: '✏️',
+            variant: 'default',
+            display: 'icon',
+            onClick: (p) => this.openEditForm(p),
+          },
+        ],
       },
     ];
   }
@@ -132,7 +202,8 @@ export class SparePartsCatalogComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.loadError');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -204,13 +275,17 @@ export class SparePartsCatalogComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.importUpsertFailed');
+            this.importError =
+              err instanceof Error
+                ? err.message
+                : this.i18n.t('spareParts.catalog.importUpsertFailed');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.importParseFailed');
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.importParseFailed');
       });
   }
 
@@ -235,7 +310,8 @@ export class SparePartsCatalogComponent implements OnInit {
     this.sparePartsService.listAllMatching(this.currentQuery).subscribe({
       next: (rows) => exportToExcel(rows, this.excelColumns(), 'spare-parts-catalog'),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -254,7 +330,8 @@ export class SparePartsCatalogComponent implements OnInit {
           'spare-parts-catalog',
         ),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

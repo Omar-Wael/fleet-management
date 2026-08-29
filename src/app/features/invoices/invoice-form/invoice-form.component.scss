@@ -14,7 +14,7 @@
   top: 0;
   right: 0;
   height: 100vh;
-  width: min(600px, 100vw);
+  width: min(50%, 100vw);
   background: var(--fleet-surface, #fff);
   box-shadow: -8px 0 24px rgba(15, 20, 30, 0.15);
   z-index: 41;
