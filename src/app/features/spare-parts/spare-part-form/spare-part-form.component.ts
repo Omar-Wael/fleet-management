@@ -53,6 +53,7 @@ export class SparePartFormComponent implements OnChanges {
     return this.fb.group({
       part_code: [null],
       name_ar: ['', Validators.required],
+      classification: [null],
       name_en: [null],
       unit: [null],
       unit_cost: [null],
@@ -67,6 +68,7 @@ export class SparePartFormComponent implements OnChanges {
       this.form.reset({
         part_code: this.part.part_code,
         name_ar: this.part.name_ar,
+        classification: this.part.classification ?? null,
         name_en: this.part.name_en,
         unit: this.part.unit,
         unit_cost: this.part.unit_cost,

@@ -1,31 +1,13 @@
-import { Component, ChangeDetectionStrategy} from '@angular/core';
-
-import { SparePartsCatalogComponent } from '../spare-parts-catalog/spare-parts-catalog.component';
-import { DisbursementRequestsComponent } from '../disbursement-requests/disbursement-requests.component';
-import { PriceIntelligenceComponent } from '../price-intelligence/price-intelligence.component';
-import { VendorDirectoryComponent } from '../vendor-directory/vendor-directory.component';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-
-type SparePartsTab = 'catalog' | 'disbursements' | 'price-intelligence' | 'vendors';
 
 @Component({
   selector: 'app-spare-parts-page',
   standalone: true,
-  imports: [
-    SparePartsCatalogComponent,
-    DisbursementRequestsComponent,
-    PriceIntelligenceComponent,
-    VendorDirectoryComponent,
-    TranslatePipe,
-  ],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './spare-parts-page.component.html',
   styleUrls: ['./spare-parts-page.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SparePartsPageComponent {
-  activeTab: SparePartsTab = 'catalog';
-
-  setTab(tab: SparePartsTab): void {
-    this.activeTab = tab;
-  }
-}
+export class SparePartsPageComponent {}

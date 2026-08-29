@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { DisbursementFormComponent } from '../disbursement-form/disbursement-form.component';
@@ -15,19 +15,30 @@ import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { forkJoin, of, from } from 'rxjs';
 import { switchMap, concatMap, toArray } from 'rxjs/operators';
 import { DisbursementStatus } from '../../../core/models/fleet.models';
-import { exportToExcel, ExcelExportColumn, downloadImportTemplate, readExcelFile } from '../../../shared/utils/excel-import-export.util';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+  readExcelFile,
+} from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 // English-only labels — used for Excel/PDF export accessors, which stay in
 // English regardless of app language (matches the technicians export
 // convention of hardcoding 'Active'/'Inactive' there).
 const STATUS_LABELS: Record<DisbursementStatus, string> = {
   requested: 'Requested',
+  approved: 'Approved',
+  rejected: 'Rejected',
   available_in_stock: 'Available in Stock',
   out_of_stock: 'Out of Stock',
   purchase_committee_received: 'With Purchase Committee',
@@ -41,6 +52,8 @@ const STATUS_LABELS: Record<DisbursementStatus, string> = {
 // spareParts.disbursement.status.* in translations/spare-parts.ts.
 const STATUS_LABEL_KEYS: Record<DisbursementStatus, string> = {
   requested: 'spareParts.disbursement.status.requested',
+  approved: 'spareParts.disbursement.status.approved',
+  rejected: 'spareParts.disbursement.status.rejected',
   available_in_stock: 'spareParts.disbursement.status.availableInStock',
   out_of_stock: 'spareParts.disbursement.status.outOfStock',
   purchase_committee_received: 'spareParts.disbursement.status.purchaseCommitteeReceived',
@@ -53,11 +66,17 @@ const STATUS_LABEL_KEYS: Record<DisbursementStatus, string> = {
 @Component({
   selector: 'app-disbursement-requests',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, DisbursementFormComponent, DisbursementDetailDrawerComponent],
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    SharedDataTableComponent,
+    DisbursementFormComponent,
+    DisbursementDetailDrawerComponent,
+  ],
   templateUrl: './disbursement-requests.component.html',
   styleUrls: ['./disbursement-requests.component.scss'],
   providers: [DatePipe],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisbursementRequestsComponent implements OnInit {
   rows: DisbursementGridRow[] = [];
@@ -108,6 +127,12 @@ export class DisbursementRequestsComponent implements OnInit {
   private buildColumns(): void {
     this.columns = [
       {
+        key: 'request_number',
+        header: this.i18n.t('spareParts.requestNumber'),
+        mono: true,
+        render: (r) => r.request_number || '—',
+      },
+      {
         key: 'vehicle',
         header: this.i18n.t('spareParts.disbursement.vehicle'),
         mono: true,
@@ -116,7 +141,7 @@ export class DisbursementRequestsComponent implements OnInit {
       {
         key: 'requested_by',
         header: this.i18n.t('spareParts.disbursement.requestedBy'),
-        render: (r) => r.technicians?.full_name || '—',
+        render: (r) => this.technicianNames(r),
       },
       {
         key: 'status',
@@ -155,11 +180,58 @@ export class DisbursementRequestsComponent implements OnInit {
     this.filters = [
       {
         key: 'status',
-        label: this.i18n.t('shared.dataTable.allFilter'),
+        label: this.i18n.t('common.status'),
         value: this.currentQuery.filters['status'] ?? '',
-        options: this.statusOptions.map((s) => ({ value: s, label: this.i18n.t(this.statusLabelKeys[s]) })),
+        options: this.statusOptions.map((s) => ({
+          value: s,
+          label: this.i18n.t(this.statusLabelKeys[s]),
+        })),
+      },
+      // {
+      //   key: 'dateFrom',
+      //   label: this.i18n.t('common.from'),
+      //   value: this.currentQuery.filters['dateFrom'] ?? '',
+      //   type: 'date',
+      // },
+      // {
+      //   key: 'dateTo',
+      //   label: this.i18n.t('common.to'),
+      //   value: this.currentQuery.filters['dateTo'] ?? '',
+      //   type: 'date',
+      // },
+      {
+        key: 'vehicleId',
+        label: this.i18n.t('spareParts.disbursement.vehicle'),
+        value: this.currentQuery.filters['vehicleId'] ?? '',
+        options: [], // populated dynamically by SharedDataTableComponent via listAllMatching() call
+      },
+      {
+        key: 'departmentId',
+        label: this.i18n.t('spareParts.department'),
+        value: this.currentQuery.filters['departmentId'] ?? '',
+        options: [], // populated dynamically by SharedDataTableComponent via listAllMatching() call
+      },
+      {
+        key: 'workshopId',
+        label: this.i18n.t('spareParts.repairDepartment'),
+        value: this.currentQuery.filters['workshopId'] ?? '',
+        options: [], // populated dynamically by SharedDataTableComponent via listAllMatching() call
+      },
+      {
+        key: 'technicianId',
+        label: this.i18n.t('spareParts.technician'),
+        value: this.currentQuery.filters['technicianId'] ?? '',
+        options: [], // populated dynamically by SharedDataTableComponent via listAllMatching() call
       },
     ];
+  }
+
+  technicianNames(row: DisbursementGridRow): string {
+    const multi = row.stock_disbursement_request_technicians
+      ?.map((t) => t.technicians?.full_name)
+      .filter(Boolean) as string[] | undefined;
+    if (multi?.length) return multi.join(', ');
+    return row.technicians?.full_name || '—';
   }
 
   onQueryChange(query: DataTableQuery): void {
@@ -196,7 +268,14 @@ export class DisbursementRequestsComponent implements OnInit {
     const items = request.stock_disbursement_items ?? [];
     if (!items.length) return '—';
     const partFallback = this.i18n.t('spareParts.disbursement.partFallback');
-    return items.map((i) => `${i.spare_parts?.name_ar || partFallback} × ${i.qty}`).join(', ');
+    return items
+      .map((i) => {
+        const name = i.spare_parts?.name_ar || partFallback;
+        const cond = i.condition ? ` [${i.condition}]` : '';
+        const sample = i.has_sample ? ' 📎' : '';
+        return `${name} × ${i.qty}${cond}${sample}`;
+      })
+      .join(', ');
   }
 
   /** Returns the translated status label text (not a key) — badge.text is rendered directly by SharedDataTableComponent, with no `| translate` applied to it. */
@@ -230,23 +309,41 @@ export class DisbursementRequestsComponent implements OnInit {
     this.reloadRequestsOnly();
   }
 
-
   // -------------------------------------------------------------
-  // Bulk import — template download + multi-row create
-  // Template columns: Vehicle Plate | Technician Name | Part Code or Name | Qty | Notes
-  // Multiple rows with the same vehicle+technician+notes are grouped into one request.
+  // Bulk import — 1 REQUEST per row
+  // Columns: Request Number | Vehicle Plate | Technician Names | Notes | PartN Code/Qty/Condition/Has Sample
   // -------------------------------------------------------------
 
   downloadTemplate(): void {
     downloadImportTemplate(
-      ['Vehicle Plate', 'Technician Name', 'Part Code or Name', 'Qty', 'Notes'],
+      [
+        'Request Number',
+        'Vehicle Plate',
+        'Technician Names',
+        'Notes',
+        'Part1 Code',
+        'Part1 Qty',
+        'Part1 Condition',
+        'Part1 Has Sample',
+        'Part2 Code',
+        'Part2 Qty',
+        'Part2 Condition',
+        'Part2 Has Sample',
+      ],
       'disbursement-requests-import-template',
       {
+        'Request Number': '',
         'Vehicle Plate': 'ABC-1234',
-        'Technician Name': 'Ahmed Ali',
-        'Part Code or Name': 'Oil Filter',
-        Qty: 2,
+        'Technician Names': 'Ahmed Ali, Khaled Omar',
         Notes: 'optional',
+        'Part1 Code': 'FLT-001',
+        'Part1 Qty': 2,
+        'Part1 Condition': 'new',
+        'Part1 Has Sample': 'false',
+        'Part2 Code': 'BRK-010',
+        'Part2 Qty': 1,
+        'Part2 Condition': 'used',
+        'Part2 Has Sample': 'true',
       },
     );
   }
@@ -269,24 +366,28 @@ export class DisbursementRequestsComponent implements OnInit {
 
     readExcelFile(file)
       .then((rawRows) => {
-        const normalized = rawRows.map((r) => {
-          const get = (...keys: string[]) => {
-            for (const k of keys) {
-              const found = Object.keys(r).find((hk) => hk.trim().toLowerCase() === k.toLowerCase());
-              if (found != null && r[found] != null && String(r[found]).trim() !== '') {
-                return String(r[found]).trim();
+        const normalized = rawRows
+          .map((r) => {
+            const get = (...keys: string[]) => {
+              for (const k of keys) {
+                const found = Object.keys(r).find(
+                  (hk) => hk.trim().toLowerCase() === k.toLowerCase(),
+                );
+                if (found != null && r[found] != null && String(r[found]).trim() !== '') {
+                  return String(r[found]).trim();
+                }
               }
-            }
-            return '';
-          };
-          return {
-            plate: get('Vehicle Plate', 'plate', 'plate_number'),
-            technician: get('Technician Name', 'technician', 'requested_by'),
-            part: get('Part Code or Name', 'part', 'part_name', 'part_code'),
-            qty: Number(get('Qty', 'quantity', 'qty') || '1') || 1,
-            notes: get('Notes', 'notes') || null,
-          };
-        }).filter((r) => r.plate && r.technician && r.part);
+              return '';
+            };
+            return {
+              plate: get('Vehicle Plate', 'plate', 'plate_number'),
+              technician: get('Technician Name', 'technician', 'requested_by'),
+              part: get('Part Code or Name', 'part', 'part_name', 'part_code'),
+              qty: Number(get('Qty', 'quantity', 'qty') || '1') || 1,
+              notes: get('Notes', 'notes') || null,
+            };
+          })
+          .filter((r) => r.plate && r.technician && r.part);
 
         if (!normalized.length) {
           this.importing = false;
@@ -301,10 +402,16 @@ export class DisbursementRequestsComponent implements OnInit {
           parts: this.sparePartsService.list(),
         }).subscribe({
           next: ({ vehicles, technicians, parts }) => {
-            const plateMap = new Map(vehicles.map((v) => [v.plate_number.trim().toLowerCase(), v.id]));
-            const techMap = new Map(technicians.map((t) => [t.full_name.trim().toLowerCase(), t.id]));
+            const plateMap = new Map(
+              vehicles.map((v) => [v.plate_number.trim().toLowerCase(), v.id]),
+            );
+            const techMap = new Map(
+              technicians.map((t) => [t.full_name.trim().toLowerCase(), t.id]),
+            );
             const partByCode = new Map(
-              parts.filter((p) => p.part_code).map((p) => [p.part_code!.trim().toLowerCase(), p.id]),
+              parts
+                .filter((p) => p.part_code)
+                .map((p) => [p.part_code!.trim().toLowerCase(), p.id]),
             );
             const partByName = new Map(
               parts.flatMap((p) => {
@@ -317,7 +424,15 @@ export class DisbursementRequestsComponent implements OnInit {
 
             // Group rows into requests by plate+technician+notes
             type GroupKey = string;
-            const groups = new Map<GroupKey, { vehicle_id: string; technician_id: string; notes: string | null; items: { spare_part_id: string | null; free_name: string; qty: number }[] }>();
+            const groups = new Map<
+              GroupKey,
+              {
+                vehicle_id: string;
+                technician_id: string;
+                notes: string | null;
+                items: { spare_part_id: string | null; free_name: string; qty: number }[];
+              }
+            >();
             let skipped = 0;
 
             for (const row of normalized) {
@@ -381,7 +496,9 @@ export class DisbursementRequestsComponent implements OnInit {
                               ),
                             );
                         });
-                        return forkJoin(itemCalls.length ? itemCalls : [of(null)]).pipe(switchMap(() => of(req)));
+                        return forkJoin(itemCalls.length ? itemCalls : [of(null)]).pipe(
+                          switchMap(() => of(req)),
+                        );
                       }),
                     ),
                 ),
@@ -397,7 +514,9 @@ export class DisbursementRequestsComponent implements OnInit {
                 error: (err) => {
                   this.importing = false;
                   this.importError =
-                    err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.importFailed');
+                    err instanceof Error
+                      ? err.message
+                      : this.i18n.t('spareParts.disbursement.importFailed');
                   this.cdr.markForCheck();
                 },
               });
@@ -405,7 +524,9 @@ export class DisbursementRequestsComponent implements OnInit {
           error: (err) => {
             this.importing = false;
             this.importError =
-              err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.importFailed');
+              err instanceof Error
+                ? err.message
+                : this.i18n.t('spareParts.disbursement.importFailed');
             this.cdr.markForCheck();
           },
         });
@@ -413,7 +534,9 @@ export class DisbursementRequestsComponent implements OnInit {
       .catch((err) => {
         this.importing = false;
         this.importError =
-          err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.importParseFailed');
+          err instanceof Error
+            ? err.message
+            : this.i18n.t('spareParts.disbursement.importParseFailed');
         this.cdr.markForCheck();
       });
   }
@@ -427,7 +550,8 @@ export class DisbursementRequestsComponent implements OnInit {
     this.disbursementService.listAllMatching(this.currentQuery).subscribe({
       next: (rows) => exportToExcel(rows, this.excelColumns(), 'disbursement-requests'),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -446,7 +570,8 @@ export class DisbursementRequestsComponent implements OnInit {
           'disbursement-requests',
         ),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

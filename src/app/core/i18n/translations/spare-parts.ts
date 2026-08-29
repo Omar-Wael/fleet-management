@@ -101,6 +101,8 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'Issued & Installed',
     ar: 'تم الصرف والتركيب',
   },
+  'spareParts.disbursement.status.rejected': { en: 'Rejected', ar: 'مرفوض' },
+  'spareParts.disbursement.status.approved': { en: 'Approved', ar: 'مقبول' },
 
   // ---------------------------------------------------------------
   // Disbursement Requests grid
@@ -278,6 +280,7 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.vendors.type.machineShop': { en: 'Machine Shop', ar: 'ورشة تشغيل ميكانيكي' },
   'spareParts.vendors.type.externalGarage': { en: 'External Garage', ar: 'ورشة خارجية' },
   'spareParts.vendors.count': { en: 'vendor(s)', ar: 'مورد/موردين' },
+  'spareParts.vendors.searchPlaceholder': { en: 'Search vendors…', ar: 'ابحث عن الموردين…' },
   'spareParts.vendors.allTypes': { en: 'All Types', ar: 'كل الأنواع' },
   'spareParts.vendors.addButton': { en: '+ Add Vendor', ar: '+ إضافة مورد' },
   'spareParts.vendors.addSubmit': { en: 'Add Vendor', ar: 'إضافة مورد' },
@@ -315,4 +318,17 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.disbursementForm.modeCatalog': { en: 'From catalogue', ar: 'من الكتالوج' },
   'spareParts.disbursementForm.modeCustom': { en: 'Free text', ar: 'نص حر' },
   'spareParts.disbursementForm.customPartPlaceholder': { en: 'Part name (not in catalogue)', ar: 'اسم القطعة (ليست في الكتالوج)' },
+
+  'spareParts.requestNumber': { en: 'Request #', ar: 'رقم الطلب' },
+  'spareParts.technicians': { en: 'Technicians', ar: 'الفنيون' },
+  'spareParts.technician': { en: 'Technician', ar: 'الفني' },
+  'spareParts.department': { en: 'Department', ar: 'الإدارة' },
+  'spareParts.repairDepartment': { en: 'Repair Department', ar: 'ورشة الصيانة' },
+  'spareParts.classification': { en: 'Classification', ar: 'التصنيف' },
+  'spareParts.hasStock': { en: 'Has Stock', ar: 'يوجد مخزون' },
+  'spareParts.hasSample': { en: 'Has Sample', ar: 'يوجد عينة' },
+  'spareParts.condition.new': { en: 'New', ar: 'جديد' },
+  'spareParts.condition.used': { en: 'Used', ar: 'مستعمل' },
+  'spareParts.condition.imported': { en: 'Imported', ar: 'استيراد' },
+
 };

@@ -28,12 +28,17 @@
           </label>
 
           <label class="field">
-            <span>{{ 'spareParts.disbursementForm.fieldRequestedBy' | translate }}</span>
-            <app-searchable-select
-              formControlName="requested_by_technician_id"
-              [options]="technicianOptions"
-              [placeholder]="'spareParts.disbursementForm.selectTechnicianPlaceholder' | translate"
-            ></app-searchable-select>
+            <span>{{ 'spareParts.requestNumber' | translate }}</span>
+            <input type="text" formControlName="request_number" placeholder="Auto" />
+          </label>
+
+          <label class="field field--wide">
+            <span>{{ 'spareParts.technicians' | translate }} (multi)</span>
+            <select formControlName="technician_ids" multiple size="4" class="multi-select">
+              @for (opt of technicianOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
           </label>
 
           <label class="field field--wide">
@@ -104,7 +109,15 @@
                 [(ngModel)]="row.qty"
                 [ngModelOptions]="{ standalone: true }"
               />
-
+              <select class="condition-select" [(ngModel)]="row.condition" [ngModelOptions]="{ standalone: true }">
+                <option value="new">{{ 'spareParts.condition.new' | translate }}</option>
+                <option value="used">{{ 'spareParts.condition.used' | translate }}</option>
+                <option value="imported">{{ 'spareParts.condition.imported' | translate }}</option>
+              </select>
+              <label class="sample-check">
+                <input type="checkbox" [(ngModel)]="row.has_sample" [ngModelOptions]="{ standalone: true }" />
+                {{ 'spareParts.hasSample' | translate }}
+              </label>
               <button type="button" class="icon-btn" (click)="removeItemRow(i)" [attr.aria-label]="'spareParts.disbursementForm.removeLineAria' | translate">✕</button>
 
               @if (row.loadingNote) {

@@ -113,7 +113,23 @@ export type DisbursementStatus =
   | 'purchase_committee_received'
   | 'purchased'
   | 'supplied'
-  | 'issued_and_installed';
+  | 'issued_and_installed'
+  | 'approved'
+  | 'rejected';
+
+export type PartCondition = 'new' | 'used' | 'imported';
+
+export type PartClassification =
+  | 'engine'
+  | 'transmission'
+  | 'power_train'
+  | 'brakes'
+  | 'electrical'
+  | 'suspension'
+  | 'body'
+  | 'cooling'
+  | 'fuel'
+  | 'other';
 
 // ---------------------------------------------------------------------
 // Base tables
@@ -173,6 +189,7 @@ export interface SparePart {
   current_stock_qty: number;
   reorder_threshold: number | null;
   created_at: string;
+  classification?: PartClassification | string | null;
 }
 
 export interface Vehicle {
@@ -276,9 +293,11 @@ export interface MaintenanceSchedule {
 
 export interface StockDisbursementRequest {
   id: string;
+  request_number?: string | null;
   work_order_id: string | null;
   vehicle_id: string;
-  requested_by_technician_id: string;
+  /** @deprecated Prefer stock_disbursement_request_technicians */
+  requested_by_technician_id?: string | null;
   status: DisbursementStatus;
   requested_at: string;
   issued_at: string | null;
@@ -292,6 +311,14 @@ export interface StockDisbursementItem {
   spare_part_id: string;
   qty: number;
   unit_cost_at_issue: number | null;
+  condition?: PartCondition | null;
+  has_sample?: boolean | null;
+}
+
+export interface StockDisbursementRequestTechnician {
+  disbursement_request_id: string;
+  technician_id: string;
+  role_on_request?: string | null;
 }
 
 export interface RepairBounce {

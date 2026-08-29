@@ -17,7 +17,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
 
 @Component({
   selector: 'app-spare-parts-catalog',
@@ -34,6 +34,7 @@ export class SparePartsCatalogComponent implements OnInit {
   loadError: string | null = null;
 
   columns: DataTableColumn<SparePart>[] = [];
+  filters: DataTableFilter[] = [];
 
   /**
    * No `filters` array — the old "low stock only" checkbox can't become a
@@ -69,7 +70,39 @@ export class SparePartsCatalogComponent implements OnInit {
 
   ngOnInit(): void {
     this.buildColumns();
+    this.buildFilters();
     this.loadParts(this.currentQuery);
+  }
+
+  private buildFilters(): void {
+    this.filters = [
+      {
+        key: 'classification',
+        label: this.i18n.t('spareParts.classification'),
+        value: this.currentQuery.filters['classification'] ?? '',
+        options: [
+          { value: 'engine', label: 'engine' },
+          { value: 'transmission', label: 'transmission' },
+          { value: 'power_train', label: 'power_train' },
+          { value: 'brakes', label: 'brakes' },
+          { value: 'electrical', label: 'electrical' },
+          { value: 'suspension', label: 'suspension' },
+          { value: 'body', label: 'body' },
+          { value: 'cooling', label: 'cooling' },
+          { value: 'fuel', label: 'fuel' },
+          { value: 'other', label: 'other' },
+        ],
+      },
+      {
+        key: 'hasStock',
+        label: this.i18n.t('spareParts.hasStock'),
+        value: this.currentQuery.filters['hasStock'] ?? '',
+        options: [
+          { value: 'true', label: this.i18n.t('common.yes') },
+          { value: 'false', label: this.i18n.t('common.no') },
+        ],
+      },
+    ];
   }
 
   private buildColumns(): void {
@@ -83,6 +116,7 @@ export class SparePartsCatalogComponent implements OnInit {
       },
       { key: 'name_ar', header: this.i18n.t('spareParts.catalog.colNameAr'), sortable: true, render: (p) => p.name_ar },
       { key: 'name_en', header: this.i18n.t('spareParts.catalog.colNameEn'), render: (p) => p.name_en || '—' },
+      { key: 'classification', header: this.i18n.t('spareParts.classification'), render: (p) => p.classification || '—' },
       { key: 'unit', header: this.i18n.t('spareParts.catalog.colUnit'), render: (p) => p.unit || '—' },
       {
         key: 'unit_cost',
