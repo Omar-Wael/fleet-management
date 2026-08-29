@@ -5,19 +5,21 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
-  ViewChild, ChangeDetectionStrategy} from '@angular/core';
+  ViewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import Chart from 'chart.js/auto';
-import { forkJoin } from 'rxjs';
 
 import { AlertBanner } from '../../../shared/components/alert-banner/alert-banner';
 import { FleetGauge } from '../../../shared/components/fleet-gauge/fleet-gauge';
 
-import { AnalyticsService, DashboardSummary } from '../../../core/services/analytics.service';
-import { VehiclesService } from '../../../core/services/vehicles.service';
-import { OverhaulsService } from '../../../core/services/overhauls.service';
-import { TechniciansService } from '../../../core/services/technicians.service';
-import { VTechnicianKpiRollup } from '../../../core/models/fleet.models';
+import {
+  AnalyticsService,
+  DashboardOverview,
+  StatusCount,
+} from '../../../core/services/analytics.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -26,49 +28,53 @@ interface DepartmentCostChartRow {
   value: number;
 }
 
-const EMPTY_SUMMARY: DashboardSummary = {
+const EMPTY_OVERVIEW: DashboardOverview = {
+  counts: {
+    vehicles: 0,
+    vehiclesActive: 0,
+    technicians: 0,
+    techniciansActive: 0,
+    departments: 0,
+    spareParts: 0,
+    workOrders: 0,
+    overhaulsTotal: 0,
+    overhaulsOpen: 0,
+    disbursementRequests: 0,
+    disbursementRequested: 0,
+  },
+  vehicleStatus: [],
+  disbursementStatus: [],
   licensesDueThisMonth: [],
   maintenanceDueThisMonth: [],
   departmentCosts: [],
+  technicianKpis: [],
+  recentActivity: [],
 };
 
-// Same palette used elsewhere on the dashboard (fleet-gauge, alert-banner),
-// cycled through if there are more departments than colors.
 const CHART_COLORS = ['#1e3a5f', '#2f547f', '#5b7ca0', '#8fa8c2', '#c3d2e0'];
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [CommonModule, AlertBanner, FleetGauge, TranslatePipe],
+  standalone: true,
+  imports: [CommonModule, RouterLink, AlertBanner, FleetGauge, TranslatePipe],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
-  // The canvas is always present in the template (not behind *ngIf), so
-  // this ViewChild is available from ngAfterViewInit onward regardless of
-  // how long the data takes to load — avoids the classic "canvas element
-  // doesn't exist yet" race that comes from gating chart markup behind
-  // an async *ngIf.
   @ViewChild('costChartCanvas') costChartCanvasRef?: ElementRef<HTMLCanvasElement>;
   private costChart: Chart | null = null;
 
   loading = true;
   loadError: string | null = null;
+  today = new Date();
 
-  summary: DashboardSummary = EMPTY_SUMMARY;
-  technicianKpis: VTechnicianKpiRollup[] = [];
-
-  totalVehicles = 0;
-  activeVehicles = 0;
-  openOverhaulsCount = 0;
-
+  overview: DashboardOverview = EMPTY_OVERVIEW;
   departmentCostChartData: DepartmentCostChartRow[] = [];
 
   constructor(
     private analyticsService: AnalyticsService,
-    private vehiclesService: VehiclesService,
-    private overhaulsService: OverhaulsService,
-    private techniciansService: TechniciansService,
+    private router: Router,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
   ) {}
@@ -78,8 +84,6 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // In case data already arrived before the view was ready (fast cache
-    // hit), render immediately rather than waiting for the next data load.
     this.renderCostChart();
   }
 
@@ -92,28 +96,10 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.markForCheck();
     this.loadError = null;
 
-    forkJoin({
-      summary: this.analyticsService.getDashboardSummary(),
-      vehicles: this.vehiclesService.list(),
-      overhauls: this.overhaulsService.list(),
-      technicianKpis: this.techniciansService.getKpiRollup(),
-    }).subscribe({
-      next: ({ summary, vehicles, overhauls, technicianKpis }) => {
-        this.summary = summary;
-        this.technicianKpis = technicianKpis
-          .slice()
-          .sort((a, b) => a.bounce_rate - b.bounce_rate)
-          .slice(0, 8);
-
-        this.totalVehicles = vehicles.length;
-        // NOTE: 'active' is assumed to be one of the vehicle_status enum
-        // labels — confirm the real label set and adjust this filter if
-        // your enum uses a different value.
-        this.activeVehicles = vehicles.filter((v) => v.status === 'active').length;
-
-        this.openOverhaulsCount = overhauls.filter((o) => o.current_stage !== 'completed').length;
-
-        this.departmentCostChartData = summary.departmentCosts
+    this.analyticsService.getDashboardOverview().subscribe({
+      next: (overview) => {
+        this.overview = overview;
+        this.departmentCostChartData = overview.departmentCosts
           .map((d) => ({
             name: d.department_name_en || d.department_name_ar,
             value: Number(d.total_cost) || 0,
@@ -125,17 +111,17 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('dashboard.loadError');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('dashboard.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
     });
   }
 
-  /** Creates the chart on first call, or updates its data in place on subsequent calls (no destroy/recreate churn). */
   private renderCostChart(): void {
     const canvas = this.costChartCanvasRef?.nativeElement;
-    if (!canvas) return; // view not ready yet — ngAfterViewInit/next loadDashboard() call will retry
+    if (!canvas) return;
 
     const labels = this.departmentCostChartData.map((d) => d.name);
     const values = this.departmentCostChartData.map((d) => d.value);
@@ -183,8 +169,16 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get fleetHealthPercent(): number {
-    if (this.totalVehicles === 0) return 0;
-    return Math.round((this.activeVehicles / this.totalVehicles) * 100);
+    const total = this.overview.counts.vehicles;
+    if (!total) return 0;
+    return Math.round((this.overview.counts.vehiclesActive / total) * 100);
+  }
+
+  statusPercent(list: StatusCount[], status: string): number {
+    const total = list.reduce((s, x) => s + x.count, 0);
+    if (!total) return 0;
+    const row = list.find((x) => x.status === status);
+    return Math.round(((row?.count ?? 0) / total) * 100);
   }
 
   formatCurrency(value: number): string {
@@ -195,13 +189,17 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
     }).format(value);
   }
 
+  activityIcon(kind: string): string {
+    if (kind === 'overhaul') return '⚙️';
+    if (kind === 'disbursement') return '🔧';
+    return '🛠️';
+  }
+
   onReviewLicenses(): void {
-    // Hook up to your router: navigate to the Vehicles tab, filtered to
-    // the plate numbers in summary.licensesDueThisMonth.
+    this.router.navigate(['/vehicles']);
   }
 
   onReviewMaintenance(): void {
-    // Hook up to your router: navigate to the Maintenance tab, filtered
-    // to the plate numbers in summary.maintenanceDueThisMonth.
+    this.router.navigate(['/maintenance']);
   }
 }

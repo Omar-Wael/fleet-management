@@ -15,4 +15,5 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'nav.reports': { en: 'Reports', ar: 'التقارير' },
   'nav.settings': { en: 'Settings', ar: 'الإعدادات' },
   'nav.langToggle': { en: 'العربية', ar: 'English' },
+  'nav.menu': { en: 'Menu', ar: 'القائمة' },
 };

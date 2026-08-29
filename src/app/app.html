@@ -1,4 +1,4 @@
-<div class="shell">
+<div class="shell" [class.sidebar-open]="layout.sidebarOpen()">
   <aside class="shell-nav">
     <div class="shell-brand">
       <span class="shell-brand-mark">FL</span>
@@ -7,18 +7,24 @@
 
     <nav>
       @for (item of navItems; track item.path) {
-        <a [routerLink]="[item.path]" routerLinkActive="active" class="shell-nav-link">
+        <a
+          [routerLink]="[item.path]"
+          routerLinkActive="active"
+          class="shell-nav-link"
+          (click)="layout.closeSidebar()"
+        >
           <span class="shell-nav-label-ar">{{ item.labelKey | translate }}</span>
         </a>
       }
     </nav>
-
-    <button type="button" class="lang-toggle" (click)="i18n.toggle()">
-      {{ 'nav.langToggle' | translate }}
-    </button>
   </aside>
 
+  @if (layout.sidebarOpen()) {
+    <div class="shell-backdrop" (click)="layout.closeSidebar()"></div>
+  }
+
   <main class="shell-main">
+    <app-header></app-header>
     <router-outlet></router-outlet>
   </main>
 </div>
