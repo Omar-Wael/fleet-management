@@ -44,7 +44,7 @@ export const DASHBOARD_TRANSLATIONS: Record<string, TranslationEntry> = {
   },
   'dashboard.chartTotalCostLabel': { en: 'Total cost', ar: 'إجمالي التكلفة' },
   'dashboard.statVehicles': { en: 'Total Vehicles', ar: 'إجمالى السيارات' },
-  'dashboard.statTechnicians': { en: 'Total Technicians', ar: 'إجمالى الفنيين' },
+  'dashboard.statTechnicians': { en: 'Total Active Technicians', ar: 'إجمالى الفنيين النشطين' },
   'dashboard.statDepartments': { en: 'Total Departments', ar: 'إجمالى الإدارات' },
   'dashboard.statPartsRequests': {
     en: 'Total Spare Parts Requests',

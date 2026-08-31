@@ -175,6 +175,8 @@ export class TechniciansListComponent implements OnInit {
           },
           {
             label: this.i18n.t(t.is_active ? 'technicians.deactivate' : 'technicians.reactivate'),
+            icon: t.is_active ? '🚫' : '🔑',
+            display: 'icon',
             onClick: (t) => this.toggleActive(t),
             variant: 'danger',
           },
