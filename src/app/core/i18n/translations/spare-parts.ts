@@ -332,4 +332,51 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.condition.used': { en: 'Used', ar: 'مستعمل' },
   'spareParts.condition.imported': { en: 'Imported', ar: 'استيراد' },
 
+  // --- Classification values ---
+  'spareParts.classification.engine': { en: 'Engine', ar: 'محرك' },
+  'spareParts.classification.transmission': { en: 'Transmission', ar: 'ناقل حركة' },
+  'spareParts.classification.power_train': { en: 'Power Train', ar: 'مجموعة نقل الحركة' },
+  'spareParts.classification.brakes': { en: 'Brake System', ar: 'نظام الفرامل' },
+  'spareParts.classification.electrical': { en: 'Electrical', ar: 'كهرباء' },
+  'spareParts.classification.suspension': { en: 'Suspension', ar: 'تعليق' },
+  'spareParts.classification.body': { en: 'Body', ar: 'هيكل' },
+  'spareParts.classification.cooling': { en: 'Cooling', ar: 'تبريد' },
+  'spareParts.classification.fuel': { en: 'Fuel System', ar: 'نظام الوقود' },
+  'spareParts.classification.other': { en: 'Other', ar: 'أخرى' },
+
+  // --- Part form extras ---
+  'spareParts.partForm.isGeneral': { en: 'General part (available for all vehicles)', ar: 'صنف عام (متاح لجميع المركبات)' },
+  'spareParts.partForm.isGeneralShort': { en: 'General', ar: 'عام' },
+  'spareParts.partForm.selectClassification': { en: 'Select classification…', ar: 'اختر التصنيف…' },
+  'spareParts.partForm.compatibilitySection': { en: 'Compatibility', ar: 'التوافق' },
+  'spareParts.partForm.compatibilityHint': {
+    en: 'General parts appear for every vehicle. Linked vehicles/engines restrict non-general parts to those assets.',
+    ar: 'الأصناف العامة تظهر لكل المركبات. ربط مركبات/محركات يقيّد الأصناف غير العامة بهذه الأصول.',
+  },
+  'spareParts.partForm.linkedVehicles': { en: 'Linked vehicles', ar: 'مركبات مرتبطة' },
+  'spareParts.partForm.linkedEngines': { en: 'Linked engines', ar: 'محركات مرتبطة' },
+  'spareParts.partForm.selectVehicles': { en: 'Select vehicle(s)…', ar: 'اختر مركبة/مركبات…' },
+  'spareParts.partForm.selectEngines': { en: 'Select engine(s)…', ar: 'اختر محرك/محركات…' },
+  'spareParts.partForm.vendorsSection': { en: 'Vendors', ar: 'الموردون' },
+  'spareParts.partForm.linkedVendors': { en: 'Supplying vendors', ar: 'الموردون المرتبطون' },
+  'spareParts.partForm.selectVendors': { en: 'Select vendor(s)…', ar: 'اختر مورد/موردين…' },
+
+  // --- Disbursement form extras ---
+  'spareParts.disbursementForm.editTitle': { en: 'Edit Disbursement Request', ar: 'تعديل طلب الصرف' },
+  'spareParts.disbursementForm.selectWorkshopPlaceholder': { en: 'Select repair department…', ar: 'اختر ورشة الصيانة…' },
+  'spareParts.disbursementForm.lastOrderedDate': { en: 'Last ordered date', ar: 'آخر تاريخ طلب' },
+
+  // --- Drawer extras ---
+  'spareParts.disbursementDrawer.vehicleDetails': { en: 'Vehicle details', ar: 'بيانات المركبة' },
+  'spareParts.disbursementDrawer.makeModel': { en: 'Make / Model', ar: 'الشركة / الموديل' },
+  'spareParts.disbursementDrawer.vehicleType': { en: 'Vehicle type', ar: 'نوع المركبة' },
+  'spareParts.disbursementDrawer.vehicleWorkshop': { en: 'Vehicle workshop', ar: 'ورشة المركبة' },
+  'spareParts.disbursementDrawer.odometer': { en: 'Odometer', ar: 'عداد المسافة' },
+  'spareParts.disbursementDrawer.colCondition': { en: 'Condition', ar: 'الحالة' },
+  'spareParts.yes': { en: 'Yes', ar: 'نعم' },
+  'spareParts.no': { en: 'No', ar: 'لا' },
+  'spareParts.catalog.confirmDelete': { en: 'Delete part "{name}"? This cannot be undone.', ar: 'حذف القطعة "{name}"؟ لا يمكن التراجع عن هذا الإجراء.' },
+  'spareParts.catalog.deleteError': { en: 'Failed to delete part. It may be used on existing requests.', ar: 'فشل حذف القطعة. قد تكون مستخدمة في طلبات موجودة.' },
+  'spareParts.disbursement.confirmDelete': { en: 'Delete request {number} for vehicle {plate}? This cannot be undone.', ar: 'حذف الطلب {number} للمركبة {plate}؟ لا يمكن التراجع عن هذا الإجراء.' },
+  'spareParts.disbursement.deleteError': { en: 'Failed to delete request. It may be linked to financial records.', ar: 'فشل حذف الطلب. قد يكون مرتبطاً بسجلات مالية.' },
 };

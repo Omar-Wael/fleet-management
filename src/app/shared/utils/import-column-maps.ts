@@ -321,6 +321,8 @@ export interface SparePartImportRow {
   unit_cost: number | null;
   current_stock_qty: number | null;
   reorder_threshold: number | null;
+  classification: string | null;
+  is_general: boolean | null;
 }
 
 export const SPARE_PART_IMPORT_MAP: ColumnMapping<SparePartImportRow> = {
@@ -331,6 +333,13 @@ export const SPARE_PART_IMPORT_MAP: ColumnMapping<SparePartImportRow> = {
   unit_cost: { headers: ['Unit Cost', 'سعر الوحدة'], type: 'number' },
   current_stock_qty: { headers: ['Stock Qty', 'Current Stock', 'الكمية بالمخزن'], type: 'number' },
   reorder_threshold: { headers: ['Reorder Threshold', 'حد إعادة الطلب'], type: 'number' },
+  classification: {
+    headers: ['Classification', 'التصنيف', 'Part Classification'],
+  },
+  is_general: {
+    headers: ['Is General', 'General', 'عام', 'صنف عام'],
+    type: 'boolean',
+  },
 };
 
 /** No foreign keys on spare_parts either — just defaults current_stock_qty to 0 when left blank, matching the DB column's own default. */
@@ -345,6 +354,8 @@ export function prepareSparePartRowsForImport(rows: SparePartImportRow[]): Parti
       unit_cost: row.unit_cost ?? null,
       current_stock_qty: row.current_stock_qty ?? 0,
       reorder_threshold: row.reorder_threshold ?? null,
+      classification: row.classification?.trim() || null,
+      is_general: row.is_general ?? true,
     }));
 }
 
@@ -356,6 +367,8 @@ export const SPARE_PART_IMPORT_TEMPLATE_HEADERS = [
   'Unit Cost',
   'Stock Qty',
   'Reorder Threshold',
+  'Classification',
+  'Is General',
 ];
 
 // ---------------------------------------------------------------------

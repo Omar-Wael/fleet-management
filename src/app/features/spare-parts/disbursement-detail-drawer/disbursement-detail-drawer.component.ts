@@ -70,8 +70,55 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
 
   @Output() closed = new EventEmitter<void>();
   @Output() updated = new EventEmitter<void>();
+  /** Parent should open the edit form for this request. */
+  @Output() editRequested = new EventEmitter<DisbursementGridRow>();
+  /** Parent should delete this request after confirm. */
+  @Output() deleteRequested = new EventEmitter<DisbursementGridRow>();
 
   readonly statusLabelKeys = STATUS_LABEL_KEYS;
+
+  get canEdit(): boolean {
+    return this.request?.status === 'requested';
+  }
+
+  conditionLabel(condition: string | null | undefined): string {
+    if (!condition) return '—';
+    const key = `spareParts.condition.${condition}` as const;
+    const t = this.i18n.t(key);
+    return t === key ? condition : t;
+  }
+
+  /** Technician names for the overview section (template-safe; no global Boolean). */
+  technicianNames(): string {
+    const rows = this.request?.stock_disbursement_request_technicians;
+    if (rows?.length) {
+      const names = rows
+        .map((t) => t.technicians?.full_name)
+        .filter((n): n is string => !!n);
+      if (names.length) return names.join(', ');
+    }
+    return this.request?.technicians?.full_name || '—';
+  }
+
+  /** Make + model joined, or em dash. */
+  makeModelLabel(): string {
+    const make = this.request?.vehicles?.make;
+    const model = this.request?.vehicles?.model;
+    const parts = [make, model].filter((x): x is string => !!x);
+    return parts.length ? parts.join(' ') : '—';
+  }
+
+  requestEdit(): void {
+    if (this.request && this.canEdit) {
+      this.editRequested.emit(this.request);
+    }
+  }
+
+  requestDelete(): void {
+    if (this.request) {
+      this.deleteRequested.emit(this.request);
+    }
+  }
 
   history: StockDisbursementStatusHistory[] = [];
   loading = false;

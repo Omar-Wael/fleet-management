@@ -49,6 +49,7 @@
 
 <app-disbursement-form
   [open]="formOpen"
+  [editRequest]="formEditRequest"
   (closed)="onFormClosed()"
   (saved)="onFormSaved()"
 ></app-disbursement-form>
@@ -58,4 +59,6 @@
   [request]="selectedRequest"
   (closed)="onDrawerClosed()"
   (updated)="onDrawerUpdated()"
+  (editRequested)="onDrawerEditRequested($event)"
+  (deleteRequested)="confirmDeleteRequest($event)"
 ></app-disbursement-detail-drawer>

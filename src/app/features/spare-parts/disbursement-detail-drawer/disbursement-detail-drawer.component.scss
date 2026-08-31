@@ -197,3 +197,33 @@
 .state-message--error {
   color: var(--fleet-rust, #c4432b);
 }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn--sm {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.btn--ghost {
+  background: none;
+  color: var(--fleet-primary, #1e3a5f);
+  border-color: var(--fleet-primary, #1e3a5f);
+}
+
+.btn--ghost:hover {
+  background: rgba(30, 58, 95, 0.1);
+}
+
+.btn--danger {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.btn--danger:hover {
+  background: #fef2f2;
+}

@@ -14,6 +14,8 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
   'new': { en: 'New', ar: 'جديد' },
   'total': { en: 'Total', ar: 'الإجمالى' },
   'common.ok': { en: 'OK', ar: 'موافق' },
+  'common.yes': { en: 'Yes', ar: 'نعم' },
+  'common.no': { en: 'No', ar: 'لا' },
   'common.save': { en: 'Save', ar: 'حفظ' },
   'common.saveChanges': { en: 'Save Changes', ar: 'حفظ التغييرات' },
   'common.saving': { en: 'Saving…', ar: 'جارٍ الحفظ…' },

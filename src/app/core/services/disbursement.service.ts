@@ -17,11 +17,19 @@ import {
 export interface DisbursementGridRow extends StockDisbursementRequest {
   vehicles?: {
     plate_number: string;
+    make?: string | null;
+    model?: string | null;
+    manufacture_year?: number | null;
+    odometer_km?: number | null;
     maintenance_workshop_id: string;
     operating_department_id: string | null;
+    vehicle_type_id?: string;
     operating_departments?: { name_ar: string; name_en: string | null };
     maintenance_workshops?: { name_ar: string; name_en: string | null };
+    vehicle_types?: { name_ar: string; name_en: string | null };
   };
+  /** Request-level repair department join */
+  maintenance_workshops?: { name_ar: string; name_en: string | null };
   /** Legacy single technician join */
   technicians?: { full_name: string };
   /** Multi-technician junction */
@@ -36,6 +44,7 @@ export interface DisbursementGridRow extends StockDisbursementRequest {
       name_en: string | null;
       part_code: string | null;
       classification?: string | null;
+      unit?: string | null;
     };
   })[];
 }
@@ -44,11 +53,18 @@ const DISBURSEMENT_GRID_SELECT = `
   *,
   vehicles (
     plate_number,
+    make,
+    model,
+    manufacture_year,
+    odometer_km,
     maintenance_workshop_id,
     operating_department_id,
+    vehicle_type_id,
     operating_departments (name_ar, name_en),
-    maintenance_workshops (name_ar, name_en)
+    maintenance_workshops (name_ar, name_en),
+    vehicle_types (name_ar, name_en)
   ),
+  maintenance_workshops (name_ar, name_en),
   technicians:requested_by_technician_id (full_name),
   stock_disbursement_request_technicians (
     technician_id,
@@ -57,7 +73,7 @@ const DISBURSEMENT_GRID_SELECT = `
   ),
   stock_disbursement_items (
     *,
-    spare_parts (name_ar, name_en, part_code, classification)
+    spare_parts (name_ar, name_en, part_code, classification, unit)
   )
 `;
 
@@ -70,6 +86,22 @@ export interface CreateDisbursementPayload {
     unit_cost_at_issue?: number | null;
     condition?: PartCondition | null;
     has_sample?: boolean | null;
+    last_ordered_date?: string | null;
+  }>;
+}
+
+/** Payload for full edit of an existing request (header + replace items + technicians). */
+export interface UpdateDisbursementPayload {
+  request: Partial<StockDisbursementRequest>;
+  technicianIds: string[];
+  items: Array<{
+    id?: string;
+    spare_part_id: string;
+    qty: number;
+    unit_cost_at_issue?: number | null;
+    condition?: PartCondition | null;
+    has_sample?: boolean | null;
+    last_ordered_date?: string | null;
   }>;
 }
 
@@ -141,7 +173,7 @@ export class DisbursementService {
     ),
     stock_disbursement_items (
       *,
-      spare_parts (name_ar, name_en, part_code, classification)
+      spare_parts (name_ar, name_en, part_code, classification, unit)
     )
   `;
 
@@ -265,11 +297,83 @@ export class DisbursementService {
             unit_cost_at_issue: i.unit_cost_at_issue ?? null,
             condition: i.condition ?? 'new',
             has_sample: i.has_sample ?? false,
+            last_ordered_date: i.last_ordered_date ?? null,
           }));
           ops.push(this.client.from('stock_disbursement_items').insert(itemRows) as any);
         }
 
         return from(Promise.all(ops)).pipe(map(() => created));
+      }),
+    );
+  }
+
+  /**
+   * Full update of an existing request (header + replace technicians + replace items).
+   * Intended for status = 'requested' only (enforce in UI).
+   */
+  updateWithItems(
+    requestId: string,
+    payload: UpdateDisbursementPayload,
+  ): Observable<StockDisbursementRequest> {
+    const { request, technicianIds, items } = payload;
+    return fromSupabase<StockDisbursementRequest>(
+      this.client
+        .from('stock_disbursement_requests')
+        .update(request)
+        .eq('id', requestId)
+        .select()
+        .single(),
+    ).pipe(
+      switchMap((updated) => {
+        const ops: Promise<unknown>[] = [];
+
+        // Replace technicians
+        ops.push(
+          this.client
+            .from('stock_disbursement_request_technicians')
+            .delete()
+            .eq('disbursement_request_id', requestId) as any,
+        );
+
+        // Replace items
+        ops.push(
+          this.client
+            .from('stock_disbursement_items')
+            .delete()
+            .eq('disbursement_request_id', requestId) as any,
+        );
+
+        return from(Promise.all(ops)).pipe(
+          switchMap(() => {
+            const insertOps: Promise<unknown>[] = [];
+
+            if (technicianIds?.length) {
+              const techRows = technicianIds.map((tid) => ({
+                disbursement_request_id: requestId,
+                technician_id: tid,
+              }));
+              insertOps.push(
+                this.client.from('stock_disbursement_request_technicians').insert(techRows) as any,
+              );
+            }
+
+            if (items?.length) {
+              const itemRows = items.map((i) => ({
+                disbursement_request_id: requestId,
+                spare_part_id: i.spare_part_id,
+                qty: i.qty,
+                unit_cost_at_issue: i.unit_cost_at_issue ?? null,
+                condition: i.condition ?? 'new',
+                has_sample: i.has_sample ?? false,
+                last_ordered_date: i.last_ordered_date ?? null,
+              }));
+              insertOps.push(this.client.from('stock_disbursement_items').insert(itemRows) as any);
+            }
+
+            if (!insertOps.length) return of(updated);
+            return from(Promise.all(insertOps)).pipe(map(() => updated));
+          }),
+        );
       }),
     );
   }
@@ -297,6 +401,35 @@ export class DisbursementService {
   removeItem(itemId: string): Observable<null> {
     return fromSupabase<null>(
       this.client.from('stock_disbursement_items').delete().eq('id', itemId),
+    );
+  }
+
+  /**
+   * Deletes a disbursement request and its dependent rows (items, technicians, status history).
+   * Does not delete linked financial transactions if any — those may block delete via FK.
+   */
+  deleteRequest(requestId: string): Observable<null> {
+    return from(
+      Promise.all([
+        this.client
+          .from('stock_disbursement_items')
+          .delete()
+          .eq('disbursement_request_id', requestId) as any,
+        this.client
+          .from('stock_disbursement_request_technicians')
+          .delete()
+          .eq('disbursement_request_id', requestId) as any,
+        this.client
+          .from('stock_disbursement_status_history')
+          .delete()
+          .eq('disbursement_request_id', requestId) as any,
+      ]),
+    ).pipe(
+      switchMap(() =>
+        fromSupabase<null>(
+          this.client.from('stock_disbursement_requests').delete().eq('id', requestId),
+        ),
+      ),
     );
   }
 

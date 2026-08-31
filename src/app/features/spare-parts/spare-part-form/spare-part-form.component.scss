@@ -152,3 +152,37 @@
     width: 100vw;
   }
 }
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.sample-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  justify-self: flex-start;
+
+  input[type='checkbox'] {
+    width: auto;
+  }
+}
+
+.links-section {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--fleet-line, #dfe3e8);
+
+  h3 {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+  }
+
+  .hint {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    color: var(--fleet-muted, #6b7280);
+  }
+}

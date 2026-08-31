@@ -215,7 +215,8 @@ export class DisbursementRequestsComponent implements OnInit {
         key: 'issued_at',
         header: this.i18n.t('spareParts.disbursement.issuedAt'),
         sortable: true,
-        render: (r) => (r.issued_at ? this.datePipe.transform(r.issued_at, 'mediumDate') || '—' : '—'),
+        render: (r) =>
+          r.issued_at ? this.datePipe.transform(r.issued_at, 'mediumDate') || '—' : '—',
       },
       {
         key: 'parts',
@@ -227,15 +228,40 @@ export class DisbursementRequestsComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (r) => [
-          {
-            label: this.i18n.t('common.view'),
-            icon: '👁️️',
-            variant: 'info',
+        actions: (r) => {
+          const acts: {
+            label: string;
+            icon: string;
+            variant: 'default' | 'info' | 'danger';
+            display: 'icon';
+            onClick: (row: DisbursementGridRow) => void;
+          }[] = [
+            {
+              label: this.i18n.t('common.view'),
+              icon: '👁️️',
+              variant: 'info',
+              display: 'icon',
+              onClick: (row) => this.openDetail(row),
+            },
+          ];
+          if (r.status === 'requested') {
+            acts.push({
+              label: this.i18n.t('common.edit'),
+              icon: '✏️',
+              variant: 'default',
+              display: 'icon',
+              onClick: (row) => this.openEditForm(row),
+            });
+          }
+          acts.push({
+            label: this.i18n.t('common.delete'),
+            icon: '🗑️',
+            variant: 'danger',
             display: 'icon',
-            onClick: (r) => this.openDetail(r),
-          },
-        ],
+            onClick: (row) => this.confirmDeleteRequest(row),
+          });
+          return acts;
+        },
       },
     ];
   }
@@ -350,16 +376,28 @@ export class DisbursementRequestsComponent implements OnInit {
     return this.i18n.t(this.statusLabelKeys[status]);
   }
 
+  /** Request being edited in the form (null = create mode). */
+  formEditRequest: DisbursementGridRow | null = null;
+
   openCreateForm(): void {
+    this.formEditRequest = null;
+    this.formOpen = true;
+  }
+
+  openEditForm(request: DisbursementGridRow): void {
+    this.formEditRequest = request;
+    this.drawerOpen = false;
     this.formOpen = true;
   }
 
   onFormClosed(): void {
     this.formOpen = false;
+    this.formEditRequest = null;
   }
 
   onFormSaved(): void {
     this.formOpen = false;
+    this.formEditRequest = null;
     this.reloadRequestsOnly();
   }
 
@@ -374,6 +412,37 @@ export class DisbursementRequestsComponent implements OnInit {
 
   onDrawerUpdated(): void {
     this.reloadRequestsOnly();
+  }
+
+  onDrawerEditRequested(request: DisbursementGridRow): void {
+    this.openEditForm(request);
+  }
+
+  confirmDeleteRequest(request: DisbursementGridRow): void {
+    console.log('confirmDeleteRequest', request);
+    const plate = request.vehicles?.plate_number || request.vehicle_id;
+    const num = request.request_number || request.id.slice(0, 8);
+    const msg = this.i18n
+      .t('spareParts.disbursement.confirmDelete')
+      .replace('{number}', String(num))
+      .replace('{plate}', String(plate));
+    if (!window.confirm(msg)) return;
+
+    this.disbursementService.deleteRequest(request.id).subscribe({
+      next: () => {
+        if (this.selectedRequest?.id === request.id) {
+          this.drawerOpen = false;
+          this.selectedRequest = null;
+        }
+        this.reloadRequestsOnly();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.deleteError');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   // -------------------------------------------------------------

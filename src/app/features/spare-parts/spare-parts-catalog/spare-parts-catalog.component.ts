@@ -136,7 +136,21 @@ export class SparePartsCatalogComponent implements OnInit {
       {
         key: 'classification',
         header: this.i18n.t('spareParts.classification'),
-        render: (p) => p.classification || '—',
+        render: (p) =>
+          p.classification
+            ? this.i18n.t(`spareParts.classification.${p.classification}`) !==
+              `spareParts.classification.${p.classification}`
+              ? this.i18n.t(`spareParts.classification.${p.classification}`)
+              : p.classification
+            : '—',
+      },
+      {
+        key: 'is_general',
+        header: this.i18n.t('spareParts.partForm.isGeneralShort'),
+        render: (p) =>
+          p.is_general === false
+            ? this.i18n.t('spareParts.no')
+            : this.i18n.t('spareParts.yes'),
       },
       {
         key: 'unit',
@@ -177,7 +191,14 @@ export class SparePartsCatalogComponent implements OnInit {
             icon: '✏️',
             variant: 'default',
             display: 'icon',
-            onClick: (p) => this.openEditForm(p),
+            onClick: (row) => this.openEditForm(row),
+          },
+          {
+            label: this.i18n.t('common.delete'),
+            icon: '🗑️',
+            variant: 'danger',
+            display: 'icon',
+            onClick: (row) => this.confirmDeletePart(row),
           },
         ],
       },
@@ -226,6 +247,28 @@ export class SparePartsCatalogComponent implements OnInit {
   openEditForm(part: SparePart): void {
     this.editingPart = part;
     this.formOpen = true;
+  }
+
+  confirmDeletePart(part: SparePart): void {
+    const label = part.part_code
+      ? `${part.name_ar} (${part.part_code})`
+      : part.name_ar;
+    const msg = this.i18n.t('spareParts.catalog.confirmDelete').replace('{name}', label);
+    if (!window.confirm(msg)) return;
+
+    this.sparePartsService.delete(part.id).subscribe({
+      next: () => {
+        this.reloadPartsOnly();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.loadError =
+          err instanceof Error
+            ? err.message
+            : this.i18n.t('spareParts.catalog.deleteError');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   onFormClosed(): void {
