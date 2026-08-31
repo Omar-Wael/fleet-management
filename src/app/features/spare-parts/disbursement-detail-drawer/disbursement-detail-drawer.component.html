@@ -4,7 +4,17 @@
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
       <h2>{{ request?.vehicles?.plate_number || ('spareParts.disbursementDrawer.fallbackTitle' | translate) }}</h2>
-      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
+      <div class="header-actions">
+        @if (canEdit) {
+          <button type="button" class="btn btn--ghost btn--sm" (click)="requestEdit()">
+            {{ 'common.edit' | translate }}
+          </button>
+        }
+        <button type="button" class="btn btn--ghost btn--sm btn--danger" (click)="requestDelete()">
+          {{ 'common.delete' | translate }}
+        </button>
+        <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
+      </div>
     </header>
 
     @if (request) {
@@ -14,8 +24,12 @@
           <dl>
             <dt>{{ 'common.status' | translate }}</dt>
             <dd><span class="badge">{{ statusLabelKeys[request.status] | translate }}</span></dd>
+            <dt>{{ 'spareParts.requestNumber' | translate }}</dt>
+            <dd>{{ request.request_number || '—' }}</dd>
+            <dt>{{ 'spareParts.repairDepartment' | translate }}</dt>
+            <dd>{{ request.maintenance_workshops?.name_ar || request.maintenance_workshops?.name_en || '—' }}</dd>
             <dt>{{ 'spareParts.disbursement.colRequestedBy' | translate }}</dt>
-            <dd>{{ request.technicians?.full_name || '—' }}</dd>
+            <dd>{{ technicianNames() }}</dd>
             <dt>{{ 'spareParts.disbursement.colRequestedAt' | translate }}</dt>
             <dd>{{ request.requested_at | date : 'mediumDate' }}</dd>
             <dt>{{ 'spareParts.disbursementDrawer.issuedAt' | translate }}</dt>
@@ -24,6 +38,28 @@
               <dt>{{ 'spareParts.disbursementDrawer.committeeReceiver' | translate }}</dt>
               <dd>{{ request.purchase_committee_receiver_name }}</dd>
             }
+            @if (request.notes) {
+              <dt>{{ 'common.notes' | translate }}</dt>
+              <dd>{{ request.notes }}</dd>
+            }
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>{{ 'spareParts.disbursementDrawer.vehicleDetails' | translate }}</h3>
+          <dl>
+            <dt>{{ 'spareParts.disbursement.vehicle' | translate }}</dt>
+            <dd>{{ request.vehicles?.plate_number || '—' }}</dd>
+            <dt>{{ 'spareParts.disbursementDrawer.makeModel' | translate }}</dt>
+            <dd>{{ makeModelLabel() }}</dd>
+            <dt>{{ 'spareParts.disbursementDrawer.vehicleType' | translate }}</dt>
+            <dd>{{ request.vehicles?.vehicle_types?.name_ar || request.vehicles?.vehicle_types?.name_en || '—' }}</dd>
+            <dt>{{ 'spareParts.department' | translate }}</dt>
+            <dd>{{ request.vehicles?.operating_departments?.name_ar || request.vehicles?.operating_departments?.name_en || '—' }}</dd>
+            <dt>{{ 'spareParts.disbursementDrawer.vehicleWorkshop' | translate }}</dt>
+            <dd>{{ request.vehicles?.maintenance_workshops?.name_ar || request.vehicles?.maintenance_workshops?.name_en || '—' }}</dd>
+            <dt>{{ 'spareParts.disbursementDrawer.odometer' | translate }}</dt>
+            <dd>{{ request.vehicles?.odometer_km != null ? (request.vehicles!.odometer_km | number : '1.0-0') : '—' }}</dd>
           </dl>
         </section>
 
@@ -33,7 +69,11 @@
             <thead>
               <tr>
                 <th>{{ 'spareParts.disbursementDrawer.colPart' | translate }}</th>
+                <th>{{ 'spareParts.catalog.colUnit' | translate }}</th>
                 <th>{{ 'spareParts.disbursementDrawer.colQty' | translate }}</th>
+                <th>{{ 'spareParts.disbursementDrawer.colCondition' | translate }}</th>
+                <th>{{ 'spareParts.hasSample' | translate }}</th>
+                <th>{{ 'spareParts.disbursementForm.lastOrderedDate' | translate }}</th>
                 <th>{{ 'spareParts.catalog.colUnitCost' | translate }}</th>
               </tr>
             </thead>
@@ -41,27 +81,21 @@
               @for (item of request.stock_disbursement_items; track item.id) {
                 <tr>
                   <td>{{ item.spare_parts?.name_ar || '—' }}</td>
+                  <td>{{ item.spare_parts?.unit || '—' }}</td>
                   <td class="mono">{{ item.qty }}</td>
+                  <td>{{ conditionLabel(item.condition) }}</td>
+                  <td>{{ item.has_sample ? ('spareParts.yes' | translate) : ('spareParts.no' | translate) }}</td>
+                  <td>{{ item.last_ordered_date ? (item.last_ordered_date | date : 'mediumDate') : '—' }}</td>
                   <td class="mono">{{ item.unit_cost_at_issue != null ? (item.unit_cost_at_issue | number : '1.2-2') : '—' }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="3" class="muted">{{ 'spareParts.disbursementDrawer.noItems' | translate }}</td>
+                  <td colspan="7" class="muted">{{ 'spareParts.disbursementDrawer.noItems' | translate }}</td>
                 </tr>
               }
             </tbody>
           </table>
-          @if (itemsTotal > 0) {
-            <p class="items-total">{{ 'spareParts.disbursementDrawer.total' | translate }} <span class="mono">{{ itemsTotal | number : '1.2-2' }}</span></p>
-          }
         </section>
-
-        @if (request.notes) {
-          <section class="profile-section">
-            <h3>{{ 'common.notes' | translate }}</h3>
-            <p class="notes-text">{{ request.notes }}</p>
-          </section>
-        }
 
         <section class="profile-section">
           <h3>{{ 'spareParts.disbursementDrawer.statusHistory' | translate }}</h3>

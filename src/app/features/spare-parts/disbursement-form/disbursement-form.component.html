@@ -3,7 +3,14 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>{{ 'spareParts.disbursementForm.title' | translate }}</h2>
+      <h2>
+        {{
+          (isEditMode
+            ? 'spareParts.disbursementForm.editTitle'
+            : 'spareParts.disbursementForm.title'
+          ) | translate
+        }}
+      </h2>
       <button
         type="button"
         class="icon-btn"
@@ -39,6 +46,16 @@
           <label class="field">
             <span>{{ 'spareParts.requestNumber' | translate }}</span>
             <input type="text" formControlName="request_number" placeholder="Auto" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'spareParts.repairDepartment' | translate }}</span>
+            <app-searchable-select
+              formControlName="maintenance_workshop_id"
+              [options]="workshopOptions"
+              [placeholder]="'spareParts.disbursementForm.selectWorkshopPlaceholder' | translate"
+              [clearable]="true"
+            ></app-searchable-select>
           </label>
 
           <label class="field field--wide">
@@ -150,6 +167,15 @@
                 {{ 'spareParts.hasSample' | translate }}
               </label>
 
+              <label class="field last-ordered-field">
+                <span>{{ 'spareParts.disbursementForm.lastOrderedDate' | translate }}</span>
+                <input
+                  type="date"
+                  [(ngModel)]="row.last_ordered_date"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+              </label>
+
               @if (row.loadingNote) {
                 <div class="item-note">{{ 'shared.dataTable.loading' | translate }}</div>
               } @else if (row.lastDisbursementNote) {
@@ -169,8 +195,12 @@
           </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
             {{
-              (saving ? 'common.saving' : 'spareParts.disbursementForm.createRequestButton')
-                | translate
+              (saving
+                ? 'common.saving'
+                : isEditMode
+                  ? 'common.saveChanges'
+                  : 'spareParts.disbursementForm.createRequestButton'
+              ) | translate
             }}
           </button>
         </footer>

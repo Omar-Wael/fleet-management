@@ -25,6 +25,16 @@
         </label>
 
         <label class="field">
+          <span>{{ 'spareParts.classification' | translate }}</span>
+          <app-searchable-select
+            formControlName="classification"
+            [options]="classificationOptions"
+            [placeholder]="'spareParts.partForm.selectClassification' | translate"
+            [clearable]="true"
+          ></app-searchable-select>
+        </label>
+
+        <label class="field">
           <span>{{ 'spareParts.catalog.colUnit' | translate }}</span>
           <input type="text" formControlName="unit" [placeholder]="'spareParts.partForm.unitPlaceholder' | translate" />
         </label>
@@ -43,7 +53,54 @@
           <span>{{ 'spareParts.partForm.fieldReorderThreshold' | translate }}</span>
           <input type="number" formControlName="reorder_threshold" />
         </label>
+
+        <label class="field field--wide sample-check">
+          <input type="checkbox" formControlName="is_general" />
+          <span>{{ 'spareParts.partForm.isGeneral' | translate }}</span>
+        </label>
       </div>
+
+      <section class="links-section">
+        <h3>{{ 'spareParts.partForm.compatibilitySection' | translate }}</h3>
+        <p class="hint">{{ 'spareParts.partForm.compatibilityHint' | translate }}</p>
+
+        <label class="field field--wide">
+          <span>{{ 'spareParts.partForm.linkedVehicles' | translate }}</span>
+          <app-searchable-select
+            formControlName="vehicle_ids"
+            [multiple]="true"
+            [options]="vehicleOptions"
+            [placeholder]="'spareParts.partForm.selectVehicles' | translate"
+          ></app-searchable-select>
+        </label>
+
+        <label class="field field--wide">
+          <span>{{ 'spareParts.partForm.linkedEngines' | translate }}</span>
+          <app-searchable-select
+            formControlName="engine_ids"
+            [multiple]="true"
+            [options]="engineOptions"
+            [placeholder]="'spareParts.partForm.selectEngines' | translate"
+          ></app-searchable-select>
+        </label>
+      </section>
+
+      <section class="links-section">
+        <h3>{{ 'spareParts.partForm.vendorsSection' | translate }}</h3>
+        <label class="field field--wide">
+          <span>{{ 'spareParts.partForm.linkedVendors' | translate }}</span>
+          <app-searchable-select
+            formControlName="vendor_ids"
+            [multiple]="true"
+            [options]="vendorOptions"
+            [placeholder]="'spareParts.partForm.selectVendors' | translate"
+          ></app-searchable-select>
+        </label>
+      </section>
+
+      @if (linksLoading) {
+        <div class="state-message">{{ 'common.loading' | translate }}</div>
+      }
 
       @if (saveError) {
         <div class="state-message state-message--error">{{ saveError }}</div>
@@ -51,7 +108,7 @@
 
       <footer class="slide-over-footer">
         <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
-        <button type="submit" class="btn btn--primary" [disabled]="saving">
+        <button type="submit" class="btn btn--primary" [disabled]="saving || linksLoading">
           {{ (saving ? 'common.saving' : (isEditMode ? 'common.saveChanges' : 'spareParts.partForm.addSubmit')) | translate }}
         </button>
       </footer>

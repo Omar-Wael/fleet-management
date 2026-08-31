@@ -190,6 +190,17 @@ export interface SparePart {
   reorder_threshold: number | null;
   created_at: string;
   classification?: PartClassification | string | null;
+  /** When true, part is available for any vehicle in disbursement requests. */
+  is_general?: boolean;
+}
+
+/** Catalogue master-data link: which vendors supply a spare part. */
+export interface SparePartVendor {
+  spare_part_id: string;
+  vendor_id: string;
+  is_preferred?: boolean;
+  notes?: string | null;
+  created_at?: string;
 }
 
 export interface Vehicle {
@@ -296,6 +307,8 @@ export interface StockDisbursementRequest {
   request_number?: string | null;
   work_order_id: string | null;
   vehicle_id: string;
+  /** Repair department (maintenance workshop) this request is routed to. */
+  maintenance_workshop_id?: string | null;
   /** @deprecated Prefer stock_disbursement_request_technicians */
   requested_by_technician_id?: string | null;
   status: DisbursementStatus;
@@ -313,6 +326,8 @@ export interface StockDisbursementItem {
   unit_cost_at_issue: number | null;
   condition?: PartCondition | null;
   has_sample?: boolean | null;
+  /** Last ordered date for this part on this vehicle (auto or user override). */
+  last_ordered_date?: string | null;
 }
 
 export interface StockDisbursementRequestTechnician {

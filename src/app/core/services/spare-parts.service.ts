@@ -7,6 +7,7 @@ import { DataTableQuery } from '../../shared/components/data-table/data-table.mo
 import {
   ExternalWorkshop,
   SparePart,
+  SparePartVendor,
   VLastPartDisbursement,
   VPartPriceHistoryLast10,
   VPartPriceTrend,
@@ -92,6 +93,14 @@ export class SparePartsService {
     );
   }
 
+  /**
+   * Deletes a spare part. May fail if referenced by disbursement items or
+   * price history without ON DELETE CASCADE on those FKs.
+   */
+  delete(partId: string): Observable<null> {
+    return fromSupabase<null>(this.client.from('spare_parts').delete().eq('id', partId));
+  }
+
   bulkUpsert(rows: Partial<SparePart>[]): Observable<SparePart[]> {
     return fromSupabase<SparePart[]>(
       this.client.from('spare_parts').upsert(rows, { onConflict: 'part_code' }).select()
@@ -103,11 +112,12 @@ export class SparePartsService {
   // -------------------------------------------------------------
 
   /**
-   * Returns unique spare parts compatible with the given vehicle via:
+   * Returns unique spare parts available for the given vehicle:
+   * 0. is_general = true (always available)
    * 1. engine_compatible_parts (current engine)
    * 2. vehicle_compatible_parts (direct)
    * 3. vehicle_type_compatible_parts (type-level)
-   * Falls back to empty list – UI should still allow manual override.
+   * Falls back to general-only if no links; UI may still allow manual override.
    */
   getPartsCompatibleWithVehicle(vehicleId: string): Observable<SparePart[]> {
     return fromSupabase<{
@@ -122,6 +132,13 @@ export class SparePartsService {
     ).pipe(
       switchMap((v) => {
         const requests: Observable<SparePart[]>[] = [];
+
+        // 0. General parts (available for every vehicle)
+        requests.push(
+          fromSupabase<SparePart[]>(
+            this.client.from('spare_parts').select('*').eq('is_general', true)
+          )
+        );
 
         // 1. Engine compatible
         if (v.current_engine_id) {
@@ -156,8 +173,6 @@ export class SparePartsService {
             ).pipe(map((rows) => rows.map((r) => r.spare_parts).filter(Boolean)))
           );
         }
-
-        if (!requests.length) return of([]);
 
         return forkJoin(requests).pipe(
           map((arrays) => {
@@ -226,6 +241,92 @@ export class SparePartsService {
         return from(
           this.client.from('vehicle_type_compatible_parts').insert(rows) as any
         ).pipe(map(() => null));
+      })
+    );
+  }
+
+  /** Engine IDs linked to a spare part (for catalogue form). */
+  getEngineIdsForPart(sparePartId: string): Observable<string[]> {
+    return fromSupabase<{ engine_id: string }[]>(
+      this.client.from('engine_compatible_parts').select('engine_id').eq('spare_part_id', sparePartId)
+    ).pipe(map((rows) => rows.map((r) => r.engine_id)));
+  }
+
+  /** Vehicle IDs linked to a spare part (for catalogue form). */
+  getVehicleIdsForPart(sparePartId: string): Observable<string[]> {
+    return fromSupabase<{ vehicle_id: string }[]>(
+      this.client.from('vehicle_compatible_parts').select('vehicle_id').eq('spare_part_id', sparePartId)
+    ).pipe(map((rows) => rows.map((r) => r.vehicle_id)));
+  }
+
+  /**
+   * Replace all engine links for a single spare part.
+   * Deletes existing rows for this part, then inserts the given engine IDs.
+   */
+  setPartEngineLinks(sparePartId: string, engineIds: string[]): Observable<null> {
+    return from(
+      this.client.from('engine_compatible_parts').delete().eq('spare_part_id', sparePartId) as any
+    ).pipe(
+      switchMap(() => {
+        if (!engineIds.length) return of(null);
+        const rows = engineIds.map((engine_id) => ({ engine_id, spare_part_id: sparePartId }));
+        return from(this.client.from('engine_compatible_parts').insert(rows) as any).pipe(
+          map(() => null)
+        );
+      })
+    );
+  }
+
+  /**
+   * Replace all vehicle links for a single spare part.
+   */
+  setPartVehicleLinks(sparePartId: string, vehicleIds: string[]): Observable<null> {
+    return from(
+      this.client.from('vehicle_compatible_parts').delete().eq('spare_part_id', sparePartId) as any
+    ).pipe(
+      switchMap(() => {
+        if (!vehicleIds.length) return of(null);
+        const rows = vehicleIds.map((vehicle_id) => ({ vehicle_id, spare_part_id: sparePartId }));
+        return from(this.client.from('vehicle_compatible_parts').insert(rows) as any).pipe(
+          map(() => null)
+        );
+      })
+    );
+  }
+
+  // -------------------------------------------------------------
+  // Part ↔ vendor (catalogue master data)
+  // -------------------------------------------------------------
+
+  listVendorsForPart(sparePartId: string): Observable<SparePartVendor[]> {
+    return fromSupabase<SparePartVendor[]>(
+      this.client.from('spare_part_vendors').select('*').eq('spare_part_id', sparePartId)
+    );
+  }
+
+  /**
+   * Replace all vendor links for a spare part.
+   * @param vendorIds ordered list; first can be preferred if markFirstPreferred is true
+   */
+  setPartVendors(
+    sparePartId: string,
+    vendorIds: string[],
+    opts?: { preferredVendorId?: string | null }
+  ): Observable<null> {
+    return from(
+      this.client.from('spare_part_vendors').delete().eq('spare_part_id', sparePartId) as any
+    ).pipe(
+      switchMap(() => {
+        if (!vendorIds.length) return of(null);
+        const preferred = opts?.preferredVendorId ?? null;
+        const rows = vendorIds.map((vendor_id) => ({
+          spare_part_id: sparePartId,
+          vendor_id,
+          is_preferred: preferred ? vendor_id === preferred : false,
+        }));
+        return from(this.client.from('spare_part_vendors').insert(rows) as any).pipe(
+          map(() => null)
+        );
       })
     );
   }

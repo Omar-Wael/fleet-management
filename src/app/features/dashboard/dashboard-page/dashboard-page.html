@@ -50,7 +50,7 @@
         <span class="stat-value">{{ overview.counts.vehicles }}</span>
         <span class="stat-label">{{ 'dashboard.statVehicles' | translate }}</span>
         <span class="stat-hint"
-          >{{ overview.counts.vehiclesActive }}
+          ><b>{{ overview.counts.vehiclesActive }}</b>
           {{ 'dashboard.vehiclesActiveUnit' | translate }}</span
         >
       </a>
@@ -58,14 +58,15 @@
         <span class="stat-value">{{ overview.counts.techniciansActive }}</span>
         <span class="stat-label">{{ 'dashboard.statTechnicians' | translate }}</span>
         <span class="stat-hint"
-          >{{ overview.counts.technicians }} {{ 'dashboard.statTotal' | translate }}</span
+          ><b>{{ overview.counts.technicians }}</b> {{ 'dashboard.statTotal' | translate }}</span
         >
       </a>
       <a routerLink="/spare-parts/disbursements" class="stat-card stat-card--peach">
         <span class="stat-value">{{ overview.counts.disbursementRequests }}</span>
         <span class="stat-label">{{ 'dashboard.statPartsRequests' | translate }}</span>
         <span class="stat-hint"
-          >{{ overview.counts.disbursementRequested }} {{ 'dashboard.statTotal' | translate }}</span
+          ><b>{{ overview.counts.disbursementRequested }}</b>
+          {{ 'dashboard.statTotal' | translate }}</span
         >
       </a>
       <a routerLink="/spare-parts/catalog" class="stat-card stat-card--lavender">
@@ -80,7 +81,7 @@
         <span class="stat-value">{{ overview.counts.overhaulsOpen }}</span>
         <span class="stat-label">{{ 'dashboard.overhaulsInProgressLabel' | translate }}</span>
         <span class="stat-hint"
-          >{{ overview.counts.overhaulsTotal }} {{ 'dashboard.statTotal' | translate }}</span
+          ><b>{{ overview.counts.overhaulsTotal }}</b> {{ 'dashboard.statTotal' | translate }}</span
         >
       </a>
       <a routerLink="/settings/departments" class="stat-card">

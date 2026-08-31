@@ -283,3 +283,15 @@
   font-size: 0.75rem;
   color: var(--fleet-ink-muted, #6b7280);
 }
+
+.last-ordered-field {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+
+  input[type='date'] {
+    max-width: 12rem;
+  }
+}

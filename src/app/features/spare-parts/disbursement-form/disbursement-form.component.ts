@@ -1,4 +1,3 @@
-import { SlicePipe } from '@angular/common';
 import {
   Component,
   EventEmitter,
@@ -20,12 +19,17 @@ import {
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
-import { DisbursementService } from '../../../core/services/disbursement.service';
+import {
+  DisbursementService,
+  DisbursementGridRow,
+} from '../../../core/services/disbursement.service';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { VehiclesService } from '../../../core/services/vehicles.service';
 import { TechniciansService } from '../../../core/services/technicians.service';
 import { MaintenanceService } from '../../../core/services/maintenance.service';
+import { LookupsService } from '../../../core/services/lookups.service';
 import {
+  MaintenanceWorkshop,
   SparePart,
   StockDisbursementRequest,
   Technician,
@@ -44,6 +48,7 @@ interface DraftItem {
   qty: number;
   condition: 'new' | 'used' | 'imported';
   has_sample: boolean;
+  last_ordered_date: string | null;
   lastDisbursementNote: string | null;
   loadingNote: boolean;
 }
@@ -54,7 +59,6 @@ interface DraftItem {
   imports: [
     ReactiveFormsModule,
     FormsModule,
-    // SlicePipe,
     TranslatePipe,
     SharedSearchableSelectComponent,
   ],
@@ -64,6 +68,8 @@ interface DraftItem {
 })
 export class DisbursementFormComponent implements OnInit, OnChanges {
   @Input() open = false;
+  /** When set, form opens in edit mode for this request (status should be 'requested'). */
+  @Input() editRequest: DisbursementGridRow | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<StockDisbursementRequest>();
@@ -74,12 +80,14 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
   vehicles: VehicleWithLookups[] = [];
   technicians: Technician[] = [];
   spareParts: SparePart[] = [];
+  workshops: MaintenanceWorkshop[] = [];
   workOrders: WorkOrder[] = [];
   compatiblePartIds = new Set<string>();
 
   vehicleOptions: SearchableSelectOption[] = [];
   technicianOptions: SearchableSelectOption[] = [];
   workOrderOptions: SearchableSelectOption[] = [];
+  workshopOptions: SearchableSelectOption[] = [];
   partOptions: SearchableSelectOption[] = [];
 
   lookupsLoading = true;
@@ -96,16 +104,21 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     private vehiclesService: VehiclesService,
     private techniciansService: TechniciansService,
     private maintenanceService: MaintenanceService,
+    private lookupsService: LookupsService,
     readonly i18n: TranslationService,
   ) {
     this.form = this.fb.group({
       request_number: [''],
       vehicle_id: ['', Validators.required],
+      maintenance_workshop_id: [null as string | null],
       technician_ids: [[] as string[]],
-      requested_by_technician_id: [''],
       work_order_id: [null as string | null],
       notes: [null as string | null],
     });
+  }
+
+  get isEditMode(): boolean {
+    return !!this.editRequest?.id;
   }
 
   ngOnInit(): void {
@@ -114,7 +127,15 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['open'] && this.open) {
-      this.resetForm();
+      if (this.editRequest) {
+        this.patchFromEditRequest();
+      } else {
+        this.resetForm();
+      }
+      this.cdr.markForCheck();
+    }
+    if (changes['editRequest'] && this.open && this.editRequest) {
+      this.patchFromEditRequest();
       this.cdr.markForCheck();
     }
   }
@@ -124,8 +145,8 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     this.form.reset({
       request_number: '',
       vehicle_id: '',
+      maintenance_workshop_id: null,
       technician_ids: [],
-      requested_by_technician_id: '',
       work_order_id: null,
       notes: null,
     });
@@ -144,9 +165,46 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
       qty: 1,
       condition: 'new',
       has_sample: false,
+      last_ordered_date: null,
       lastDisbursementNote: null,
       loadingNote: false,
     };
+  }
+
+  private patchFromEditRequest(): void {
+    const r = this.editRequest!;
+    this.saveError = null;
+    const techIds =
+      r.stock_disbursement_request_technicians?.map((t) => t.technician_id) ??
+      (r.requested_by_technician_id ? [r.requested_by_technician_id] : []);
+
+    this.form.reset({
+      request_number: r.request_number ?? '',
+      vehicle_id: r.vehicle_id,
+      maintenance_workshop_id: r.maintenance_workshop_id ?? null,
+      technician_ids: techIds,
+      work_order_id: r.work_order_id,
+      notes: r.notes,
+    });
+
+    this.items = (r.stock_disbursement_items ?? []).map((item) => ({
+      spare_part_id: item.spare_part_id,
+      free_text_name: '',
+      mode: 'catalog' as const,
+      qty: item.qty,
+      condition: (item.condition as DraftItem['condition']) || 'new',
+      has_sample: !!item.has_sample,
+      last_ordered_date: item.last_ordered_date ?? null,
+      lastDisbursementNote: null,
+      loadingNote: false,
+    }));
+    if (!this.items.length) this.items = [this.emptyItem()];
+
+    if (r.vehicle_id) {
+      this.loadWorkOrdersAndParts(r.vehicle_id, false);
+    } else {
+      this.rebuildPartOptions();
+    }
   }
 
   private loadLookups(): void {
@@ -158,11 +216,13 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
       vehicles: this.vehiclesService.list(),
       technicians: this.techniciansService.list(),
       spareParts: this.sparePartsService.list(),
+      workshops: this.lookupsService.listMaintenanceWorkshops(),
     }).subscribe({
-      next: ({ vehicles, technicians, spareParts }) => {
+      next: ({ vehicles, technicians, spareParts, workshops }) => {
         this.vehicles = vehicles;
         this.technicians = technicians;
         this.spareParts = spareParts;
+        this.workshops = workshops;
         this.vehicleOptions = vehicles.map((v) => ({
           value: v.id,
           label: v.plate_number,
@@ -172,8 +232,15 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
           value: t.id,
           label: t.full_name,
         }));
+        this.workshopOptions = workshops.map((w) => ({
+          value: w.id,
+          label: w.name_ar || w.name_en || w.id,
+        }));
         this.rebuildPartOptions();
         this.lookupsLoading = false;
+        if (this.open && this.editRequest) {
+          this.patchFromEditRequest();
+        }
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -188,7 +255,6 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
   }
 
   private rebuildPartOptions(): void {
-    // Show only compatible parts when vehicle selected and matches exist
     const source =
       this.compatiblePartIds.size > 0
         ? this.spareParts.filter((p) => this.compatiblePartIds.has(p.id))
@@ -210,9 +276,18 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     this.workOrderOptions = [];
     this.compatiblePartIds = new Set();
     this.rebuildPartOptions();
-    this.cdr.markForCheck();
-    if (!vehicleId) return;
 
+    if (vehicleId) {
+      const v = this.vehicles.find((x) => x.id === vehicleId);
+      if (v?.maintenance_workshop_id && !this.form.value.maintenance_workshop_id) {
+        this.form.patchValue({ maintenance_workshop_id: v.maintenance_workshop_id });
+      }
+      this.loadWorkOrdersAndParts(vehicleId, true);
+    }
+    this.cdr.markForCheck();
+  }
+
+  private loadWorkOrdersAndParts(vehicleId: string, clearItemsNotes: boolean): void {
     this.maintenanceService.list(vehicleId).subscribe({
       next: (orders) => {
         this.workOrders = orders.filter((o) => !o.closed_at);
@@ -232,10 +307,13 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
         this.cdr.markForCheck();
       },
     });
-  }
 
-  isCompatible(partId: string): boolean {
-    return this.compatiblePartIds.has(partId);
+    if (clearItemsNotes) {
+      for (const row of this.items) {
+        row.lastDisbursementNote = null;
+        row.last_ordered_date = null;
+      }
+    }
   }
 
   addItemRow(): void {
@@ -256,6 +334,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     } else {
       row.spare_part_id = '';
       row.lastDisbursementNote = null;
+      row.last_ordered_date = null;
     }
     this.cdr.markForCheck();
   }
@@ -263,6 +342,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
   onItemPartChange(row: DraftItem, partId: string | null): void {
     row.spare_part_id = partId || '';
     row.lastDisbursementNote = null;
+    row.last_ordered_date = null;
     const vehicleId = this.form.value.vehicle_id;
     if (!row.spare_part_id || !vehicleId) {
       this.cdr.markForCheck();
@@ -274,13 +354,12 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     this.sparePartsService.getLastDisbursement(row.spare_part_id, vehicleId).subscribe({
       next: (last) => {
         row.loadingNote = false;
-        row.lastDisbursementNote = last
-          ? `${this.i18n.t('spareParts.disbursementForm.lastIssuedLabel')} ${new Date(
-              last.requested_at,
-            ).toLocaleDateString()} — ${last.odometer_at_lookup_time ?? '—'} ${this.i18n.t(
-              'spareParts.disbursementForm.kmUnit',
-            )}`
-          : null;
+        if (last) {
+          const d = new Date(last.requested_at);
+          const iso = d.toISOString().slice(0, 10);
+          row.last_ordered_date = iso;
+          row.lastDisbursementNote = `${this.i18n.t('spareParts.disbursementForm.lastIssuedLabel')} ${d.toLocaleDateString()} — ${last.odometer_at_lookup_time ?? '—'} ${this.i18n.t('spareParts.disbursementForm.kmUnit')}`;
+        }
         this.cdr.markForCheck();
       },
       error: () => {
@@ -311,17 +390,82 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     this.saving = true;
     this.saveError = null;
     this.cdr.markForCheck();
-    const { vehicle_id, requested_by_technician_id, work_order_id, notes } = this.form.value;
 
-    this.disbursementService
-      .create({
-        vehicle_id,
-        requested_by_technician_id,
-        work_order_id: work_order_id || null,
-        notes,
-      })
+    const {
+      vehicle_id,
+      maintenance_workshop_id,
+      work_order_id,
+      notes,
+      request_number,
+      technician_ids,
+    } = this.form.value;
+
+    const resolveItems$ = forkJoin(
+      this.validItems.map((item) => {
+        if (item.mode === 'catalog' && item.spare_part_id) {
+          return of({
+            spare_part_id: item.spare_part_id,
+            qty: item.qty,
+            condition: item.condition,
+            has_sample: item.has_sample,
+            last_ordered_date: item.last_ordered_date || null,
+          });
+        }
+        const name = item.free_text_name.trim();
+        return this.sparePartsService
+          .create({
+            name_ar: name,
+            name_en: name,
+            current_stock_qty: 0,
+            is_general: true,
+          })
+          .pipe(
+            switchMap((part) =>
+              of({
+                spare_part_id: part.id,
+                qty: item.qty,
+                condition: item.condition,
+                has_sample: item.has_sample,
+                last_ordered_date: item.last_ordered_date || null,
+              }),
+            ),
+          );
+      }),
+    );
+
+    resolveItems$
+      .pipe(
+        switchMap((items) => {
+          const requestPayload = {
+            vehicle_id,
+            maintenance_workshop_id: maintenance_workshop_id || null,
+            work_order_id: work_order_id || null,
+            notes,
+            request_number: request_number || null,
+          };
+          const techIds: string[] = technician_ids || [];
+
+          if (this.isEditMode) {
+            return this.disbursementService.updateWithItems(this.editRequest!.id, {
+              request: requestPayload,
+              technicianIds: techIds,
+              items,
+            });
+          }
+          return this.disbursementService.createWithItems({
+            request: { ...requestPayload, status: 'requested' },
+            technicianIds: techIds,
+            items,
+          });
+        }),
+      )
       .subscribe({
-        next: (request) => this.saveItems(request),
+        next: (request) => {
+          this.saving = false;
+          this.cdr.markForCheck();
+          this.saved.emit(request);
+          this.close();
+        },
         error: (err) => {
           this.saving = false;
           this.saveError =
@@ -331,54 +475,6 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
           this.cdr.markForCheck();
         },
       });
-  }
-
-  private saveItems(request: StockDisbursementRequest): void {
-    const resolvePartId$ = (item: DraftItem) => {
-      if (item.mode === 'catalog' && item.spare_part_id) {
-        return of(item.spare_part_id);
-      }
-      // Create a catalogue entry on the fly for free-text parts so FK stays valid.
-      const name = item.free_text_name.trim();
-      return this.sparePartsService
-        .create({
-          name_ar: name,
-          name_en: name,
-          current_stock_qty: 0,
-          unit: null,
-          unit_cost: null,
-          part_code: null,
-          reorder_threshold: null,
-        })
-        .pipe(switchMap((part) => of(part.id)));
-    };
-
-    const calls = this.validItems.map((item) =>
-      resolvePartId$(item).pipe(
-        switchMap((spare_part_id) =>
-          this.disbursementService.addItem({
-            disbursement_request_id: request.id,
-            spare_part_id,
-            qty: item.qty,
-          }),
-        ),
-      ),
-    );
-
-    forkJoin(calls).subscribe({
-      next: () => {
-        this.saving = false;
-        this.cdr.markForCheck();
-        this.saved.emit(request);
-        this.close();
-      },
-      error: (err) => {
-        this.saving = false;
-        const prefix = this.i18n.t('spareParts.disbursementForm.itemsFailedPrefix');
-        this.saveError = err instanceof Error ? `${prefix}: ${err.message}` : `${prefix}.`;
-        this.cdr.markForCheck();
-      },
-    });
   }
 
   close(): void {
