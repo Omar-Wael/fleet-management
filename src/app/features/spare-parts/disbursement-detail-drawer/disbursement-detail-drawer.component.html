@@ -58,6 +58,8 @@
             <dd>{{ request.vehicles?.operating_departments?.name_ar || request.vehicles?.operating_departments?.name_en || '—' }}</dd>
             <dt>{{ 'spareParts.disbursementDrawer.vehicleWorkshop' | translate }}</dt>
             <dd>{{ request.vehicles?.maintenance_workshops?.name_ar || request.vehicles?.maintenance_workshops?.name_en || '—' }}</dd>
+            <dt>{{ 'engines.fuelType' | translate }}</dt>
+            <dd>{{ engine?.fuel_type || '—' }}</dd>
             <dt>{{ 'spareParts.disbursementDrawer.odometer' | translate }}</dt>
             <dd>{{ request.vehicles?.odometer_km != null ? (request.vehicles!.odometer_km | number : '1.0-0') : '—' }}</dd>
           </dl>

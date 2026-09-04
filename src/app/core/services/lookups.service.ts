@@ -6,6 +6,7 @@ import {
   GarageLocation,
   MaintenanceWorkshop,
   OperatingDepartment,
+  Vehicle,
   VehicleType,
 } from '../models/fleet.models';
 
@@ -135,5 +136,9 @@ export class LookupsService {
     return fromSupabase<GarageLocation>(
       this.client.from('garage_locations').update(changes).eq('id', id).select().single(),
     );
+  }
+
+  listVehicles(): Observable<Vehicle[]> {
+    return fromSupabase<Vehicle[]>(this.client.from('vehicles').select('*'));
   }
 }

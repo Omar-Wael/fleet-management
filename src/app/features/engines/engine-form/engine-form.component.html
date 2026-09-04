@@ -33,7 +33,11 @@
 
           <label class="field">
             <span>{{ 'engines.fuelType' | translate }}</span>
-            <input type="text" formControlName="fuel_type" [placeholder]="'engines.fuelTypePlaceholder' | translate" />
+            <input
+              type="text"
+              formControlName="fuel_type"
+              [placeholder]="'engines.fuelTypePlaceholder' | translate"
+            />
           </label>
 
           <label class="field">
@@ -74,11 +78,39 @@
         </section>
 
         <section class="compat-section">
+          <h3>{{ 'engines.compatibleVehicleMakes' | translate }}</h3>
+          <!-- <div class="make-search">
+            <input
+              type="text"
+              [(ngModel)]="vehicleMakeSearchTerm"
+              [placeholder]="'engines.searchMakePlaceholder' | translate"
+            />
+          </div> -->
+          <div class="chip-grid">
+            @for (make of filteredVehicleMakes; track make) {
+              <label class="chip" [class.chip--active]="selectedVehicleMakes.has(make)">
+                <input
+                  type="checkbox"
+                  [checked]="selectedVehicleMakes.has(make)"
+                  (change)="toggleVehicleMake(make)"
+                />
+                {{ make }}
+              </label>
+            }
+          </div>
+          <div class="hint">{{ 'engines.vehicleMakeCompatHint' | translate }}</div>
+        </section>
+
+        <section class="compat-section">
           <h3>{{ 'engines.compatibleSpareParts' | translate }}</h3>
           <div class="chip-grid">
             @for (p of spareParts; track p.id) {
               <label class="chip" [class.chip--active]="selectedPartIds.has(p.id)">
-                <input type="checkbox" [checked]="selectedPartIds.has(p.id)" (change)="togglePart(p.id)" />
+                <input
+                  type="checkbox"
+                  [checked]="selectedPartIds.has(p.id)"
+                  (change)="togglePart(p.id)"
+                />
                 {{ p.name_en || p.name_ar }}
               </label>
             }
@@ -90,9 +122,14 @@
         }
 
         <footer class="slide-over-footer">
-          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ (saving ? 'common.saving' : (isEditMode ? 'common.saveChanges' : 'engines.addButton')) | translate }}
+            {{
+              (saving ? 'common.saving' : isEditMode ? 'common.saveChanges' : 'engines.addButton')
+                | translate
+            }}
           </button>
         </footer>
       </form>

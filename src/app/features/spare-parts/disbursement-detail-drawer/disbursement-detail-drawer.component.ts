@@ -21,6 +21,7 @@ import {
 } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { EnginesService } from '../../../core/services/engines.service';
 
 /**
  * Lifecycle: available_in_stock -> issued
@@ -92,9 +93,7 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
   technicianNames(): string {
     const rows = this.request?.stock_disbursement_request_technicians;
     if (rows?.length) {
-      const names = rows
-        .map((t) => t.technicians?.full_name)
-        .filter((n): n is string => !!n);
+      const names = rows.map((t) => t.technicians?.full_name).filter((n): n is string => !!n);
       if (names.length) return names.join(', ');
     }
     return this.request?.technicians?.full_name || '—';
@@ -128,9 +127,11 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
   advanceError: string | null = null;
   receiverName = '';
 
+  engine: any | null = null;
+
   constructor(
     private cdr: ChangeDetectorRef,
-
+    private enginesService: EnginesService,
     private disbursementService: DisbursementService,
     readonly i18n: TranslationService,
   ) {}
@@ -168,6 +169,20 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
         this.cdr.markForCheck();
       },
     });
+
+    if (this.request?.vehicles?.current_engine_id) {
+      this.enginesService.getById(this.request.vehicles.current_engine_id).subscribe({
+        next: (engine) => {
+          this.engine = engine;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load engine details:', err);
+          this.engine = null;
+          this.cdr.markForCheck();
+        },
+      });
+    }
   }
 
   get nextStatuses(): DisbursementStatus[] {

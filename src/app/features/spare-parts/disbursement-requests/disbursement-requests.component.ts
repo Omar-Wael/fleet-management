@@ -120,6 +120,7 @@ export class DisbursementRequestsComponent implements OnInit {
   workshops: MaintenanceWorkshop[] = [];
   vehicles: Vehicle[] = [];
   technicians: Technician[] = [];
+  vehiclesTypes: { id: string; name_ar: string | null; name_en: string | null }[] = [];
 
   // private departmentIdByName = new Map<string, string>();
   // private workshopIdByName = new Map<string, string>();
@@ -149,12 +150,14 @@ export class DisbursementRequestsComponent implements OnInit {
       departments: this.lookupsService.listOperatingDepartments(),
       workshops: this.lookupsService.listMaintenanceWorkshops(),
       engines: this.enginesService.list(),
+      vehicleTypes: this.lookupsService.listVehicleTypes(),
     }).subscribe({
-      next: ({ technicians, vehicles, departments, workshops, engines }) => {
+      next: ({ technicians, vehicles, departments, workshops, engines, vehicleTypes }) => {
         this.technicians = technicians;
         this.vehicles = vehicles;
         this.departments = departments;
         this.workshops = workshops;
+        this.vehiclesTypes = vehicleTypes;
 
         // this.departmentIdByName = new Map(
         //   departments.map((d) => [(d.name_en || d.name_ar).trim().toLowerCase(), d.id]),
@@ -294,6 +297,15 @@ export class DisbursementRequestsComponent implements OnInit {
         label: this.i18n.t('spareParts.disbursement.vehicle'),
         value: this.currentQuery.filters['vehicleId'] ?? '',
         options: this.vehicles.map((v) => ({ value: v.id, label: v.plate_number || '—' })),
+      },
+      {
+        key: 'vehicleTypeId',
+        label: this.i18n.t('settings.vehicleTypes.title'),
+        value: this.currentQuery.filters['vehicleTypeId'] ?? '',
+        options: this.vehiclesTypes.map((v) => ({
+          value: v.id,
+          label: v.name_ar || v.name_en || '—',
+        })),
       },
       {
         key: 'departmentId',

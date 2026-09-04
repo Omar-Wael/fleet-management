@@ -145,8 +145,13 @@ export class EnginesListComponent implements OnInit {
         header: this.i18n.t('common.actions'),
         align: 'end',
         actions: (e) => [
-          { label: this.i18n.t('common.view'), icon: '👁️️',
-            variant: 'info', display: 'icon', onClick: (e) => this.openProfile(e) },
+          {
+            label: this.i18n.t('common.view'),
+            icon: '👁️️',
+            variant: 'info',
+            display: 'icon',
+            onClick: (e) => this.openProfile(e),
+          },
           {
             label: this.i18n.t('common.edit'),
             icon: '✏️',
@@ -204,10 +209,23 @@ export class EnginesListComponent implements OnInit {
   }
 
   compatibleTypeNames(engine: EngineGridRow): string {
-    const names = (engine.engine_compatible_vehicle_types ?? []).map(
-      (link) => link.vehicle_types.name_en || link.vehicle_types.name_ar,
-    );
-    return names.length ? names.join(', ') : '—';
+    // Get vehicle type names
+    const typeNames = (engine.engine_compatible_vehicle_types ?? [])
+      .map((link) => link.vehicle_types.name_en || link.vehicle_types.name_ar)
+      .filter((n): n is string => !!n);
+
+    // Get vehicle makes and deduplicate them
+    const makeNames = (engine.engine_compatible_vehicles ?? [])
+      .map((link) => link.vehicles.make || '')
+      .filter((make): make is string => !!make);
+
+    // Deduplicate makes using Set
+    const uniqueMakes = Array.from(new Set(makeNames));
+
+    // Combine and deduplicate all names
+    const allNames = Array.from(new Set([...typeNames, ...uniqueMakes]));
+
+    return allNames.length ? allNames.join(', ') : '—';
   }
 
   // -------------------------------------------------------------
