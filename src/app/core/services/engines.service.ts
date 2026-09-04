@@ -9,12 +9,17 @@ import { Engine, EngineSwap, SparePart, VehicleType } from '../models/fleet.mode
 /** Row shape for the "Engines" catalog grid. */
 export interface EngineGridRow extends Engine {
   engine_compatible_vehicle_types?: { vehicle_types: VehicleType }[];
+  engine_compatible_vehicles?: {
+    vehicles: { id: string; plate_number: string; make?: string | null; model?: string | null };
+  }[];
   vehicles?: { id: string; plate_number: string }[]; // vehicles currently fitted with this engine
 }
 
+// FIX: Added comma between the two joined tables
 const ENGINE_GRID_SELECT = `
   *,
-  engine_compatible_vehicle_types (vehicle_types (*))
+  engine_compatible_vehicle_types (vehicle_types (*)),
+  engine_compatible_vehicles (vehicles (id, plate_number, make, model))
 `;
 
 @Injectable({ providedIn: 'root' })
@@ -210,6 +215,149 @@ export class EnginesService {
   }): Observable<EngineSwap> {
     return fromSupabase<EngineSwap>(
       this.client.from('engine_swaps').insert(swap).select().single(),
+    );
+  }
+
+  // -------------------------------------------------------------
+  // Compatibility (vehicles by make/model)
+  // -------------------------------------------------------------
+
+  /**
+   * Get all vehicles compatible with this engine
+   */
+  getCompatibleVehicles(
+    engineId: string,
+  ): Observable<
+    { id: string; plate_number: string; make?: string | null; model?: string | null }[]
+  > {
+    return fromSupabase<
+      {
+        vehicles: { id: string; plate_number: string; make?: string | null; model?: string | null };
+      }[]
+    >(
+      this.client
+        .from('engine_compatible_vehicles')
+        .select('vehicles (id, plate_number, make, model)')
+        .eq('engine_id', engineId),
+    ).pipe(switchMap((rows) => of(rows.map((r) => r.vehicles))));
+  }
+
+  /**
+   * Get all compatible vehicle makes (distinct)
+   */
+  getCompatibleVehicleMakes(engineId: string): Observable<string[]> {
+    return this.getCompatibleVehicles(engineId).pipe(
+      switchMap((vehicles) => {
+        const makes = new Set<string>();
+        vehicles.forEach((v) => {
+          if (v.make) makes.add(v.make);
+        });
+        return of(Array.from(makes));
+      }),
+    );
+  }
+
+  /**
+   * Check if an engine is compatible with a specific vehicle
+   */
+  isCompatibleWithVehicle(engineId: string, vehicleId: string): Observable<boolean> {
+    return fromSupabase<{ count: number }>(
+      this.client
+        .from('engine_compatible_vehicles')
+        .select('*', { count: 'exact', head: true })
+        .eq('engine_id', engineId)
+        .eq('vehicle_id', vehicleId),
+    ).pipe(switchMap((result) => of(result.count > 0)));
+  }
+
+  /**
+   * Get vehicles that are compatible with this engine by make
+   * This returns all vehicles that have a make that matches the engine's compatibility
+   */
+  getVehiclesByCompatibleMakes(
+    engineId: string,
+  ): Observable<
+    { id: string; plate_number: string; make?: string | null; model?: string | null }[]
+  > {
+    return this.getCompatibleVehicles(engineId).pipe(
+      switchMap((compatibleVehicles) => {
+        const makes = new Set<string>();
+        compatibleVehicles.forEach((v) => {
+          if (v.make) makes.add(v.make);
+        });
+
+        if (makes.size === 0) return of([]);
+
+        // Get all vehicles that have a make in the compatible set
+        const makeList = Array.from(makes)
+          .map((m) => `make.eq.${m}`)
+          .join(',');
+        return fromSupabase<
+          { id: string; plate_number: string; make?: string | null; model?: string | null }[]
+        >(this.client.from('vehicles').select('id, plate_number, make, model').or(makeList));
+      }),
+    );
+  }
+
+  addCompatibleVehicle(engineId: string, vehicleId: string): Observable<void> {
+    return fromSupabase<void>(
+      this.client
+        .from('engine_compatible_vehicles')
+        .insert({ engine_id: engineId, vehicle_id: vehicleId }),
+    );
+  }
+
+  removeCompatibleVehicle(engineId: string, vehicleId: string): Observable<null> {
+    return fromSupabase<null>(
+      this.client
+        .from('engine_compatible_vehicles')
+        .delete()
+        .eq('engine_id', engineId)
+        .eq('vehicle_id', vehicleId),
+    );
+  }
+
+  /**
+   * Add compatibility by make - adds all vehicles with the given make
+   */
+  addCompatibleVehicleMake(engineId: string, make: string): Observable<{ added: number }> {
+    return fromSupabase<{ id: string }[]>(
+      this.client.from('vehicles').select('id').eq('make', make),
+    ).pipe(
+      switchMap((vehicles) => {
+        if (!vehicles.length) return of({ added: 0 });
+
+        const compatRows = vehicles.map((v) => ({
+          engine_id: engineId,
+          vehicle_id: v.id,
+        }));
+
+        return fromSupabase<void>(
+          this.client.from('engine_compatible_vehicles').insert(compatRows),
+        ).pipe(switchMap(() => of({ added: vehicles.length })));
+      }),
+    );
+  }
+
+  /**
+   * Remove compatibility by make - removes all vehicles with the given make
+   */
+  removeCompatibleVehicleMake(engineId: string, make: string): Observable<{ removed: number }> {
+    return fromSupabase<{ id: string }[]>(
+      this.client.from('vehicles').select('id').eq('make', make),
+    ).pipe(
+      switchMap((vehicles) => {
+        if (!vehicles.length) return of({ removed: 0 });
+
+        const vehicleIds = vehicles.map((v) => v.id);
+        return fromSupabase<void>(
+          this.client
+            .from('engine_compatible_vehicles')
+            .delete()
+            .eq('engine_id', engineId)
+            .in('vehicle_id', vehicleIds),
+        ).pipe(switchMap(() => of({ removed: vehicleIds.length })));
+      }),
     );
   }
 }

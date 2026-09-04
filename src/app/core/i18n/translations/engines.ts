@@ -65,7 +65,15 @@ export const ENGINES_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'No swap events recorded for this engine.',
     ar: 'لا توجد أحداث استبدال مسجلة لهذا المحرك.',
   },
-
+  'engines.compatibleVehicleMakes': { en: 'Compatible Vehicle Makes', ar: 'ماركات السيارات المتوافقة' },
+  'engines.searchMakePlaceholder': {
+    en: 'Search vehicle makes...',
+    ar: 'ابحث عن ماركات السيارات...',
+  },
+  'engines.vehicleMakeCompatHint': {
+    en: 'Select vehicle makes that this engine is compatible with (applies to all vehicles of that make)',
+    ar: 'حدد ماركات السيارات التي يتوافق معها هذا المحرك (يطبق على جميع السيارات من هذه الماركة)',
+  },
   // List page chrome / errors
   'engines.deleteConfirmPrefix': { en: 'Delete engine', ar: 'حذف المحرك' },
   'engines.deleteConfirmSuffix': { en: "This can't be undone.", ar: 'لا يمكن التراجع عن هذا الإجراء.' },
@@ -80,4 +88,5 @@ export const ENGINES_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'Engine saved, but updating compatibility failed',
     ar: 'تم حفظ المحرك، ولكن فشل تحديث بيانات التوافق',
   },
+  
 };
