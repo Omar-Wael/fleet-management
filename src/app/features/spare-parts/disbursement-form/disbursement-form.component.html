@@ -185,6 +185,15 @@
           }
         </section>
 
+        <section class="images-section">
+          <h3>{{ 'shared.images.title' | translate }}</h3>
+          <app-entity-image-upload
+            entityType="disbursement_request"
+            [entityId]="isEditMode ? editRequest!.id : pendingEntityId"
+            [editable]="true"
+          ></app-entity-image-upload>
+        </section>
+
         @if (saveError) {
           <div class="state-message state-message--error">{{ saveError }}</div>
         }

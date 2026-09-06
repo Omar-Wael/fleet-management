@@ -16,10 +16,12 @@ import { VehiclesService } from '../../../core/services/vehicles.service';
 import { LookupsService } from '../../../core/services/lookups.service';
 import { EnginesService } from '../../../core/services/engines.service';
 import {
+  Engine,
   MaintenanceWorkshop,
   OperatingDepartment,
   VAlertLicenseDue,
   VAlertMaintenanceDue,
+  Vehicle,
   VehicleType,
   VehicleWithLookups,
 } from '../../../core/models/fleet.models';
@@ -116,6 +118,7 @@ export class VehiclesListComponent implements OnInit {
   private vehicleTypeIdByName = new Map<string, string>();
   private departmentIdByName = new Map<string, string>();
   private engineIdBySerial = new Map<string, string>();
+  private engineBySerial = new Map<string, Engine>();
 
   private readonly vehiclesService = inject(VehiclesService);
   private readonly lookupsService = inject(LookupsService);
@@ -164,6 +167,9 @@ export class VehiclesListComponent implements OnInit {
         this.engineIdBySerial = new Map(
           engines.map((e) => [e.engine_serial_number.trim().toLowerCase(), e.id]),
         );
+        this.engineBySerial = new Map(
+          engines.map((e) => [e.engine_serial_number.trim().toLowerCase(), e]),
+        );
 
         this.buildFilters();
         this.cdr.markForCheck();
@@ -211,7 +217,7 @@ export class VehiclesListComponent implements OnInit {
       {
         key: 'fuel_type',
         header: this.i18n.t('vehicles.fuelType'),
-        render: (v) => v.engines?.fuel_type || '—',
+        render: (v) => this.resolveEngine(v)?.fuel_type || '—',
       },
       {
         key: 'repair_dept',
@@ -241,12 +247,12 @@ export class VehiclesListComponent implements OnInit {
         mono: true,
         render: (v) => v.engine_number || '—',
       },
-      // {
-      //   key: 'engine_serial_number',
-      //   header: this.i18n.t('vehicles.engineSerialNumber'),
-      //   mono: true,
-      //   render: (v) => v.engines?.engine_serial_number || '—',
-      // },
+      {
+        key: 'engine_serial_number',
+        header: this.i18n.t('vehicles.engineSerialNumber'),
+        mono: true,
+        render: (v) => this.resolveEngine(v)?.engine_serial_number || '—',
+      },
       {
         key: 'notes',
         header: this.i18n.t('common.notes'),
@@ -401,6 +407,79 @@ export class VehiclesListComponent implements OnInit {
 
   private reloadVehiclesOnly(): void {
     this.loadVehicles(this.currentQuery);
+  }
+
+  /**
+   * A vehicle's engine only shows in the table/detail view once
+   * current_engine_id is actually linked. Many vehicles only carry the
+   * free-text engine_number (from import or manual entry) without that
+   * link ever being made. This resolves the same fallback the "Link
+   * engines by serial" action below persists, so the columns show
+   * something useful even before that's run.
+   */
+  private resolveEngine(v: VehicleWithLookups): Engine | undefined {
+    if (v.engines) return v.engines;
+    const serial = (v.engine_number || '').trim().toLowerCase();
+    return serial ? this.engineBySerial.get(serial) : undefined;
+  }
+
+  linkingEngines = false;
+  linkEnginesSummary: string | null = null;
+
+  /**
+   * Bulk-fixes vehicles whose current_engine_id was never set (the actual
+   * "link" between a vehicle and its engine) despite having a matching
+   * engine_number text value — by upserting current_engine_id for every
+   * vehicle whose engine_number matches an engine's serial number.
+   */
+  linkEnginesBySerial(): void {
+    this.linkingEngines = true;
+    this.linkEnginesSummary = null;
+    this.cdr.markForCheck();
+
+    this.vehiclesService.list().subscribe({
+      next: (vehicles) => {
+        const rows: Partial<Vehicle>[] = [];
+        for (const v of vehicles) {
+          if (v.current_engine_id) continue;
+          const serial = (v.engine_number || '').trim().toLowerCase();
+          if (!serial) continue;
+          const engineId = this.engineIdBySerial.get(serial);
+          if (!engineId) continue;
+          rows.push({ plate_number: v.plate_number, current_engine_id: engineId });
+        }
+
+        if (rows.length === 0) {
+          this.linkingEngines = false;
+          this.linkEnginesSummary = this.i18n.t('vehicles.linkEnginesNoneFound');
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.vehiclesService.bulkUpsert(rows).subscribe({
+          next: (saved) => {
+            this.linkingEngines = false;
+            this.linkEnginesSummary = this.i18n
+              .t('vehicles.linkEnginesLinkedCount')
+              .replace('{count}', String(saved.length));
+            this.reloadVehiclesOnly();
+            this.cdr.markForCheck();
+          },
+          error: (err) => {
+            this.linkingEngines = false;
+            this.linkEnginesSummary =
+              err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+            this.cdr.markForCheck();
+          },
+        });
+      },
+      error: (err) => {
+        this.linkingEngines = false;
+        this.linkEnginesSummary =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   statusLabelKey(value: string): string {

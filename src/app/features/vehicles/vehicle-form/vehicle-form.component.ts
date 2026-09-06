@@ -26,6 +26,9 @@ import {
 } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
+import { EntityImageUploadComponent } from '../../../shared/components/entity-image-upload/entity-image-upload.component';
 
 /**
  * `vehicle_status` labels aren't confirmed against the live DB yet (see
@@ -41,7 +44,12 @@ const VEHICLE_STATUS_OPTIONS: { value: string; labelKey: string }[] = [
 @Component({
   selector: 'app-vehicle-form',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    SharedSearchableSelectComponent,
+    EntityImageUploadComponent,
+  ],
   templateUrl: './vehicle-form.component.html',
   styleUrls: ['./vehicle-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,13 +70,23 @@ export class VehicleFormComponent implements OnInit, OnChanges {
   garageLocations: GarageLocation[] = [];
   engines: Engine[] = [];
 
+  vehicleTypeOptions: SearchableSelectOption[] = [];
+  departmentOptions: SearchableSelectOption[] = [];
+  workshopOptions: SearchableSelectOption[] = [];
+  garageLocationOptions: SearchableSelectOption[] = [];
+  engineOptions: SearchableSelectOption[] = [];
+  odometerUnitOptions: SearchableSelectOption[] = [];
+
   readonly statusOptions = VEHICLE_STATUS_OPTIONS;
+  statusSelectOptions: SearchableSelectOption[] = [];
 
   lookupsLoading = true;
   lookupsError: string | null = null;
 
   saving = false;
   saveError: string | null = null;
+  /** Client-generated id used so images can be attached before the vehicle row exists (create flow). */
+  pendingEntityId = crypto.randomUUID();
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -80,6 +98,15 @@ export class VehicleFormComponent implements OnInit, OnChanges {
     readonly i18n: TranslationService,
   ) {
     this.form = this.buildForm();
+    this.statusSelectOptions = VEHICLE_STATUS_OPTIONS.map((s) => ({
+      value: s.value,
+      label: this.i18n.t(s.labelKey),
+    }));
+    this.odometerUnitOptions = [
+      { value: 'km', label: this.i18n.t('vehicles.unitKm') },
+      { value: 'hours', label: this.i18n.t('vehicles.unitHours') },
+      { value: 'other', label: this.i18n.t('vehicles.unitOther') },
+    ];
   }
 
   ngOnInit(): void {
@@ -153,6 +180,8 @@ export class VehicleFormComponent implements OnInit, OnChanges {
         odometer_unit: 'km',
         status: 'active',
       });
+      // Fresh id for this create session so images can be uploaded before saving.
+      this.pendingEntityId = crypto.randomUUID();
     }
   }
 
@@ -174,6 +203,34 @@ export class VehicleFormComponent implements OnInit, OnChanges {
         this.workshops = workshops;
         this.garageLocations = garageLocations;
         this.engines = engines;
+
+        this.vehicleTypeOptions = vehicleTypes.map((t) => ({
+          value: t.id,
+          label: t.name_en || t.name_ar,
+        }));
+        this.departmentOptions = departments.map((d) => ({
+          value: d.id,
+          label: d.name_en || d.name_ar,
+        }));
+        this.workshopOptions = workshops.map((w) => ({
+          value: w.id,
+          label: w.name_en || w.name_ar,
+          sublabel: w.workshop_type,
+        }));
+        this.garageLocationOptions = garageLocations.map((g) => ({
+          value: g.id,
+          label: g.garage_name,
+        }));
+        // Sublabel surfaces manufacturer/model so a vehicle's make can be
+        // matched to the right engine when linking current_engine_id.
+        this.engineOptions = engines.map((e) => ({
+          value: e.id,
+          label: e.engine_serial_number,
+          sublabel:
+            [e.manufacturer, e.model_name].filter(Boolean).join(' ') ||
+            this.i18n.t('vehicles.unknownModel'),
+        }));
+
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
@@ -196,6 +253,10 @@ export class VehicleFormComponent implements OnInit, OnChanges {
     this.cdr.markForCheck();
     this.saveError = null;
     const payload: Partial<Vehicle> = this.form.value;
+    if (!this.isEditMode) {
+      // Reuse the id images were already uploaded against.
+      (payload as { id?: string }).id = this.pendingEntityId;
+    }
 
     const request$ = this.isEditMode
       ? this.vehiclesService.update(this.vehicle!.id, payload)

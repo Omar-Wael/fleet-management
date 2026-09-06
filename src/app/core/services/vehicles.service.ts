@@ -26,6 +26,8 @@ export interface VehicleFullProfile {
   licensing: VehicleLicensing | null;
   openOverhaul: Overhaul | null;
   activeLodging: GarageLodging | null;
+  /** Engines linked via engine_compatible_vehicles (compatibility, not necessarily fitted). */
+  compatibleEngines: Engine[];
 }
 
 export interface VehicleListFilters {
@@ -81,9 +83,23 @@ export class VehiclesService {
    * month), restricting the grid to just those vehicles.
    */
   private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    const fuelFilter = query.filters['fuel_type'] as string | undefined;
+    // Filtering on an embedded relation requires !inner, otherwise PostgREST
+    // ignores the nested filter on a left join and fuel_type appears empty.
+    const select = fuelFilter
+      ? `
+      *,
+      vehicle_types (*),
+      operating_departments (*),
+      maintenance_workshops (*),
+      engines:current_engine_id!inner (*),
+      garage_locations:current_garage_location_id (*)
+    `
+      : VEHICLE_LOOKUP_SELECT;
+
     let q = this.client
       .from('vehicles')
-      .select(VEHICLE_LOOKUP_SELECT, withCount ? { count: 'exact' } : undefined);
+      .select(select, withCount ? { count: 'exact' } : undefined);
 
     if (query.filters['operating_department_id']) {
       q = q.eq('operating_department_id', query.filters['operating_department_id']);
@@ -103,8 +119,8 @@ export class VehiclesService {
     if (query.filters['manufacture_year']) {
       q = q.eq('manufacture_year', Number(query.filters['manufacture_year']));
     }
-    if (query.filters['fuel_type']) {
-      q = q.eq('engines.fuel_type', query.filters['fuel_type']);
+    if (fuelFilter) {
+      q = q.eq('engines.fuel_type', fuelFilter);
     }
     if (query.filters['alertPlates']) {
       q = q.in('plate_number', query.filters['alertPlates'].split(','));
@@ -244,6 +260,12 @@ export class VehiclesService {
               .order('entry_date', { ascending: false })
               .limit(1)
           ).pipe(map((rows) => rows[0] ?? null)),
+          compatibleEngines: fromSupabase<{ engines: Engine }[]>(
+            this.client
+              .from('engine_compatible_vehicles')
+              .select('engines (*)')
+              .eq('vehicle_id', vehicleId)
+          ).pipe(map((rows) => rows.map((r) => r.engines).filter(Boolean))),
         })
       )
     );

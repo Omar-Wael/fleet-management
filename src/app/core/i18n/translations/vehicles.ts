@@ -32,6 +32,15 @@ export const VEHICLES_TRANSLATIONS: Record<string, TranslationEntry> = {
   'vehicles.currentEngine': { en: 'Current Engine', ar: 'المحرك الحالي' },
   'vehicles.unknownModel': { en: 'Unknown model', ar: 'موديل غير معروف' },
   'vehicles.make': { en: 'Make', ar: 'الماركة' },
+  'vehicles.linkEnginesButton': { en: 'Link engines by serial', ar: 'ربط المحركات حسب الرقم التسلسلي' },
+  'vehicles.linkEnginesNoneFound': {
+    en: 'No unlinked vehicles matched an engine serial number.',
+    ar: 'لا توجد مركبات غير مرتبطة تطابق رقم محرك تسلسلي.',
+  },
+  'vehicles.linkEnginesLinkedCount': {
+    en: 'Linked {count} vehicle(s) to their engine.',
+    ar: 'تم ربط {count} مركبة بمحركها.',
+  },
   'vehicles.model': { en: 'Model', ar: 'الموديل' },
   'vehicles.manufactureYear': { en: 'Manufacture Year', ar: 'سنة الصنع' },
   'vehicles.chassisNumber': { en: 'Chassis No.', ar: 'رقم الشاسيه' },
@@ -95,6 +104,10 @@ export const VEHICLES_TRANSLATIONS: Record<string, TranslationEntry> = {
   'vehicles.makeModel': { en: 'Make / Model', ar: 'الماركة / الموديل' },
   'vehicles.serialNumber': { en: 'Serial No.', ar: 'الرقم التسلسلي' },
   'vehicles.noEngineAssigned': { en: 'No engine currently assigned.', ar: 'لا يوجد محرك مُركّب حاليًا.' },
+  'vehicles.engineMatchedByNumber': {
+    en: 'Matched by engine number — not formally linked yet. Edit the vehicle to link it.',
+    ar: 'تمت المطابقة برقم المحرك — لم يتم ربطه رسميًا بعد. عدّل المركبة لربطه.',
+  },
   'vehicles.reading': { en: 'Reading', ar: 'القراءة' },
   'vehicles.yes': { en: 'Yes', ar: 'نعم' },
   'vehicles.no': { en: 'No', ar: 'لا' },
@@ -130,5 +143,8 @@ export const VEHICLES_TRANSLATIONS: Record<string, TranslationEntry> = {
   'vehicles.fuel.hybrid': { en: 'Hybrid', ar: 'هجين' },
   'vehicles.fuel.cng': { en: 'CNG', ar: 'غاز طبيعي' },
   'vehicles.fuel.lpg': { en: 'LPG', ar: 'غاز بترولي' },
-
+  'vehicles.compatibleEngines': { en: 'Compatible engines (by link / make)', ar: 'محركات متوافقة (ربط / ماركة)' },
+  'vehicles.manufacturer': { en: 'Manufacturer', ar: 'الشركة المصنعة' },
+  'vehicles.horsepower': { en: 'Horsepower', ar: 'القدرة' },
+  'vehicles.engineSerialNumber': { en: 'Engine serial', ar: 'رقم المحرك التسلسلي' },
 };

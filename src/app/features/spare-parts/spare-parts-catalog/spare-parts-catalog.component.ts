@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import { SparePartFormComponent } from '../spare-part-form/spare-part-form.component';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
+import { VehiclesService } from '../../../core/services/vehicles.service';
 import { SparePart } from '../../../core/models/fleet.models';
 import {
   exportToExcel,
@@ -65,6 +66,8 @@ export class SparePartsCatalogComponent implements OnInit {
   formOpen = false;
   editingPart: SparePart | null = null;
 
+  distinctMakes: string[] = [];
+
   // ---- import state ----
   importing = false;
   importError: string | null = null;
@@ -72,6 +75,7 @@ export class SparePartsCatalogComponent implements OnInit {
 
   constructor(
     private sparePartsService: SparePartsService,
+    private vehiclesService: VehiclesService,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
   ) {}
@@ -80,6 +84,15 @@ export class SparePartsCatalogComponent implements OnInit {
     this.buildColumns();
     this.buildFilters();
     this.loadParts(this.currentQuery);
+
+    this.vehiclesService.listDistinctMakes().subscribe({
+      next: (makes) => {
+        this.distinctMakes = makes;
+        this.buildFilters();
+        this.cdr.markForCheck();
+      },
+      error: () => {},
+    });
   }
 
   private buildFilters(): void {
@@ -109,6 +122,12 @@ export class SparePartsCatalogComponent implements OnInit {
           { value: 'true', label: this.i18n.t('common.yes') },
           { value: 'false', label: this.i18n.t('common.no') },
         ],
+      },
+      {
+        key: 'vehicleMake',
+        label: this.i18n.t('vehicles.make'),
+        value: this.currentQuery.filters['vehicleMake'] ?? '',
+        options: this.distinctMakes.map((m) => ({ value: m, label: m })),
       },
     ];
   }

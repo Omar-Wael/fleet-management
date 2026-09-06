@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
+import { Observable, forkJoin, from, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
 import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
@@ -27,7 +27,6 @@ export interface DisbursementGridRow extends StockDisbursementRequest {
     operating_departments?: { name_ar: string; name_en: string | null };
     maintenance_workshops?: { name_ar: string; name_en: string | null };
     vehicle_types?: { name_ar: string; name_en: string | null };
-    current_engine_id?: string | null;
   };
   /** Request-level repair department join */
   maintenance_workshops?: { name_ar: string; name_en: string | null };
@@ -129,7 +128,7 @@ export class DisbursementService {
   list(status?: DisbursementStatus): Observable<DisbursementGridRow[]> {
     let query = this.client.from('stock_disbursement_requests').select(DISBURSEMENT_GRID_SELECT);
     if (status) query = query.eq('status', status);
-    return fromSupabase<DisbursementGridRow[]>(query.order('request_number', { ascending: false }));
+    return fromSupabase<DisbursementGridRow[]>(query.order('requested_at', { ascending: false }));
   }
 
   /**
@@ -139,46 +138,43 @@ export class DisbursementService {
    * - vehicleId
    * - departmentId (vehicles.operating_department_id)
    * - workshopId  (vehicles.maintenance_workshop_id)  ← repair department
-   * - technicianId (junction – applied client-side after fetch)
+   * - vehicleMake (vehicles.make)
+   * - technicianId (junction table + legacy FK — resolved to a request-id
+   *   allowlist by resolveRequestIdsForTechnician() *before* pagination, so
+   *   filtering and the total count both apply to the full matching set,
+   *   not just whatever happened to land on the current page)
    */
-  private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+  private buildGridQuery(query: DataTableQuery, withCount: boolean, restrictIds?: string[] | null) {
     const filterDept = !!query.filters['departmentId'];
     const filterWorkshop = !!query.filters['workshopId'];
-    const filterVehicleType = !!query.filters['vehicleTypeId'];
+    const filterMake = !!query.filters['vehicleMake'];
+    const vehicleInner = filterDept || filterWorkshop || filterMake;
 
     // !inner when filtering on nested vehicle columns, otherwise left embed
-    const vehicleInner = filterDept || filterWorkshop || filterVehicleType;
     const vehicleEmbed = vehicleInner
       ? `vehicles!inner (
         plate_number,
-        maintenance_workshop_id,
-        operating_department_id,
-        vehicle_type_id,
-        operating_departments (name_ar, name_en),
-        maintenance_workshops (name_ar, name_en),
-        vehicle_types (name_ar, name_en),
         make,
         model,
-        odometer_km
+        maintenance_workshop_id,
+        operating_department_id,
+        operating_departments (name_ar, name_en),
+        maintenance_workshops (name_ar, name_en)
       )`
       : `vehicles (
         plate_number,
-        maintenance_workshop_id,
-        operating_department_id,
-        vehicle_type_id,
-        operating_departments (name_ar, name_en),
-        maintenance_workshops (name_ar, name_en),
-        vehicle_types (name_ar, name_en),
         make,
         model,
-        odometer_km
+        maintenance_workshop_id,
+        operating_department_id,
+        operating_departments (name_ar, name_en),
+        maintenance_workshops (name_ar, name_en)
       )`;
 
     const select = `
     *,
     ${vehicleEmbed},
     technicians:requested_by_technician_id (full_name),
-    maintenance_workshops (name_ar, name_en),
     stock_disbursement_request_technicians (
       technician_id,
       role_on_request,
@@ -186,7 +182,7 @@ export class DisbursementService {
     ),
     stock_disbursement_items (
       *,
-      spare_parts (name_ar, name_en, part_code, classification, unit)
+      spare_parts (name_ar, name_en, part_code, classification)
     )
   `;
 
@@ -214,12 +210,17 @@ export class DisbursementService {
       q = q.eq('vehicles.operating_department_id', query.filters['departmentId']);
     }
     if (filterWorkshop) {
-      q = q.eq('maintenance_workshop_id', query.filters['workshopId']);
+      q = q.eq('vehicles.maintenance_workshop_id', query.filters['workshopId']);
+    }
+    if (filterMake) {
+      q = q.eq('vehicles.make', query.filters['vehicleMake']);
     }
 
-    // Vehicle type filter
-    if (filterVehicleType) {
-      q = q.eq('vehicles.vehicle_type_id', query.filters['vehicleTypeId']);
+    // technicianId — pre-resolved to a request-id allowlist by the caller
+    // (see resolveRequestIdsForTechnician), so it can be applied before
+    // .range() instead of filtering an already-paginated page.
+    if (restrictIds) {
+      q = q.in('id', restrictIds);
     }
 
     const term = (query.search || '').trim();
@@ -228,60 +229,58 @@ export class DisbursementService {
       q = q.or(`request_number.ilike.%${escaped}%,notes.ilike.%${escaped}%`);
     }
 
-    const sortField = query.sort?.field ?? 'request_number';
+    const sortField = query.sort?.field ?? 'requested_at';
     const sortAscending = query.sort ? query.sort.dir === 'asc' : false;
     return q.order(sortField, { ascending: sortAscending });
   }
 
-  listPaged(query: DataTableQuery): Observable<PagedResult<DisbursementGridRow>> {
-    const techId = query.filters['technicianId'] as string | undefined;
-
-    // If technician filter is present, handle it with both primary and junction technicians
-    if (techId) {
-      // First, get all request IDs that have this technician in the junction table
-      return from(
+  /**
+   * Resolves which disbursement_requests a technician is linked to — via
+   * the multi-technician junction table AND the legacy single
+   * requested_by_technician_id column — as a plain id list, so the
+   * technicianId filter can be applied server-side (`.in('id', ids)`)
+   * before pagination, exactly like the other filters.
+   */
+  private resolveRequestIdsForTechnician(technicianId: string): Observable<string[]> {
+    return forkJoin({
+      viaJunction: fromSupabase<{ disbursement_request_id: string }[]>(
         this.client
           .from('stock_disbursement_request_technicians')
           .select('disbursement_request_id')
-          .eq('technician_id', techId),
-      ).pipe(
-        switchMap(({ data, error }) => {
-          if (error) throw new Error(error.message);
+          .eq('technician_id', technicianId),
+      ),
+      viaLegacy: fromSupabase<{ id: string }[]>(
+        this.client
+          .from('stock_disbursement_requests')
+          .select('id')
+          .eq('requested_by_technician_id', technicianId),
+      ),
+    }).pipe(
+      map(({ viaJunction, viaLegacy }) => {
+        const ids = new Set<string>();
+        viaJunction.forEach((r) => ids.add(r.disbursement_request_id));
+        viaLegacy.forEach((r) => ids.add(r.id));
+        return Array.from(ids);
+      }),
+    );
+  }
 
-          const junctionRequestIds = data?.map((d) => d.disbursement_request_id) || [];
+  listPaged(query: DataTableQuery): Observable<PagedResult<DisbursementGridRow>> {
+    const techId = query.filters['technicianId'] as string | undefined;
+    const from = (query.page - 1) * query.pageSize;
+    const to = from + query.pageSize - 1;
 
-          // Remove technicianId from filters for the main query
-          const modifiedQuery = {
-            ...query,
-            filters: { ...query.filters },
-          };
-          delete modifiedQuery.filters['technicianId'];
-
-          // Rename from to startIndex to avoid conflict with RxJS from
-          const startIndex = (query.page - 1) * query.pageSize;
-          const endIndex = startIndex + query.pageSize - 1;
-          let q = this.buildGridQuery(modifiedQuery, true);
-
-          // Filter by BOTH primary technician OR junction table technician
-          if (junctionRequestIds.length > 0) {
-            // Use OR condition: requested_by_technician_id = techId OR id IN (junctionRequestIds)
-            const ids = junctionRequestIds.join(',');
-            q = q.or(`requested_by_technician_id.eq.${techId},id.in.(${ids})`);
-          } else {
-            // Only filter by primary technician
-            q = q.eq('requested_by_technician_id', techId);
-          }
-
-          q = q.range(startIndex, endIndex);
+    if (techId) {
+      return this.resolveRequestIdsForTechnician(techId).pipe(
+        switchMap((ids) => {
+          if (ids.length === 0) return of<PagedResult<DisbursementGridRow>>({ rows: [], total: 0 });
+          const q = this.buildGridQuery(query, true, ids).range(from, to);
           return fromSupabasePaged<DisbursementGridRow>(q);
         }),
       );
     }
 
-    // Normal flow without technician filter
-    const startIndex = (query.page - 1) * query.pageSize;
-    const endIndex = startIndex + query.pageSize - 1;
-    const q = this.buildGridQuery(query, true).range(startIndex, endIndex);
+    const q = this.buildGridQuery(query, true).range(from, to);
     return fromSupabasePaged<DisbursementGridRow>(q);
   }
 
@@ -289,35 +288,10 @@ export class DisbursementService {
     const techId = query.filters['technicianId'] as string | undefined;
 
     if (techId) {
-      // Similar approach for listAllMatching
-      return from(
-        this.client
-          .from('stock_disbursement_request_technicians')
-          .select('disbursement_request_id')
-          .eq('technician_id', techId),
-      ).pipe(
-        switchMap(({ data, error }) => {
-          if (error) throw new Error(error.message);
-
-          const junctionRequestIds = data?.map((d) => d.disbursement_request_id) || [];
-
-          const modifiedQuery = {
-            ...query,
-            filters: { ...query.filters },
-          };
-          delete modifiedQuery.filters['technicianId'];
-
-          let q = this.buildGridQuery(modifiedQuery, false);
-
-          // Filter by BOTH primary technician OR junction table technician
-          if (junctionRequestIds.length > 0) {
-            const ids = junctionRequestIds.join(',');
-            q = q.or(`requested_by_technician_id.eq.${techId},id.in.(${ids})`);
-          } else {
-            q = q.eq('requested_by_technician_id', techId);
-          }
-
-          return fromSupabase<DisbursementGridRow[]>(q);
+      return this.resolveRequestIdsForTechnician(techId).pipe(
+        switchMap((ids) => {
+          if (ids.length === 0) return of<DisbursementGridRow[]>([]);
+          return fromSupabase<DisbursementGridRow[]>(this.buildGridQuery(query, false, ids));
         }),
       );
     }
@@ -468,6 +442,18 @@ export class DisbursementService {
         .from('stock_disbursement_items')
         .update(changes)
         .eq('id', itemId)
+        .select()
+        .single(),
+    );
+  }
+
+  /** Lets the drawer correct the issued_at date directly, independent of the status-advance workflow. */
+  updateIssuedAt(requestId: string, issuedAt: string | null): Observable<StockDisbursementRequest> {
+    return fromSupabase<StockDisbursementRequest>(
+      this.client
+        .from('stock_disbursement_requests')
+        .update({ issued_at: issuedAt })
+        .eq('id', requestId)
         .select()
         .single(),
     );

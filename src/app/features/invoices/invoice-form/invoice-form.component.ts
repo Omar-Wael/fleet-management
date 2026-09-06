@@ -27,18 +27,30 @@ import {
 } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
+import { EntityImageUploadComponent } from '../../../shared/components/entity-image-upload/entity-image-upload.component';
 
 interface DraftItem {
   spare_part_id: string | null;
+  item_name: string;
   item_description: string;
   quantity: number;
   unit_value: number;
+  mode: 'catalog' | 'custom';
 }
 
 @Component({
   selector: 'app-invoice-form',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, DecimalPipe, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    DecimalPipe,
+    TranslatePipe,
+    SharedSearchableSelectComponent,
+    EntityImageUploadComponent,
+  ],
   templateUrl: './invoice-form.component.html',
   styleUrls: ['./invoice-form.component.scss'],
 changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,11 +69,16 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
   vendors: ExternalWorkshop[] = [];
   spareParts: SparePart[] = [];
 
+  vendorOptions: SearchableSelectOption[] = [];
+  sparePartOptions: SearchableSelectOption[] = [];
+
   lookupsLoading = true;
   lookupsError: string | null = null;
 
   saving = false;
   saveError: string | null = null;
+  /** Client-generated id used so images can be attached before the invoice row exists (create flow). */
+  pendingEntityId = crypto.randomUUID();
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -115,7 +132,9 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
         tax_value: 0,
         discount_value: 0,
       });
-      this.items = [{ spare_part_id: null, item_description: '', quantity: 1, unit_value: 0 }];
+      this.items = [this.emptyItem()];
+      // Fresh id for this create session so images can be uploaded before saving.
+      this.pendingEntityId = crypto.randomUUID();
     }
   }
 
@@ -137,24 +156,61 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
       },
     });
 
+    // The catalog picker only offers items that have actually appeared on
+    // an invoice before — a free-text row covers anything new/one-off.
+    this.invoicesService.listInvoicedSpareParts().subscribe({
+      next: (parts) => {
+        this.sparePartOptions = parts.map((p) => ({
+          value: p.id,
+          label: p.part_code ? `${p.name_ar} (${p.part_code})` : p.name_ar,
+        }));
+        this.cdr.markForCheck();
+      },
+    });
+
     this.sparePartsService.listVendors().subscribe({
-      next: (vendors) => (this.vendors = vendors),
+      next: (vendors) => {
+        this.vendors = vendors;
+        this.vendorOptions = vendors.map((v) => ({ value: v.id, label: v.name }));
+        this.cdr.markForCheck();
+      },
     });
   }
 
+  private emptyItem(): DraftItem {
+    return {
+      spare_part_id: null,
+      item_name: '',
+      item_description: '',
+      quantity: 1,
+      unit_value: 0,
+      mode: 'catalog',
+    };
+  }
+
   addItemRow(): void {
-    this.items.push({ spare_part_id: null, item_description: '', quantity: 1, unit_value: 0 });
+    this.items.push(this.emptyItem());
   }
 
   removeItemRow(index: number): void {
     this.items.splice(index, 1);
   }
 
+  setItemMode(row: DraftItem, mode: 'catalog' | 'custom'): void {
+    row.mode = mode;
+    if (mode === 'catalog') {
+      row.item_name = '';
+    } else {
+      row.spare_part_id = null;
+    }
+    this.cdr.markForCheck();
+  }
+
   onItemPartChange(row: DraftItem): void {
     if (!row.spare_part_id) return;
     const part = this.spareParts.find((p) => p.id === row.spare_part_id);
     if (part) {
-      row.item_description = row.item_description || part.name_en || part.name_ar;
+      row.item_name = part.name_en || part.name_ar;
       if (part.unit_cost != null && !row.unit_value) row.unit_value = part.unit_cost;
     }
   }
@@ -169,7 +225,11 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
   }
 
   private get validItems(): DraftItem[] {
-    return this.items.filter((i) => i.item_description.trim() && i.quantity > 0);
+    return this.items.filter((i) => {
+      if (i.quantity <= 0) return false;
+      if (i.mode === 'catalog') return !!i.spare_part_id;
+      return !!i.item_name.trim();
+    });
   }
 
   submit(): void {
@@ -222,6 +282,7 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
     }
 
     const header: Partial<Invoice> = {
+      id: this.pendingEntityId,
       invoice_no,
       vendor_id,
       invoice_source,
@@ -234,7 +295,12 @@ export class InvoiceFormComponent implements OnInit, OnChanges {
 
     const itemRows: Omit<Partial<InvoiceItem>, 'invoice_id'>[] = this.validItems.map((i) => ({
       spare_part_id: i.spare_part_id,
-      item_description: i.item_description,
+      // invoice_items only has one text column — combine the item name
+      // (from the catalog pick or the free-text field) with the optional
+      // extra description into it.
+      item_description: i.item_description.trim()
+        ? `${i.item_name.trim()} — ${i.item_description.trim()}`
+        : i.item_name.trim(),
       quantity: i.quantity,
       unit_value: i.unit_value,
     }));

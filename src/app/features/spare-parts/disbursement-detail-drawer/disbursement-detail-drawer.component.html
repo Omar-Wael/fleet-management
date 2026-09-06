@@ -33,7 +33,37 @@
             <dt>{{ 'spareParts.disbursement.colRequestedAt' | translate }}</dt>
             <dd>{{ request.requested_at | date : 'mediumDate' }}</dd>
             <dt>{{ 'spareParts.disbursementDrawer.issuedAt' | translate }}</dt>
-            <dd>{{ request.issued_at ? (request.issued_at | date : 'mediumDate') : '—' }}</dd>
+            <dd>
+              @if (editingIssuedAt) {
+                <span class="issued-at-edit">
+                  <input type="date" [(ngModel)]="issuedAtDraft" [disabled]="savingIssuedAt" />
+                  <button
+                    type="button"
+                    class="btn btn--primary btn--sm"
+                    [disabled]="savingIssuedAt"
+                    (click)="saveIssuedAt()"
+                  >
+                    {{ (savingIssuedAt ? 'common.saving' : 'common.save') | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm"
+                    [disabled]="savingIssuedAt"
+                    (click)="cancelEditIssuedAt()"
+                  >
+                    {{ 'common.cancel' | translate }}
+                  </button>
+                </span>
+                @if (issuedAtError) {
+                  <p class="state-message state-message--error">{{ issuedAtError }}</p>
+                }
+              } @else {
+                <span class="issued-at-view">
+                  {{ request.issued_at ? (request.issued_at | date : 'mediumDate') : '—' }}
+                  <button type="button" class="icon-btn" (click)="startEditIssuedAt()" [attr.aria-label]="'common.edit' | translate">✏️</button>
+                </span>
+              }
+            </dd>
             @if (request.purchase_committee_receiver_name) {
               <dt>{{ 'spareParts.disbursementDrawer.committeeReceiver' | translate }}</dt>
               <dd>{{ request.purchase_committee_receiver_name }}</dd>
@@ -58,8 +88,6 @@
             <dd>{{ request.vehicles?.operating_departments?.name_ar || request.vehicles?.operating_departments?.name_en || '—' }}</dd>
             <dt>{{ 'spareParts.disbursementDrawer.vehicleWorkshop' | translate }}</dt>
             <dd>{{ request.vehicles?.maintenance_workshops?.name_ar || request.vehicles?.maintenance_workshops?.name_en || '—' }}</dd>
-            <dt>{{ 'engines.fuelType' | translate }}</dt>
-            <dd>{{ engine?.fuel_type || '—' }}</dd>
             <dt>{{ 'spareParts.disbursementDrawer.odometer' | translate }}</dt>
             <dd>{{ request.vehicles?.odometer_km != null ? (request.vehicles!.odometer_km | number : '1.0-0') : '—' }}</dd>
           </dl>

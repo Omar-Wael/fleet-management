@@ -40,6 +40,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
+import { EntityImageUploadComponent } from '../../../shared/components/entity-image-upload/entity-image-upload.component';
 
 interface DraftItem {
   spare_part_id: string;
@@ -61,6 +62,7 @@ interface DraftItem {
     FormsModule,
     TranslatePipe,
     SharedSearchableSelectComponent,
+    EntityImageUploadComponent,
   ],
   templateUrl: './disbursement-form.component.html',
   styleUrls: ['./disbursement-form.component.scss'],
@@ -95,6 +97,8 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
 
   saving = false;
   saveError: string | null = null;
+  /** Client-generated id used so images can be attached before the request row exists (create flow). */
+  pendingEntityId = crypto.randomUUID();
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -155,6 +159,8 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
     this.workOrderOptions = [];
     this.compatiblePartIds = new Set();
     this.rebuildPartOptions();
+    // Fresh id for this create session so images can be uploaded before saving.
+    this.pendingEntityId = crypto.randomUUID();
   }
 
   private emptyItem(): DraftItem {
@@ -453,7 +459,7 @@ export class DisbursementFormComponent implements OnInit, OnChanges {
             });
           }
           return this.disbursementService.createWithItems({
-            request: { ...requestPayload, status: 'requested' },
+            request: { ...requestPayload, id: this.pendingEntityId, status: 'requested' },
             technicianIds: techIds,
             items,
           });
