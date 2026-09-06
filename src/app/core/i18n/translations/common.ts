@@ -20,6 +20,7 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
   'common.saveChanges': { en: 'Save Changes', ar: 'حفظ التغييرات' },
   'common.saving': { en: 'Saving…', ar: 'جارٍ الحفظ…' },
   'common.cancel': { en: 'Cancel', ar: 'إلغاء' },
+  'common.clear': { en: 'Clear', ar: 'مسح' },
   'common.close': { en: 'Close', ar: 'إغلاق' },
   'common.edit': { en: 'Edit', ar: 'تعديل' },
   'common.view': { en: 'View', ar: 'عرض' },

@@ -6,6 +6,7 @@ export const ANALYTICS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'analytics.tabDepartmentCost': { en: 'Cost by Department', ar: 'التكلفة حسب الإدارة' },
   'analytics.tabTechnicianKpis': { en: 'Technician KPIs', ar: 'مؤشرات أداء الفنيين' },
   'analytics.tabVendorPricing': { en: 'Vendor Price Comparison', ar: 'مقارنة أسعار الموردين' },
+  'analytics.tabSparePartsOrders': { en: 'Spare Parts Orders', ar: 'طلبات قطع الغيار' },
 
   // Shared
   'analytics.total': { en: 'total', ar: 'الإجمالي' },
@@ -78,4 +79,33 @@ export const ANALYTICS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'analytics.vendorTypePartsVendor': { en: 'Parts Vendor', ar: 'مورد قطع غيار' },
   'analytics.vendorTypeMachineShop': { en: 'Machine Shop', ar: 'ورشة مكن' },
   'analytics.vendorTypeExternalGarage': { en: 'External Garage', ar: 'جراج خارجي' },
+
+  // Spare Parts Orders analytics
+  'analytics.sparePartsOrdersTitle': { en: 'Spare Parts Orders Analytics', ar: 'تحليلات طلبات قطع الغيار' },
+  'analytics.orderCount': { en: 'order(s)', ar: 'طلب/طلبات' },
+  'analytics.loadingSparePartsOrders': { en: 'Loading spare parts orders…', ar: 'جارٍ تحميل طلبات قطع الغيار…' },
+  'analytics.noSparePartsOrdersData': { en: 'No data for the current filter.', ar: 'لا توجد بيانات للفلتر الحالي.' },
+  'analytics.failedLoadSparePartsOrders': {
+    en: 'Failed to load spare parts orders.',
+    ar: 'فشل تحميل طلبات قطع الغيار.',
+  },
+  'analytics.tabOverview': { en: 'Overview', ar: 'نظرة عامة' },
+  'analytics.tabTimeline': { en: 'Timeline', ar: 'الجدول الزمني' },
+  'analytics.technicians': { en: 'Technicians', ar: 'الفنيون' },
+  'analytics.departments': { en: 'Departments', ar: 'الإدارات' },
+  'analytics.items': { en: 'Items', ar: 'الأصناف' },
+  'analytics.orders': { en: 'Orders', ar: 'الطلبات' },
+  'analytics.from': { en: 'From', ar: 'من' },
+  'analytics.to': { en: 'To', ar: 'إلى' },
+  'analytics.unassigned': { en: 'Unassigned', ar: 'غير محدد' },
+  'analytics.totalItemsRequested': { en: 'Items Requested', ar: 'الأصناف المطلوبة' },
+  'analytics.percentOfTotal': { en: '% of Total', ar: '% من الإجمالي' },
+  'analytics.sortBy': { en: 'Sort by:', ar: 'ترتيب حسب:' },
+  'analytics.avgItemsPerOrder': { en: 'Avg Items / Order', ar: 'متوسط الأصناف / طلب' },
+  'analytics.lastOrder': { en: 'Last Order', ar: 'آخر طلب' },
+  'analytics.itemName': { en: 'Item Name', ar: 'اسم الصنف' },
+  'analytics.totalQty': { en: 'Total Qty', ar: 'إجمالي الكمية' },
+  'analytics.searchItems': { en: 'Search items…', ar: 'ابحث عن صنف…' },
+  'analytics.month': { en: 'Month', ar: 'الشهر' },
+  'analytics.inNOrders': { en: 'in {n} order(s)', ar: 'في {n} طلب/طلبات' },
 };
