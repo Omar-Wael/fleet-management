@@ -31,6 +31,14 @@
   >
     {{ 'analytics.tabVendorPricing' | translate }}
   </button>
+  <button
+    type="button"
+    class="tab-btn"
+    [class.tab-btn--active]="activeTab === 'spare-parts-orders'"
+    (click)="setTab('spare-parts-orders')"
+  >
+    {{ 'analytics.tabSparePartsOrders' | translate }}
+  </button>
 </div>
 
 <div class="tab-content">
@@ -46,6 +54,9 @@
     }
     @case ('vendor-pricing') {
       <app-vendor-price-comparison></app-vendor-price-comparison>
+    }
+    @case ('spare-parts-orders') {
+      <app-spare-parts-orders></app-spare-parts-orders>
     }
   }
 </div>
