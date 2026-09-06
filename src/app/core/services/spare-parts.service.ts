@@ -38,7 +38,7 @@ export class SparePartsService {
     return fromSupabase<SparePart[]>(query.order('name_ar', { ascending: true }));
   }
 
-  private buildCatalogGridQuery(query: DataTableQuery, withCount: boolean) {
+  private buildCatalogGridQuery(query: DataTableQuery, withCount: boolean, restrictIds?: string[] | null) {
     let q = this.client
       .from('spare_parts')
       .select('*', withCount ? { count: 'exact' } : undefined);
@@ -53,6 +53,13 @@ export class SparePartsService {
       q = q.gt('current_stock_qty', 0);
     } else if (query.filters['hasStock'] === 'false') {
       q = q.lte('current_stock_qty', 0);
+    }
+
+    // vehicleMake — pre-resolved to a spare_part id allowlist by the
+    // caller (see resolvePartIdsForVehicleMake), applied before .range()
+    // just like every other filter so pagination reflects the full set.
+    if (restrictIds) {
+      q = q.in('id', restrictIds);
     }
 
     // lowStockOnly remains client-side (see original comment)
@@ -70,14 +77,82 @@ export class SparePartsService {
     return q.order(sortField, { ascending: sortAscending });
   }
 
+  /**
+   * Resolves which spare_parts are usable on vehicles of a given make —
+   * via both the direct per-vehicle compatibility table and the
+   * per-vehicle-type table — as a plain id list, so the vehicleMake
+   * catalog filter can be applied server-side before pagination.
+   */
+  private resolvePartIdsForVehicleMake(make: string): Observable<string[]> {
+    return fromSupabase<{ id: string; vehicle_type_id: string }[]>(
+      this.client.from('vehicles').select('id, vehicle_type_id').eq('make', make),
+    ).pipe(
+      switchMap((vehicles) => {
+        const vehicleIds = vehicles.map((v) => v.id);
+        const vehicleTypeIds = Array.from(
+          new Set(vehicles.map((v) => v.vehicle_type_id).filter(Boolean)),
+        );
+
+        return forkJoin({
+          viaVehicle: vehicleIds.length
+            ? fromSupabase<{ spare_part_id: string }[]>(
+                this.client
+                  .from('vehicle_compatible_parts')
+                  .select('spare_part_id')
+                  .in('vehicle_id', vehicleIds),
+              )
+            : of([]),
+          viaType: vehicleTypeIds.length
+            ? fromSupabase<{ spare_part_id: string }[]>(
+                this.client
+                  .from('vehicle_type_compatible_parts')
+                  .select('spare_part_id')
+                  .in('vehicle_type_id', vehicleTypeIds),
+              )
+            : of([]),
+        }).pipe(
+          map(({ viaVehicle, viaType }) => {
+            const ids = new Set<string>();
+            viaVehicle.forEach((r) => ids.add(r.spare_part_id));
+            viaType.forEach((r) => ids.add(r.spare_part_id));
+            return Array.from(ids);
+          }),
+        );
+      }),
+    );
+  }
+
   listPaged(query: DataTableQuery): Observable<PagedResult<SparePart>> {
+    const make = query.filters['vehicleMake'] as string | undefined;
     const from = (query.page - 1) * query.pageSize;
     const to = from + query.pageSize - 1;
+
+    if (make) {
+      return this.resolvePartIdsForVehicleMake(make).pipe(
+        switchMap((ids) => {
+          if (ids.length === 0) return of<PagedResult<SparePart>>({ rows: [], total: 0 });
+          const q = this.buildCatalogGridQuery(query, true, ids).range(from, to);
+          return fromSupabasePaged<SparePart>(q);
+        }),
+      );
+    }
+
     const q = this.buildCatalogGridQuery(query, true).range(from, to);
     return fromSupabasePaged<SparePart>(q);
   }
 
   listAllMatching(query: DataTableQuery): Observable<SparePart[]> {
+    const make = query.filters['vehicleMake'] as string | undefined;
+
+    if (make) {
+      return this.resolvePartIdsForVehicleMake(make).pipe(
+        switchMap((ids) => {
+          if (ids.length === 0) return of<SparePart[]>([]);
+          return fromSupabase<SparePart[]>(this.buildCatalogGridQuery(query, false, ids));
+        }),
+      );
+    }
+
     return fromSupabase<SparePart[]>(this.buildCatalogGridQuery(query, false));
   }
 

@@ -21,51 +21,49 @@
 
           <label class="field">
             <span>{{ 'vehicles.vehicleType' | translate }} *</span>
-            <select formControlName="vehicle_type_id">
-              <option [ngValue]="''" disabled>{{ 'vehicles.selectType' | translate }}</option>
-              @for (t of vehicleTypes; track t.id) {
-                <option [ngValue]="t.id">{{ t.name_en || t.name_ar }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="vehicle_type_id"
+              [options]="vehicleTypeOptions"
+              [placeholder]="'vehicles.selectType' | translate"
+              [clearable]="false"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
             <span>{{ 'vehicles.operatingDept' | translate }}</span>
-            <select formControlName="operating_department_id">
-              <option [ngValue]="null">—</option>
-              @for (d of departments; track d.id) {
-                <option [ngValue]="d.id">{{ d.name_en || d.name_ar }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="operating_department_id"
+              [options]="departmentOptions"
+              [placeholder]="'common.none' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
             <span>{{ 'vehicles.repairDeptWorkshop' | translate }} *</span>
-            <select formControlName="maintenance_workshop_id">
-              <option [ngValue]="''" disabled>{{ 'vehicles.selectWorkshop' | translate }}</option>
-              @for (w of workshops; track w.id) {
-                <option [ngValue]="w.id">{{ w.name_en || w.name_ar }} ({{ w.workshop_type }})</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="maintenance_workshop_id"
+              [options]="workshopOptions"
+              [placeholder]="'vehicles.selectWorkshop' | translate"
+              [clearable]="false"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
             <span>{{ 'vehicles.currentEngine' | translate }}</span>
-            <select formControlName="current_engine_id">
-              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
-              @for (e of engines; track e.id) {
-                <option [ngValue]="e.id">{{ e.engine_serial_number }} — {{ e.model_name || ('vehicles.unknownModel' | translate) }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="current_engine_id"
+              [options]="engineOptions"
+              [placeholder]="'common.none' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
             <span>{{ 'common.status' | translate }} *</span>
-            <select formControlName="status">
-              @for (s of statusOptions; track s.value) {
-                <option [ngValue]="s.value">{{ s.labelKey | translate }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="status"
+              [options]="statusSelectOptions"
+              [clearable]="false"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
@@ -100,11 +98,11 @@
 
           <label class="field">
             <span>{{ 'vehicles.odometerUnit' | translate }}</span>
-            <select formControlName="odometer_unit">
-              <option value="km">{{ 'vehicles.unitKm' | translate }}</option>
-              <option value="hours">{{ 'vehicles.unitHours' | translate }}</option>
-              <option value="other">{{ 'vehicles.unitOther' | translate }}</option>
-            </select>
+            <app-searchable-select
+              formControlName="odometer_unit"
+              [options]="odometerUnitOptions"
+              [clearable]="false"
+            ></app-searchable-select>
           </label>
 
           <label class="field field--checkbox">
@@ -119,12 +117,11 @@
 
           <label class="field">
             <span>{{ 'vehicles.garageLocation' | translate }}</span>
-            <select formControlName="current_garage_location_id">
-              <option [ngValue]="null">{{ 'vehicles.notLodged' | translate }}</option>
-              @for (g of garageLocations; track g.id) {
-                <option [ngValue]="g.id">{{ g.garage_name }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="current_garage_location_id"
+              [options]="garageLocationOptions"
+              [placeholder]="'vehicles.notLodged' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
@@ -142,6 +139,15 @@
             <textarea formControlName="notes" rows="3"></textarea>
           </label>
         </div>
+
+        <section class="images-section">
+          <h3>{{ 'shared.images.title' | translate }}</h3>
+          <app-entity-image-upload
+            entityType="vehicle"
+            [entityId]="isEditMode ? vehicle!.id : pendingEntityId"
+            [editable]="true"
+          ></app-entity-image-upload>
+        </section>
 
         @if (saveError) {
           <div class="state-message state-message--error">{{ saveError }}</div>

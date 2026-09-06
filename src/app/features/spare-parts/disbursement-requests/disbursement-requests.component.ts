@@ -104,7 +104,7 @@ export class DisbursementRequestsComponent implements OnInit {
     pageSize: 10,
     search: '',
     sort: { field: 'requested_at', dir: 'desc' },
-    filters: { status: '', vehicleId: '', technicianId: '', departmentId: '', workshopId: '' },
+    filters: { status: '', vehicleId: '', technicianId: '', departmentId: '', workshopId: '', vehicleMake: '' },
   };
 
   formOpen = false;
@@ -120,7 +120,7 @@ export class DisbursementRequestsComponent implements OnInit {
   workshops: MaintenanceWorkshop[] = [];
   vehicles: Vehicle[] = [];
   technicians: Technician[] = [];
-  vehiclesTypes: { id: string; name_ar: string | null; name_en: string | null }[] = [];
+  distinctMakes: string[] = [];
 
   // private departmentIdByName = new Map<string, string>();
   // private workshopIdByName = new Map<string, string>();
@@ -150,14 +150,21 @@ export class DisbursementRequestsComponent implements OnInit {
       departments: this.lookupsService.listOperatingDepartments(),
       workshops: this.lookupsService.listMaintenanceWorkshops(),
       engines: this.enginesService.list(),
-      vehicleTypes: this.lookupsService.listVehicleTypes(),
     }).subscribe({
-      next: ({ technicians, vehicles, departments, workshops, engines, vehicleTypes }) => {
+      next: ({ technicians, vehicles, departments, workshops, engines }) => {
         this.technicians = technicians;
         this.vehicles = vehicles;
         this.departments = departments;
         this.workshops = workshops;
-        this.vehiclesTypes = vehicleTypes;
+
+        this.vehiclesService.listDistinctMakes().subscribe({
+          next: (makes) => {
+            this.distinctMakes = makes;
+            this.buildFilters();
+            this.cdr.markForCheck();
+          },
+          error: () => {},
+        });
 
         // this.departmentIdByName = new Map(
         //   departments.map((d) => [(d.name_en || d.name_ar).trim().toLowerCase(), d.id]),
@@ -218,8 +225,7 @@ export class DisbursementRequestsComponent implements OnInit {
         key: 'issued_at',
         header: this.i18n.t('spareParts.disbursement.issuedAt'),
         sortable: true,
-        render: (r) =>
-          r.issued_at ? this.datePipe.transform(r.issued_at, 'mediumDate') || '—' : '—',
+        render: (r) => (r.issued_at ? this.datePipe.transform(r.issued_at, 'mediumDate') || '—' : '—'),
       },
       {
         key: 'parts',
@@ -235,7 +241,7 @@ export class DisbursementRequestsComponent implements OnInit {
           const acts: {
             label: string;
             icon: string;
-            variant: 'default' | 'info' | 'danger';
+            variant: 'info' | 'danger';
             display: 'icon';
             onClick: (row: DisbursementGridRow) => void;
           }[] = [
@@ -251,7 +257,7 @@ export class DisbursementRequestsComponent implements OnInit {
             acts.push({
               label: this.i18n.t('common.edit'),
               icon: '✏️',
-              variant: 'default',
+              variant: 'info',
               display: 'icon',
               onClick: (row) => this.openEditForm(row),
             });
@@ -299,13 +305,10 @@ export class DisbursementRequestsComponent implements OnInit {
         options: this.vehicles.map((v) => ({ value: v.id, label: v.plate_number || '—' })),
       },
       {
-        key: 'vehicleTypeId',
-        label: this.i18n.t('settings.vehicleTypes.title'),
-        value: this.currentQuery.filters['vehicleTypeId'] ?? '',
-        options: this.vehiclesTypes.map((v) => ({
-          value: v.id,
-          label: v.name_ar || v.name_en || '—',
-        })),
+        key: 'vehicleMake',
+        label: this.i18n.t('vehicles.make'),
+        value: this.currentQuery.filters['vehicleMake'] ?? '',
+        options: this.distinctMakes.map((m) => ({ value: m, label: m })),
       },
       {
         key: 'departmentId',
@@ -431,7 +434,6 @@ export class DisbursementRequestsComponent implements OnInit {
   }
 
   confirmDeleteRequest(request: DisbursementGridRow): void {
-    console.log('confirmDeleteRequest', request);
     const plate = request.vehicles?.plate_number || request.vehicle_id;
     const num = request.request_number || request.id.slice(0, 8);
     const msg = this.i18n
@@ -451,7 +453,9 @@ export class DisbursementRequestsComponent implements OnInit {
       },
       error: (err) => {
         this.loadError =
-          err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.deleteError');
+          err instanceof Error
+            ? err.message
+            : this.i18n.t('spareParts.disbursement.deleteError');
         this.cdr.markForCheck();
       },
     });

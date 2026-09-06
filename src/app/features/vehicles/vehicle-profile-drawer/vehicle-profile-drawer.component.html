@@ -61,17 +61,36 @@
 
         <section class="profile-section">
           <h3>{{ 'vehicles.sectionEngine' | translate }}</h3>
-          @if (profile.vehicle.engines) {
+          @if (resolvedEngine; as engine) {
             <dl>
               <dt>{{ 'vehicles.serialNumber' | translate }}</dt>
-              <dd class="mono">{{ profile.vehicle.engines.engine_serial_number }}</dd>
+              <dd class="mono">{{ engine.engine_serial_number }}</dd>
               <dt>{{ 'vehicles.model' | translate }}</dt>
-              <dd>{{ profile.vehicle.engines.model_name || '—' }}</dd>
+              <dd>{{ engine.model_name || '—' }}</dd>
+              <dt>{{ 'vehicles.manufacturer' | translate }}</dt>
+              <dd>{{ engine.manufacturer || '—' }}</dd>
               <dt>{{ 'vehicles.fuelType' | translate }}</dt>
-              <dd>{{ profile.vehicle.engines.fuel_type || '—' }}</dd>
+              <dd>{{ engine.fuel_type || '—' }}</dd>
+              <dt>{{ 'vehicles.horsepower' | translate }}</dt>
+              <dd>{{ engine.horsepower != null ? engine.horsepower : '—' }}</dd>
             </dl>
+            @if (!profile.vehicle.engines) {
+              <p class="muted">{{ 'vehicles.engineMatchedByNumber' | translate }}</p>
+            }
           } @else {
             <p class="muted">{{ 'vehicles.noEngineAssigned' | translate }}</p>
+          }
+          @if (profile.compatibleEngines?.length) {
+            <h4 class="subheading">{{ 'vehicles.compatibleEngines' | translate }}</h4>
+            <ul class="compat-list">
+              @for (e of profile.compatibleEngines; track e.id) {
+                <li>
+                  <span class="mono">{{ e.engine_serial_number }}</span>
+                  — {{ e.model_name || '—' }}
+                  ({{ e.fuel_type || '—' }})
+                </li>
+              }
+            </ul>
           }
         </section>
 
@@ -194,6 +213,12 @@
             <h3>{{ 'common.notes' | translate }}</h3>
             <p class="notes-text">{{ profile.vehicle.notes }}</p>
           </section>
+        <app-entity-image-upload
+          entityType="vehicle"
+          [entityId]="profile.vehicle.id"
+          [editable]="true"
+        ></app-entity-image-upload>
+
         }
       </div>
     }

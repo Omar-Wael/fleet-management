@@ -98,6 +98,15 @@
         </label>
       </section>
 
+      <section class="links-section images-section">
+        <h3>{{ 'shared.images.title' | translate }}</h3>
+        <app-entity-image-upload
+          entityType="spare_part"
+          [entityId]="isEditMode ? part!.id : pendingEntityId"
+          [editable]="true"
+        ></app-entity-image-upload>
+      </section>
+
       @if (linksLoading) {
         <div class="state-message">{{ 'common.loading' | translate }}</div>
       }

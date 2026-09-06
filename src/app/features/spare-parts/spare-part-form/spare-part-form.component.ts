@@ -25,6 +25,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
+import { EntityImageUploadComponent } from '../../../shared/components/entity-image-upload/entity-image-upload.component';
 
 const CLASSIFICATIONS: PartClassification[] = [
   'engine',
@@ -42,7 +43,12 @@ const CLASSIFICATIONS: PartClassification[] = [
 @Component({
   selector: 'app-spare-part-form',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, SharedSearchableSelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    SharedSearchableSelectComponent,
+    EntityImageUploadComponent,
+  ],
   templateUrl: './spare-part-form.component.html',
   styleUrls: ['./spare-part-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +71,8 @@ export class SparePartFormComponent implements OnChanges {
   saving = false;
   saveError: string | null = null;
   linksLoading = false;
+  /** Client-generated id used so images can be attached before the part row exists (create flow). */
+  pendingEntityId = crypto.randomUUID();
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -176,6 +184,8 @@ export class SparePartFormComponent implements OnChanges {
         engine_ids: [],
         vendor_ids: [],
       });
+      // Fresh id for this create session so images can be uploaded before saving.
+      this.pendingEntityId = crypto.randomUUID();
     }
   }
 
@@ -219,6 +229,10 @@ export class SparePartFormComponent implements OnChanges {
       ...partFields,
       is_general: !!partFields.is_general,
     };
+    if (!this.isEditMode) {
+      // Reuse the id images were already uploaded against.
+      (payload as { id?: string }).id = this.pendingEntityId;
+    }
 
     const savePart$ = this.isEditMode
       ? this.sparePartsService.update(this.part!.id, payload)

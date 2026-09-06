@@ -23,12 +23,11 @@
 
           <label class="field">
             <span>{{ 'invoices.vendor' | translate }}</span>
-            <select formControlName="vendor_id">
-              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
-              @for (v of vendors; track v.id) {
-                <option [ngValue]="v.id">{{ v.name }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="vendor_id"
+              [options]="vendorOptions"
+              [placeholder]="'common.none' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
@@ -70,16 +69,45 @@
 
             @for (row of items; track $index; let i = $index) {
               <div class="item-row">
-                <select
-                  [(ngModel)]="row.spare_part_id"
-                  [ngModelOptions]="{ standalone: true }"
-                  (change)="onItemPartChange(row)"
-                >
-                  <option [ngValue]="null">{{ 'invoices.freeTextItem' | translate }}</option>
-                  @for (p of spareParts; track p.id) {
-                    <option [ngValue]="p.id">{{ p.name_en || p.name_ar }}</option>
-                  }
-                </select>
+                <div class="item-options">
+                  <div class="item-mode-toggle">
+                    <button
+                      type="button"
+                      class="mode-btn"
+                      [class.mode-btn--active]="row.mode === 'catalog'"
+                      (click)="setItemMode(row, 'catalog')"
+                    >
+                      {{ 'invoices.modeCatalog' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="mode-btn"
+                      [class.mode-btn--active]="row.mode === 'custom'"
+                      (click)="setItemMode(row, 'custom')"
+                    >
+                      {{ 'invoices.modeCustom' | translate }}
+                    </button>
+                  </div>
+                  <button type="button" class="icon-btn" (click)="removeItemRow(i)" aria-label="Remove line">✕</button>
+                </div>
+
+                @if (row.mode === 'catalog') {
+                  <app-searchable-select
+                    [options]="sparePartOptions"
+                    [(ngModel)]="row.spare_part_id"
+                    [ngModelOptions]="{ standalone: true }"
+                    [placeholder]="'invoices.selectItemPlaceholder' | translate"
+                    (ngModelChange)="onItemPartChange(row)"
+                  ></app-searchable-select>
+                } @else {
+                  <input
+                    type="text"
+                    class="free-text-input"
+                    [placeholder]="'invoices.freeTextItem' | translate"
+                    [(ngModel)]="row.item_name"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                }
 
                 <input
                   type="text"
@@ -106,8 +134,6 @@
                   [(ngModel)]="row.unit_value"
                   [ngModelOptions]="{ standalone: true }"
                 />
-
-                <button type="button" class="icon-btn" (click)="removeItemRow(i)" aria-label="Remove line">✕</button>
               </div>
             }
 
@@ -117,6 +143,15 @@
             </div>
           </section>
         }
+
+        <section class="images-section">
+          <h3>{{ 'shared.images.title' | translate }}</h3>
+          <app-entity-image-upload
+            entityType="invoice"
+            [entityId]="isEditMode ? invoice!.id : pendingEntityId"
+            [editable]="true"
+          ></app-entity-image-upload>
+        </section>
 
         @if (saveError) {
           <div class="state-message state-message--error">{{ saveError }}</div>

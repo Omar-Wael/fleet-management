@@ -159,11 +159,9 @@
 
 .sample-check {
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  justify-self: flex-start;
 
   input[type='checkbox'] {
     width: auto;

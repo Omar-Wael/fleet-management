@@ -1,12 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 
 import { InvoiceFormComponent } from '../invoice-form/invoice-form.component';
 import { InvoiceDetailDrawerComponent } from '../invoice-detail-drawer/invoice-detail-drawer.component';
 
 import { InvoicesService, InvoiceGridRow } from '../../../core/services/invoices.service';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
+import { VehiclesService } from '../../../core/services/vehicles.service';
+import { LookupsService } from '../../../core/services/lookups.service';
 import { ExternalWorkshop } from '../../../core/models/fleet.models';
 import { exportToExcel, ExcelExportColumn, downloadImportTemplate } from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
@@ -46,7 +49,13 @@ export class InvoicesListComponent implements OnInit {
     pageSize: 10,
     search: '',
     sort: { field: 'invoice_date', dir: 'desc' },
-    filters: { vendor_id: '' },
+    filters: {
+      vendor_id: '',
+      vehicle_id: '',
+      spare_part_id: '',
+      department_id: '',
+      workshop_id: '',
+    },
   };
 
   formOpen = false;
@@ -64,6 +73,8 @@ export class InvoicesListComponent implements OnInit {
   constructor(
     private invoicesService: InvoicesService,
     private sparePartsService: SparePartsService,
+    private vehiclesService: VehiclesService,
+    private lookupsService: LookupsService,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
@@ -72,16 +83,61 @@ export class InvoicesListComponent implements OnInit {
   ngOnInit(): void {
     this.buildColumns();
     this.loadInvoices(this.currentQuery);
+    this.loadFilterOptions();
+  }
 
-    this.sparePartsService.listVendors().subscribe({
-      next: (vendors) => {
+  private loadFilterOptions(): void {
+    forkJoin({
+      vendors: this.sparePartsService.listVendors(),
+      vehicles: this.vehiclesService.list(),
+      parts: this.invoicesService.listInvoicedSpareParts(),
+      departments: this.lookupsService.listOperatingDepartments(),
+      workshops: this.lookupsService.listMaintenanceWorkshops(),
+    }).subscribe({
+      next: ({ vendors, vehicles, parts, departments, workshops }) => {
         this.vendors = vendors;
         this.filters = [
           {
             key: 'vendor_id',
-            label: this.i18n.t('shared.dataTable.allFilter'),
+            label: this.i18n.t('invoices.filterVendor'),
             value: this.currentQuery.filters['vendor_id'] ?? '',
             options: vendors.map((v) => ({ value: v.id, label: v.name })),
+          },
+          {
+            key: 'vehicle_id',
+            label: this.i18n.t('invoices.filterVehicle'),
+            value: this.currentQuery.filters['vehicle_id'] ?? '',
+            options: vehicles.map((v) => ({
+              value: v.id,
+              label: v.plate_number,
+            })),
+          },
+          {
+            key: 'spare_part_id',
+            label: this.i18n.t('invoices.filterItem'),
+            value: this.currentQuery.filters['spare_part_id'] ?? '',
+            options: parts.map((p) => ({
+              value: p.id,
+              label: p.part_code ? `${p.name_ar} (${p.part_code})` : p.name_ar,
+            })),
+          },
+          {
+            key: 'department_id',
+            label: this.i18n.t('invoices.filterDepartment'),
+            value: this.currentQuery.filters['department_id'] ?? '',
+            options: departments.map((d) => ({
+              value: d.id,
+              label: d.name_ar || d.name_en || d.id,
+            })),
+          },
+          {
+            key: 'workshop_id',
+            label: this.i18n.t('invoices.filterWorkshop'),
+            value: this.currentQuery.filters['workshop_id'] ?? '',
+            options: workshops.map((w) => ({
+              value: w.id,
+              label: w.name_ar || w.name_en || w.id,
+            })),
           },
         ];
         this.cdr.markForCheck();

@@ -102,6 +102,9 @@ export class SharedDataTableComponent<T = any> implements OnInit, OnDestroy, OnC
   sort: DataTableSort | null = null;
 
   pageJumpValue = '';
+  private readonly pageJumpInput$ = new Subject<string>(); // NEW
+
+  @Input() pageJumpDebounceMs = 500; // NEW — separate from search debounce, numbers need a beat longer
 
   private readonly searchInput$ = new Subject<string>();
 
@@ -134,10 +137,16 @@ export class SharedDataTableComponent<T = any> implements OnInit, OnDestroy, OnC
         this.page = 1;
         this.emitQuery();
       });
+
+    // NEW: auto-navigate once the user pauses typing in the page-jump box
+    this.pageJumpInput$
+      .pipe(debounceTime(this.pageJumpDebounceMs), distinctUntilChanged())
+      .subscribe((value) => this.commitPageJump(value));
   }
 
   ngOnDestroy(): void {
     this.searchInput$.complete();
+    this.pageJumpInput$.complete(); // NEW
   }
 
   // ---- cell content (pure functions of row + column, computed on demand — no templates) ----
@@ -210,13 +219,20 @@ export class SharedDataTableComponent<T = any> implements OnInit, OnDestroy, OnC
 
   onPageJumpInput(value: string): void {
     this.pageJumpValue = value;
+    this.pageJumpInput$.next(value); // NEW — feeds the debounce pipeline
   }
 
-  /** Commits whatever's in the jump box (Enter or blur), then clears it — the input
-   *  is empty by default and just shows the current page as a placeholder, so the
-   *  displayed page number never fights with the value the user is typing. */
+  /** Commits whatever's in the jump box immediately (Enter or blur) — bypasses
+   *  the debounce for the common "type then hit Enter" flow. */
   onPageJumpSubmit(): void {
-    const trimmed = this.pageJumpValue.trim();
+    this.commitPageJump(this.pageJumpValue);
+  }
+
+  /** Shared by the debounced auto-jump and the immediate Enter/blur submit.
+   *  Clears the box after — it's empty by default and just shows the current
+   *  page as a placeholder, so it never fights with what the user is typing. */
+  private commitPageJump(value: string): void {
+    const trimmed = value.toString().trim();
     if (trimmed) {
       const parsed = Number(trimmed);
       if (Number.isFinite(parsed) && parsed > 0) {

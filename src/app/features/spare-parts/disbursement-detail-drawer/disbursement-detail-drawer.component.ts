@@ -21,7 +21,6 @@ import {
 } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { EnginesService } from '../../../core/services/engines.service';
 
 /**
  * Lifecycle: available_in_stock -> issued
@@ -93,7 +92,9 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
   technicianNames(): string {
     const rows = this.request?.stock_disbursement_request_technicians;
     if (rows?.length) {
-      const names = rows.map((t) => t.technicians?.full_name).filter((n): n is string => !!n);
+      const names = rows
+        .map((t) => t.technicians?.full_name)
+        .filter((n): n is string => !!n);
       if (names.length) return names.join(', ');
     }
     return this.request?.technicians?.full_name || '—';
@@ -127,11 +128,14 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
   advanceError: string | null = null;
   receiverName = '';
 
-  engine: any | null = null;
+  editingIssuedAt = false;
+  issuedAtDraft = '';
+  savingIssuedAt = false;
+  issuedAtError: string | null = null;
 
   constructor(
     private cdr: ChangeDetectorRef,
-    private enginesService: EnginesService,
+
     private disbursementService: DisbursementService,
     readonly i18n: TranslationService,
   ) {}
@@ -152,6 +156,8 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
     this.cdr.markForCheck();
     this.receiverName = '';
     this.advanceError = null;
+    this.editingIssuedAt = false;
+    this.issuedAtError = null;
 
     this.disbursementService.getStatusHistory(this.request.id).subscribe({
       next: (history) => {
@@ -169,20 +175,6 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
         this.cdr.markForCheck();
       },
     });
-
-    if (this.request?.vehicles?.current_engine_id) {
-      this.enginesService.getById(this.request.vehicles.current_engine_id).subscribe({
-        next: (engine) => {
-          this.engine = engine;
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          console.error('Failed to load engine details:', err);
-          this.engine = null;
-          this.cdr.markForCheck();
-        },
-      });
-    }
   }
 
   get nextStatuses(): DisbursementStatus[] {
@@ -233,5 +225,48 @@ export class DisbursementDetailDrawerComponent implements OnChanges {
 
   close(): void {
     this.closed.emit();
+  }
+
+  // ---- issued_at inline edit ----
+
+  startEditIssuedAt(): void {
+    if (!this.request) return;
+    this.issuedAtDraft = this.request.issued_at ? this.request.issued_at.slice(0, 10) : '';
+    this.issuedAtError = null;
+    this.editingIssuedAt = true;
+    this.cdr.markForCheck();
+  }
+
+  cancelEditIssuedAt(): void {
+    this.editingIssuedAt = false;
+    this.issuedAtError = null;
+    this.cdr.markForCheck();
+  }
+
+  saveIssuedAt(): void {
+    if (!this.request) return;
+    this.savingIssuedAt = true;
+    this.issuedAtError = null;
+    this.cdr.markForCheck();
+
+    const isoValue = this.issuedAtDraft
+      ? new Date(this.issuedAtDraft + 'T00:00:00').toISOString()
+      : null;
+
+    this.disbursementService.updateIssuedAt(this.request.id, isoValue).subscribe({
+      next: (updated) => {
+        this.request = { ...this.request!, ...updated };
+        this.savingIssuedAt = false;
+        this.editingIssuedAt = false;
+        this.cdr.markForCheck();
+        this.updated.emit();
+      },
+      error: (err) => {
+        this.savingIssuedAt = false;
+        this.issuedAtError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }

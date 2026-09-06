@@ -318,11 +318,14 @@ export class EnginesService {
   }
 
   /**
-   * Add compatibility by make - adds all vehicles with the given make
+   * Add compatibility by make — inserts engine_compatible_vehicles for all
+   * vehicles with that make, and assigns this engine as current_engine_id
+   * on any of those vehicles that do not already have a fitted engine.
+   * (Compatibility ≠ fitted engine; only empty slots are filled.)
    */
   addCompatibleVehicleMake(engineId: string, make: string): Observable<{ added: number }> {
-    return fromSupabase<{ id: string }[]>(
-      this.client.from('vehicles').select('id').eq('make', make),
+    return fromSupabase<{ id: string; current_engine_id: string | null }[]>(
+      this.client.from('vehicles').select('id, current_engine_id').eq('make', make),
     ).pipe(
       switchMap((vehicles) => {
         if (!vehicles.length) return of({ added: 0 });
@@ -331,10 +334,62 @@ export class EnginesService {
           engine_id: engineId,
           vehicle_id: v.id,
         }));
+        const unassignedIds = vehicles
+          .filter((v) => !v.current_engine_id)
+          .map((v) => v.id);
 
+        const insertCompat$ = fromSupabase<void>(
+          this.client.from('engine_compatible_vehicles').insert(compatRows) as any,
+        );
+
+        const assignCurrent$ =
+          unassignedIds.length > 0
+            ? fromSupabase<void>(
+                this.client
+                  .from('vehicles')
+                  .update({ current_engine_id: engineId })
+                  .in('id', unassignedIds) as any,
+              )
+            : of(void 0);
+
+        return insertCompat$.pipe(
+          switchMap(() => assignCurrent$),
+          switchMap(() => of({ added: vehicles.length })),
+        );
+      }),
+    );
+  }
+
+  /**
+   * Link one vehicle as compatible and, if it has no fitted engine yet,
+   * set this engine as vehicles.current_engine_id so list/drawer show fuel type.
+   */
+  addCompatibleVehicleAndAssignIfEmpty(
+    engineId: string,
+    vehicleId: string,
+  ): Observable<void> {
+    return fromSupabase<void>(
+      this.client
+        .from('engine_compatible_vehicles')
+        .insert({ engine_id: engineId, vehicle_id: vehicleId }) as any,
+    ).pipe(
+      switchMap(() =>
+        fromSupabase<{ current_engine_id: string | null }>(
+          this.client
+            .from('vehicles')
+            .select('current_engine_id')
+            .eq('id', vehicleId)
+            .single(),
+        ),
+      ),
+      switchMap((v) => {
+        if (v.current_engine_id) return of(void 0);
         return fromSupabase<void>(
-          this.client.from('engine_compatible_vehicles').insert(compatRows),
-        ).pipe(switchMap(() => of({ added: vehicles.length })));
+          this.client
+            .from('vehicles')
+            .update({ current_engine_id: engineId })
+            .eq('id', vehicleId) as any,
+        );
       }),
     );
   }

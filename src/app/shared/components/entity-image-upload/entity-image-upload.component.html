@@ -1,0 +1,43 @@
+<section class="entity-images">
+  <header class="entity-images__header">
+    <h3>{{ 'shared.images.title' | translate }}</h3>
+    @if (editable && entityId) {
+      <label class="upload-btn">
+        <input type="file" accept="image/*" hidden (change)="onFileSelected($event)" [disabled]="uploading" />
+        {{ (uploading ? 'shared.images.uploading' : 'shared.images.upload') | translate }}
+      </label>
+    }
+  </header>
+
+  @if (error) {
+    <p class="state-message state-message--error">{{ error }}</p>
+  }
+
+  @if (loading) {
+    <p class="muted">{{ 'common.loading' | translate }}</p>
+  } @else if (!images.length) {
+    <p class="muted">{{ 'shared.images.empty' | translate }}</p>
+  } @else {
+    <div class="thumb-grid">
+      @for (img of images; track img.id) {
+        <figure class="thumb" [class.thumb--primary]="img.is_primary">
+          <img [src]="img.public_url || ''" [alt]="img.file_name || ''" />
+          @if (editable) {
+            <figcaption class="thumb-actions">
+              @if (!img.is_primary) {
+                <button type="button" class="link-btn" (click)="setPrimary(img)">
+                  {{ 'shared.images.setPrimary' | translate }}
+                </button>
+              } @else {
+                <span class="primary-badge">{{ 'shared.images.primary' | translate }}</span>
+              }
+              <button type="button" class="link-btn link-btn--danger" (click)="remove(img)">
+                {{ 'common.delete' | translate }}
+              </button>
+            </figcaption>
+          }
+        </figure>
+      }
+    </div>
+  }
+</section>

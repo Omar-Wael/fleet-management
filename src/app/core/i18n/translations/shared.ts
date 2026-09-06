@@ -60,5 +60,16 @@ export const SHARED_TRANSLATIONS: Record<string, TranslationEntry> = {
   'workshopType.electrical': { en: 'Electrical Workshop', ar: 'ورشة كهرباء' },
   'workshopType.mechanical': { en: 'Mechanical Workshop', ar: 'ورشة ميكانيكا' },
   'workshopType.general': { en: 'General Workshop', ar: 'ورشة عامة' },
+  'shared.images.title': { en: 'Images', ar: 'الصور' },
+  'shared.images.upload': { en: 'Upload image', ar: 'رفع صورة' },
+  'shared.images.uploading': { en: 'Uploading…', ar: 'جارٍ الرفع…' },
+  'shared.images.empty': { en: 'No images yet.', ar: 'لا توجد صور بعد.' },
+  'shared.images.setPrimary': { en: 'Set primary', ar: 'تعيين كأساسية' },
+  'shared.images.primary': { en: 'Primary', ar: 'أساسية' },
+  'shared.images.confirmDelete': { en: 'Delete this image?', ar: 'حذف هذه الصورة؟' },
+  'shared.images.saveFirstHint': {
+    en: 'Save this record first, then you can upload images.',
+    ar: 'يرجى الحفظ أولاً، ثم يمكنك رفع الصور.',
+  },
 
 };
