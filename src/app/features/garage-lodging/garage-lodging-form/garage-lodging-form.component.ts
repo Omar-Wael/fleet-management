@@ -24,17 +24,25 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
+import { EntityImageUploadComponent } from '../../../shared/components/entity-image-upload/entity-image-upload.component';
 
 @Component({
   selector: 'app-garage-lodging-form',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, SharedSearchableSelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    SharedSearchableSelectComponent,
+    EntityImageUploadComponent,
+  ],
   templateUrl: './garage-lodging-form.component.html',
   styleUrls: ['./garage-lodging-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GarageLodgingFormComponent implements OnInit, OnChanges {
   @Input() open = false;
+  /** عند التعديل: السجل المراد تعديله */
+  @Input() lodging: GarageLodging | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<GarageLodging>();
@@ -50,9 +58,15 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
   saving = false;
   saveError: string | null = null;
 
+  /** بعد الحفظ الأول يظهر رفع الصور (يحتاج entity id) */
+  savedEntityId: string | null = null;
+
+  get isEditMode(): boolean {
+    return !!this.lodging?.id;
+  }
+
   constructor(
     private cdr: ChangeDetectorRef,
-
     private fb: FormBuilder,
     private garageLodgingService: GarageLodgingService,
     private vehiclesService: VehiclesService,
@@ -64,6 +78,8 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
       garage_location_id: [null],
       reason: ['', Validators.required],
       entry_date: [new Date().toISOString().slice(0, 10), Validators.required],
+      exit_date: [null as string | null],
+      notes: [''],
     });
   }
 
@@ -74,7 +90,26 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['open'] && this.open) {
       this.saveError = null;
-      this.form.reset({ entry_date: new Date().toISOString().slice(0, 10) });
+      this.savedEntityId = this.lodging?.id ?? null;
+      if (this.lodging) {
+        this.form.patchValue({
+          vehicle_id: this.lodging.vehicle_id,
+          garage_location_id: this.lodging.garage_location_id,
+          reason: this.lodging.reason,
+          entry_date: this.lodging.entry_date,
+          exit_date: this.lodging.exit_date,
+          notes: this.lodging.notes ?? '',
+        });
+        // في التعديل لا نغيّر السيارة عادة
+        this.form.get('vehicle_id')?.disable();
+      } else {
+        this.form.reset({
+          entry_date: new Date().toISOString().slice(0, 10),
+          notes: '',
+          exit_date: null,
+        });
+        this.form.get('vehicle_id')?.enable();
+      }
     }
   }
 
@@ -118,12 +153,37 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
     this.cdr.markForCheck();
     this.saveError = null;
 
-    this.garageLodgingService.checkIn(this.form.value).subscribe({
+    const raw = this.form.getRawValue();
+    const payload: Partial<GarageLodging> = {
+      vehicle_id: raw.vehicle_id,
+      garage_location_id: raw.garage_location_id || null,
+      reason: raw.reason,
+      entry_date: raw.entry_date,
+      notes: raw.notes?.trim() || null,
+    };
+    if (this.isEditMode && raw.exit_date) {
+      payload.exit_date = raw.exit_date;
+    }
+
+    const req$ = this.isEditMode
+      ? this.garageLodgingService.update(this.lodging!.id, payload)
+      : this.garageLodgingService.checkIn(payload);
+
+    req$.subscribe({
       next: (lodging) => {
         this.saving = false;
+        this.savedEntityId = lodging.id;
         this.cdr.markForCheck();
         this.saved.emit(lodging);
-        this.close();
+        // في وضع الإضافة نبقى مفتوحين قليلاً لرفع الصور إن رغب المستخدم،
+        // أو نغلق مباشرة — نغلق بعد الحفظ ونترك الصور في وضع التعديل لاحقاً
+        if (!this.isEditMode) {
+          // بعد الإضافة الأولى: نبقي النموذج مفتوحاً لرفع الصور
+          this.lodging = lodging;
+          this.form.get('vehicle_id')?.disable();
+        } else {
+          this.close();
+        }
       },
       error: (err) => {
         this.saving = false;

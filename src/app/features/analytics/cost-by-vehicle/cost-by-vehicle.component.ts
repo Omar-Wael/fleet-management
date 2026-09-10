@@ -118,6 +118,38 @@ export class CostByVehicleComponent implements OnInit, AfterViewInit, OnDestroy 
             maximumFractionDigits: 2,
           }).format(Number(r.total_cost) || 0),
       },
+      {
+        key: 'work_orders_count',
+        header: this.i18n.t('analytics.workOrders'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.work_orders_count ?? 0),
+      },
+      {
+        key: 'disbursement_requests_count',
+        header: this.i18n.t('analytics.disbursementRequests'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.disbursement_requests_count ?? 0),
+      },
+      {
+        key: 'garage_visits_count',
+        header: this.i18n.t('analytics.garageVisits'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.garage_visits_count ?? 0),
+      },
+      {
+        key: 'garage_days_total',
+        header: this.i18n.t('analytics.garageDays'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.garage_days_total ?? 0),
+      },
     ];
   }
 

@@ -5,7 +5,19 @@ export const GARAGE_LODGING_TRANSLATIONS: Record<string, TranslationEntry> = {
   'garageLodging.shown': { en: 'record(s) shown', ar: 'سجل/سجلات معروضة' },
   'garageLodging.checkInButton': { en: '+ Check In Vehicle', ar: '+ تسجيل دخول سيارة' },
   'garageLodging.checkInTitle': { en: 'Check In Vehicle', ar: 'تسجيل دخول سيارة' },
+  'garageLodging.editTitle': { en: 'Edit Garage Lodging', ar: 'تعديل سجل المبيت' },
   'garageLodging.checkIn': { en: 'Check In', ar: 'تسجيل دخول' },
+  'garageLodging.edit': { en: 'Edit', ar: 'تعديل' },
+  'garageLodging.notes': { en: 'Notes', ar: 'ملاحظات' },
+  'garageLodging.notesPlaceholder': {
+    en: 'Optional notes about this lodging…',
+    ar: 'ملاحظات اختيارية عن هذا المبيت…',
+  },
+  'garageLodging.images': { en: 'Images / Attachments', ar: 'الصور / المرفقات' },
+  'garageLodging.imagesAfterSaveHint': {
+    en: 'Save the record first to attach images.',
+    ar: 'احفظ السجل أولاً لإضافة الصور.',
+  },
   'garageLodging.loadingFormOptions': { en: 'Loading form options…', ar: 'جارٍ تحميل خيارات النموذج…' },
   'garageLodging.loadingList': {
     en: 'Loading garage lodging records…',

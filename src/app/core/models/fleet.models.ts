@@ -508,7 +508,38 @@ export interface GarageLodging {
   entry_date: string;
   exit_date: string | null;
   duration_days: number | null; // generated column
+  notes: string | null;
   created_at: string;
+}
+
+/** مأمورية: تسليم مؤقت للسيارة لإدارة أخرى */
+export interface VehicleMission {
+  id: string;
+  vehicle_id: string;
+  receiving_department_id: string | null;
+  receiving_department_name: string | null;
+  recipient_name: string;
+  recipient_phone: string | null;
+  handover_date: string;
+  odometer_at_handover: number | null;
+  odometer_unit_at_handover: OdometerUnit | null;
+  return_date: string | null;
+  odometer_at_return: number | null;
+  odometer_unit_at_return: OdometerUnit | null;
+  duration_days: number | null; // generated
+  distance_traveled: number | null; // generated
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VVehicleMissionSummary {
+  vehicle_id: string;
+  plate_number: string;
+  missions_count: number;
+  open_missions_count: number;
+  total_days_on_mission: number;
+  total_distance_traveled: number;
 }
 
 // ---------------------------------------------------------------------
@@ -565,6 +596,14 @@ export interface VVehicleCostSummary {
   plate_number: string;
   operating_department_id: string | null;
   total_cost: number;
+  /** عدد أوامر العمل */
+  work_orders_count?: number;
+  /** عدد طلبات صرف قطع الغيار */
+  disbursement_requests_count?: number;
+  /** عدد زيارات / مبيت الورشة */
+  garage_visits_count?: number;
+  /** إجمالي أيام المبيت */
+  garage_days_total?: number;
 }
 
 export interface VDepartmentCostSummary {
@@ -574,6 +613,9 @@ export interface VDepartmentCostSummary {
   total_cost: number;
   vehicle_count: number;
   avg_cost_per_vehicle: number;
+  work_orders_count?: number;
+  disbursement_requests_count?: number;
+  garage_visits_count?: number;
 }
 
 export interface VPartPriceTrend {

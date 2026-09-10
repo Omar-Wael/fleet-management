@@ -122,6 +122,19 @@ export class GarageLodgingService {
     );
   }
 
+  /** تحديث سجل مبيت موجود (سبب، موقع، تواريخ، ملاحظات). */
+  update(id: string, patch: Partial<GarageLodging>): Observable<GarageLodging> {
+    return fromSupabase<GarageLodging>(
+      this.client.from('garage_lodgings').update(patch).eq('id', id).select().single(),
+    );
+  }
+
+  getById(id: string): Observable<GarageLodgingGridRow | null> {
+    return fromSupabase<GarageLodgingGridRow[]>(
+      this.client.from('garage_lodgings').select(GARAGE_LODGING_SELECT).eq('id', id).limit(1),
+    ).pipe(switchMap((rows) => of(rows[0] ?? null)));
+  }
+
   /** "Total Garage Visits this year" summary column, per vehicle. */
   getVisitsThisYear(vehicleId: string): Observable<VGarageVisitsThisYear | null> {
     return fromSupabase<VGarageVisitsThisYear[]>(

@@ -1,0 +1,60 @@
+<div class="missions-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'vehicleMissions.title' | translate }}</h1>
+      <p class="page-subtitle">{{ total }} {{ 'vehicleMissions.shown' | translate }}</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn--primary" (click)="openNew()">
+        {{ 'vehicleMissions.addButton' | translate }}
+      </button>
+    </div>
+  </header>
+
+  @if (currentQueryVehicleId) {
+    @if (vehicleStatLoading) {
+      <div class="state-message">{{ 'vehicleMissions.loadingList' | translate }}</div>
+    } @else if (vehicleStat && vehicleStat.missions_count > 0) {
+      <div class="stat-banner">
+        <span>
+          <strong class="mono">{{ vehicleStat.missions_count }}</strong>
+          {{ 'vehicleMissions.summaryMissions' | translate }}
+          ({{ vehicleStat.open_missions_count }} {{ 'vehicleMissions.summaryOpen' | translate }})
+        </span>
+        <span>
+          <strong class="mono">{{ vehicleStat.total_days_on_mission }}</strong>
+          {{ 'vehicleMissions.summaryDays' | translate }}
+        </span>
+        <span>
+          <strong class="mono">{{ vehicleStat.total_distance_traveled }}</strong>
+          {{ 'vehicleMissions.summaryDistance' | translate }}
+        </span>
+      </div>
+    } @else {
+      <div class="stat-banner">{{ 'vehicleMissions.noSummary' | translate }}</div>
+    }
+  }
+
+  @if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [searchPlaceholder]="'vehicleMissions.searchPlaceholder' | translate"
+    [emptyMessage]="'vehicleMissions.noResults' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
+</div>
+
+<app-vehicle-missions-form
+  [open]="formOpen"
+  [mission]="editingMission"
+  (closed)="onFormClosed()"
+  (saved)="onFormSaved()"
+></app-vehicle-missions-form>

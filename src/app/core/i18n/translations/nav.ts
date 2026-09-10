@@ -9,6 +9,7 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'nav.checks': { en: 'Checks', ar: 'الشيكات' },
   'nav.overhauls': { en: 'Overhauls', ar: 'العمرات' },
   'nav.garageLodging': { en: 'Garage Lodging', ar: 'مبيت الورشة' },
+  'nav.vehicleMissions': { en: 'Vehicle Missions', ar: 'المأموريات' },
   'nav.engines': { en: 'Engines', ar: 'المحركات' },
   'nav.technicians': { en: 'Technicians', ar: 'الفنيون' },
   'nav.analytics': { en: 'Analytics', ar: 'التحليلات' },

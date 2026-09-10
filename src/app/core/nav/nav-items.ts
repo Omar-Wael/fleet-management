@@ -19,6 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { path: 'checks', labelKey: 'nav.checks' },
   { path: 'overhauls', labelKey: 'nav.overhauls' },
   { path: 'garage-lodging', labelKey: 'nav.garageLodging' },
+  { path: 'vehicle-missions', labelKey: 'nav.vehicleMissions' },
   { path: 'engines', labelKey: 'nav.engines' },
   { path: 'technicians', labelKey: 'nav.technicians' },
   { path: 'analytics', labelKey: 'nav.analytics' },

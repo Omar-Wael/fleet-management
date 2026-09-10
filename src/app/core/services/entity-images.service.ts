@@ -9,7 +9,9 @@ export type EntityImageType =
   | 'invoice'
   | 'check'
   | 'disbursement_request'
-  | 'spare_part';
+  | 'spare_part'
+  | 'garage_lodging'
+  | 'vehicle_mission';
 
 export interface EntityImage {
   id: string;

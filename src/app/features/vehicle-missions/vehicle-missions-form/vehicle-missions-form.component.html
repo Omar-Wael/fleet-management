@@ -1,0 +1,131 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+  <aside class="slide-over" role="dialog" aria-modal="true">
+    <header class="slide-over-header">
+      <h2>
+        {{
+          (isEditMode || savedEntityId
+            ? 'vehicleMissions.formTitleEdit'
+            : 'vehicleMissions.formTitleNew'
+          ) | translate
+        }}
+      </h2>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+    </header>
+
+    @if (lookupsLoading) {
+      <div class="state-message">{{ 'vehicleMissions.loadingForm' | translate }}</div>
+    } @else {
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
+        @if (lookupsError) {
+          <div class="state-message state-message--error">{{ lookupsError }}</div>
+        }
+
+        <div class="field-grid">
+          <label class="field">
+            <span>{{ 'vehicleMissions.vehicle' | translate }} *</span>
+            <app-searchable-select
+              formControlName="vehicle_id"
+              [options]="vehicles"
+              [placeholder]="'vehicleMissions.selectVehicle' | translate"
+              [clearable]="true"
+            ></app-searchable-select>
+          </label>
+
+          <label class="field">
+            <span>{{ 'vehicleMissions.receivingDepartment' | translate }}</span>
+            <app-searchable-select
+              formControlName="receiving_department_id"
+              [options]="departments"
+              [placeholder]="'vehicleMissions.selectDepartment' | translate"
+              [clearable]="true"
+            ></app-searchable-select>
+          </label>
+
+          <label class="field field--wide">
+            <span>{{ 'vehicleMissions.departmentNameFree' | translate }}</span>
+            <input type="text" formControlName="receiving_department_name" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'vehicleMissions.recipientName' | translate }} *</span>
+            <input type="text" formControlName="recipient_name" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'vehicleMissions.recipientPhone' | translate }}</span>
+            <input type="text" formControlName="recipient_phone" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'vehicleMissions.handoverDate' | translate }} *</span>
+            <input type="date" formControlName="handover_date" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'vehicleMissions.odometerAtHandover' | translate }}</span>
+            <input type="number" formControlName="odometer_at_handover" step="any" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'vehicleMissions.odometerUnit' | translate }}</span>
+            <app-searchable-select
+              formControlName="odometer_unit_at_handover"
+              [options]="odometerUnitOptions"
+              [clearable]="false"
+            ></app-searchable-select>
+          </label>
+
+          @if (isEditMode) {
+            <label class="field">
+              <span>{{ 'vehicleMissions.returnDate' | translate }}</span>
+              <input type="date" formControlName="return_date" />
+            </label>
+            <label class="field">
+              <span>{{ 'vehicleMissions.odometerAtReturn' | translate }}</span>
+              <input type="number" formControlName="odometer_at_return" step="any" />
+            </label>
+            <label class="field">
+              <span>{{ 'vehicleMissions.odometerUnit' | translate }}</span>
+              <app-searchable-select
+                formControlName="odometer_unit_at_return"
+                [options]="odometerUnitOptions"
+                [clearable]="false"
+              ></app-searchable-select>
+            </label>
+          }
+
+          <label class="field field--wide">
+            <span>{{ 'vehicleMissions.notes' | translate }}</span>
+            <textarea formControlName="notes" rows="2"></textarea>
+          </label>
+        </div>
+
+        @if (savedEntityId) {
+          <div class="images-section">
+            <h3 class="section-title">{{ 'vehicleMissions.handoverReportImage' | translate }}</h3>
+            <app-entity-image-upload
+              entityType="vehicle_mission"
+              [entityId]="savedEntityId"
+            ></app-entity-image-upload>
+          </div>
+        } @else {
+          <p class="hint">{{ 'vehicleMissions.imagesAfterSaveHint' | translate }}</p>
+        }
+
+        @if (saveError) {
+          <div class="state-message state-message--error">{{ saveError }}</div>
+        }
+
+        <footer class="slide-over-footer">
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving">
+            {{ (saving ? 'common.saving' : 'common.save') | translate }}
+          </button>
+        </footer>
+      </form>
+    }
+  </aside>
+}

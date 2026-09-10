@@ -5,6 +5,7 @@ import { TECHNICIANS_TRANSLATIONS } from './technicians';
 import { VEHICLES_TRANSLATIONS } from './vehicles';
 import { ENGINES_TRANSLATIONS } from './engines';
 import { GARAGE_LODGING_TRANSLATIONS } from './garage-lodging';
+import { VEHICLE_MISSIONS_TRANSLATIONS } from './vehicle-missions';
 import { SPARE_PARTS_TRANSLATIONS } from './spare-parts';
 import { MAINTENANCE_TRANSLATIONS } from './maintenance';
 import { INVOICES_TRANSLATIONS } from './invoices';
@@ -26,6 +27,7 @@ export const TRANSLATIONS: Record<string, TranslationEntry> = {
   ...VEHICLES_TRANSLATIONS,
   ...ENGINES_TRANSLATIONS,
   ...GARAGE_LODGING_TRANSLATIONS,
+  ...VEHICLE_MISSIONS_TRANSLATIONS,
   ...SPARE_PARTS_TRANSLATIONS,
   ...MAINTENANCE_TRANSLATIONS,
   ...INVOICES_TRANSLATIONS,
