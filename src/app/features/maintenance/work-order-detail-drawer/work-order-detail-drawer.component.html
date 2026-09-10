@@ -15,11 +15,11 @@
             <dt>{{ 'maintenance.colType' | translate }}</dt>
             <dd>{{ workOrder.maintenance_type || '—' }}</dd>
             <dt>{{ 'maintenance.opened' | translate }}</dt>
-            <dd>{{ workOrder.opened_at | date : 'mediumDate' }}</dd>
+            <dd>{{ workOrder.opened_at | date : 'dd/MM/yyyy' }}</dd>
             <dt>{{ 'maintenance.closed' | translate }}</dt>
             <dd>
               @if (isClosed) {
-                {{ workOrder.closed_at | date : 'mediumDate' }}
+                {{ workOrder.closed_at | date : 'dd/MM/yyyy' }}
               } @else {
                 <span class="badge badge--warn">{{ 'maintenance.statusOpen' | translate }}</span>
               }

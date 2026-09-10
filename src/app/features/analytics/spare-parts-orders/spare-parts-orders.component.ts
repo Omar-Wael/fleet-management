@@ -12,11 +12,19 @@ import {
 import { FormsModule } from '@angular/forms';
 import Chart from 'chart.js/auto';
 
-import { DisbursementGridRow, DisbursementService } from '../../../core/services/disbursement.service';
+import {
+  DisbursementGridRow,
+  DisbursementService,
+} from '../../../core/services/disbursement.service';
 import { DisbursementStatus } from '../../../core/models/fleet.models';
 import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import {
+  DataTableColumn,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 type Tab = 'overview' | 'vehicles' | 'technicians' | 'departments' | 'items' | 'timeline';
 
@@ -76,7 +84,7 @@ const CHART_TOP_N_ITEMS = 20;
 @Component({
   selector: 'app-spare-parts-orders',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, SharedDataTableComponent],
   templateUrl: './spare-parts-orders.component.html',
   styleUrls: ['./spare-parts-orders.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,12 +109,72 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
   deptSort: 'orders' | 'items' = 'orders';
   itemSort: 'qty' | 'orders' = 'qty';
 
-  kpis = { orders: 0, vehicles: 0, techs: 0, depts: 0, totalItems: 0, byStatus: {} as Record<string, number> };
+  kpis = {
+    orders: 0,
+    vehicles: 0,
+    techs: 0,
+    depts: 0,
+    totalItems: 0,
+    byStatus: {} as Record<string, number>,
+  };
   vehicleStats: VehicleStat[] = [];
   techStats: TechnicianStat[] = [];
   deptStats: DepartmentStat[] = [];
   itemStats: ItemStat[] = [];
   timelineData: { month: string; count: number }[] = [];
+
+  // Data-table display rows (client-paged views of the stats arrays)
+  vehicleRows: VehicleStat[] = [];
+  vehicleTotal = 0;
+  vehicleColumns: DataTableColumn<VehicleStat>[] = [];
+  techRows: TechnicianStat[] = [];
+  techTotal = 0;
+  techColumns: DataTableColumn<TechnicianStat>[] = [];
+  deptRows: DepartmentStat[] = [];
+  deptTotal = 0;
+  deptColumns: DataTableColumn<DepartmentStat>[] = [];
+  itemRows: ItemStat[] = [];
+  itemTotal = 0;
+  itemColumns: DataTableColumn<ItemStat>[] = [];
+  timelineRows: { month: string; count: number }[] = [];
+  timelineTotal = 0;
+  timelineColumns: DataTableColumn<{ month: string; count: number }>[] = [];
+
+  private vehicleQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: null,
+    filters: {},
+  };
+  private techQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: null,
+    filters: {},
+  };
+  private deptQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: null,
+    filters: {},
+  };
+  private itemQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: null,
+    filters: {},
+  };
+  private timelineQuery: DataTableQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    sort: null,
+    filters: {},
+  };
 
   readonly statusLabelKeys = STATUS_LABEL_KEYS;
   readonly objectEntries = Object.entries;
@@ -118,6 +186,7 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
   ) {}
 
   ngOnInit(): void {
+    this.buildColumns();
     this.load();
   }
 
@@ -209,6 +278,11 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
     this.computeDeptStats();
     this.computeItemStats();
     this.computeTimeline();
+    this.applyVehicleQuery();
+    this.applyTechQuery();
+    this.applyDeptQuery();
+    this.applyItemQuery();
+    this.applyTimelineQuery();
     setTimeout(() => this.renderChart(), 0);
   }
 
@@ -258,7 +332,14 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
       byStatus[label] = (byStatus[label] || 0) + 1;
     }
 
-    this.kpis = { orders: parts.length, vehicles: vehicles.size, techs: techs.size, depts: depts.size, totalItems, byStatus };
+    this.kpis = {
+      orders: parts.length,
+      vehicles: vehicles.size,
+      techs: techs.size,
+      depts: depts.size,
+      totalItems,
+      byStatus,
+    };
   }
 
   private computeVehicleStats(): void {
@@ -299,7 +380,13 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
     for (const r of this.filteredRows) {
       for (const name of this.technicianNames(r)) {
         if (!map.has(name)) {
-          map.set(name, { name, orderCount: 0, itemCount: 0, vehicles: new Set(), departments: new Set() });
+          map.set(name, {
+            name,
+            orderCount: 0,
+            itemCount: 0,
+            vehicles: new Set(),
+            departments: new Set(),
+          });
         }
         const s = map.get(name)!;
         s.orderCount++;
@@ -324,7 +411,13 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
     for (const r of this.filteredRows) {
       const dept = this.departmentName(r);
       if (!map.has(dept)) {
-        map.set(dept, { name: dept, orderCount: 0, itemCount: 0, vehicles: new Set(), technicians: new Set() });
+        map.set(dept, {
+          name: dept,
+          orderCount: 0,
+          itemCount: 0,
+          vehicles: new Set(),
+          technicians: new Set(),
+        });
       }
       const s = map.get(dept)!;
       s.orderCount++;
@@ -349,7 +442,13 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
       for (const item of r.stock_disbursement_items || []) {
         const name = item.spare_parts?.name_en || item.spare_parts?.name_ar || '—';
         if (!map.has(name)) {
-          map.set(name, { name, totalQty: 0, orderCount: 0, vehicles: new Set(), latestDate: null });
+          map.set(name, {
+            name,
+            totalQty: 0,
+            orderCount: 0,
+            vehicles: new Set(),
+            latestDate: null,
+          });
         }
         const s = map.get(name)!;
         s.totalQty += Number(item.qty) || 0;
@@ -393,7 +492,11 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
     return total > 0 ? Math.round((value / total) * 100) : 0;
   }
 
-  barPct(value: number, list: { orderCount?: number; itemCount?: number; totalQty?: number; count?: number }[], key: 'orderCount' | 'itemCount' | 'totalQty' | 'count'): number {
+  barPct(
+    value: number,
+    list: { orderCount?: number; itemCount?: number; totalQty?: number; count?: number }[],
+    key: 'orderCount' | 'itemCount' | 'totalQty' | 'count',
+  ): number {
     const max = list.length ? Math.max(...list.map((item) => Number(item[key]) || 0)) : 1;
     return max > 0 ? Math.round((value / max) * 100) : 0;
   }
@@ -413,19 +516,40 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
 
     if (this.activeTab === 'overview') {
       const entries = Object.entries(this.kpis.byStatus).sort(([, a], [, b]) => b - a);
-      const colors = ['#1e3a5f', '#16a34a', '#f59e0b', '#a855f7', '#ef4444', '#0891b2', '#f97316', '#6b7280', '#c4432b', '#0d9488'];
+      const colors = [
+        '#1e3a5f',
+        '#16a34a',
+        '#f59e0b',
+        '#a855f7',
+        '#ef4444',
+        '#0891b2',
+        '#f97316',
+        '#6b7280',
+        '#c4432b',
+        '#0d9488',
+      ];
       this.chart = new Chart(canvas, {
         type: 'doughnut',
         data: {
           labels: entries.map(([k]) => k),
-          datasets: [{ data: entries.map(([, v]) => v), backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }],
+          datasets: [
+            {
+              data: entries.map(([, v]) => v),
+              backgroundColor: colors,
+              borderWidth: 0,
+              hoverOffset: 8,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           cutout: '65%',
           plugins: {
-            legend: { position: 'bottom', labels: { color: legend, font: { size: 11 }, padding: 10 } },
+            legend: {
+              position: 'bottom',
+              labels: { color: legend, font: { size: 11 }, padding: 10 },
+            },
             tooltip: { backgroundColor: tooltipBg, padding: 10 },
           },
         },
@@ -440,14 +564,27 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
         data: {
           labels: data.map((s) => s.plate),
           datasets: [
-            { label: this.i18n.t('analytics.orders'), data: data.map((s) => s.orderCount), backgroundColor: '#1e3a5f', borderRadius: 5 },
-            { label: this.i18n.t('analytics.items'), data: data.map((s) => s.itemCount), backgroundColor: '#a855f7', borderRadius: 5 },
+            {
+              label: this.i18n.t('analytics.orders'),
+              data: data.map((s) => s.orderCount),
+              backgroundColor: '#1e3a5f',
+              borderRadius: 5,
+            },
+            {
+              label: this.i18n.t('analytics.items'),
+              data: data.map((s) => s.itemCount),
+              backgroundColor: '#a855f7',
+              borderRadius: 5,
+            },
           ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: legend, font: { size: 11 } } }, tooltip: { backgroundColor: tooltipBg, padding: 10 } },
+          plugins: {
+            legend: { position: 'bottom', labels: { color: legend, font: { size: 11 } } },
+            tooltip: { backgroundColor: tooltipBg, padding: 10 },
+          },
           scales: {
             x: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } },
             y: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } },
@@ -464,15 +601,28 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
         data: {
           labels: data.map((s) => s.name),
           datasets: [
-            { label: this.i18n.t('analytics.orders'), data: data.map((s) => s.orderCount), backgroundColor: '#16a34a', borderRadius: 5 },
-            { label: this.i18n.t('analytics.items'), data: data.map((s) => s.itemCount), backgroundColor: '#f59e0b', borderRadius: 5 },
+            {
+              label: this.i18n.t('analytics.orders'),
+              data: data.map((s) => s.orderCount),
+              backgroundColor: '#16a34a',
+              borderRadius: 5,
+            },
+            {
+              label: this.i18n.t('analytics.items'),
+              data: data.map((s) => s.itemCount),
+              backgroundColor: '#f59e0b',
+              borderRadius: 5,
+            },
           ],
         },
         options: {
           indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: legend, font: { size: 11 } } }, tooltip: { backgroundColor: tooltipBg, padding: 10 } },
+          plugins: {
+            legend: { position: 'bottom', labels: { color: legend, font: { size: 11 } } },
+            tooltip: { backgroundColor: tooltipBg, padding: 10 },
+          },
           scales: {
             x: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } },
             y: { ticks: { color: tick, font: { size: 9 } }, grid: { color: grid } },
@@ -489,15 +639,28 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
         data: {
           labels: data.map((s) => s.name),
           datasets: [
-            { label: this.i18n.t('analytics.orders'), data: data.map((s) => s.orderCount), backgroundColor: '#0891b2', borderRadius: 5 },
-            { label: this.i18n.t('analytics.items'), data: data.map((s) => s.itemCount), backgroundColor: '#f97316', borderRadius: 5 },
+            {
+              label: this.i18n.t('analytics.orders'),
+              data: data.map((s) => s.orderCount),
+              backgroundColor: '#0891b2',
+              borderRadius: 5,
+            },
+            {
+              label: this.i18n.t('analytics.items'),
+              data: data.map((s) => s.itemCount),
+              backgroundColor: '#f97316',
+              borderRadius: 5,
+            },
           ],
         },
         options: {
           indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: legend, font: { size: 11 } } }, tooltip: { backgroundColor: tooltipBg, padding: 10 } },
+          plugins: {
+            legend: { position: 'bottom', labels: { color: legend, font: { size: 11 } } },
+            tooltip: { backgroundColor: tooltipBg, padding: 10 },
+          },
           scales: {
             x: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } },
             y: { ticks: { color: tick, font: { size: 9 } }, grid: { color: grid } },
@@ -513,7 +676,14 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
         type: 'bar',
         data: {
           labels: data.map((s) => (s.name.length > 22 ? s.name.slice(0, 22) + '…' : s.name)),
-          datasets: [{ label: this.i18n.t('analytics.totalQty'), data: data.map((s) => s.totalQty), backgroundColor: '#b07a00', borderRadius: 5 }],
+          datasets: [
+            {
+              label: this.i18n.t('analytics.totalQty'),
+              data: data.map((s) => s.totalQty),
+              backgroundColor: '#b07a00',
+              borderRadius: 5,
+            },
+          ],
         },
         options: {
           indexAxis: 'y',
@@ -527,7 +697,9 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
               callbacks: {
                 afterLabel: (ctx) => {
                   const s = data[ctx.dataIndex];
-                  return s ? `${this.i18n.t('analytics.inNOrders').replace('{n}', String(s.orderCount))} · ${s.vehicles.size} ${this.i18n.t('analytics.vehicles')}` : '';
+                  return s
+                    ? `${this.i18n.t('analytics.inNOrders').replace('{n}', String(s.orderCount))} · ${s.vehicles.size} ${this.i18n.t('analytics.vehicles')}`
+                    : '';
                 },
               },
             },
@@ -563,10 +735,17 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { backgroundColor: tooltipBg, padding: 10 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: tooltipBg, padding: 10 },
+          },
           scales: {
             x: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } },
-            y: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid }, beginAtZero: true },
+            y: {
+              ticks: { color: tick, font: { size: 10 } },
+              grid: { color: grid },
+              beginAtZero: true,
+            },
           },
         },
       });
@@ -578,7 +757,11 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
   exportExcel(): void {
     switch (this.activeTab) {
       case 'vehicles':
-        exportToExcel(this.vehicleStats, this.vehicleExportColumns(), 'spare-parts-orders-by-vehicle');
+        exportToExcel(
+          this.vehicleStats,
+          this.vehicleExportColumns(),
+          'spare-parts-orders-by-vehicle',
+        );
         return;
       case 'technicians':
         exportToExcel(this.techStats, this.techExportColumns(), 'spare-parts-orders-by-technician');
@@ -590,15 +773,25 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
         exportToExcel(this.itemStats, this.itemExportColumns(), 'spare-parts-orders-by-item');
         return;
       case 'timeline':
-        exportToExcel(this.timelineData, this.timelineExportColumns(), 'spare-parts-orders-timeline');
+        exportToExcel(
+          this.timelineData,
+          this.timelineExportColumns(),
+          'spare-parts-orders-timeline',
+        );
         return;
       default: {
-        const statusRows = Object.entries(this.kpis.byStatus).map(([status, count]) => ({ status, count }));
+        const statusRows = Object.entries(this.kpis.byStatus).map(([status, count]) => ({
+          status,
+          count,
+        }));
         exportToExcel(
           statusRows,
           [
             { header: this.i18n.t('common.status'), accessor: (r: { status: string }) => r.status },
-            { header: this.i18n.t('analytics.orders'), accessor: (r: { count: number }) => r.count },
+            {
+              header: this.i18n.t('analytics.orders'),
+              accessor: (r: { count: number }) => r.count,
+            },
           ],
           'spare-parts-orders-overview',
         );
@@ -651,6 +844,326 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
       { header: this.i18n.t('analytics.month'), accessor: (r) => r.month },
       { header: this.i18n.t('analytics.orders'), accessor: (r) => r.count },
     ];
+  }
+
+  private buildColumns(): void {
+    this.vehicleColumns = [
+      {
+        key: 'plate',
+        header: this.i18n.t('analytics.plateNumber'),
+        sortable: true,
+        mono: true,
+        render: (r) => r.plate,
+      },
+      {
+        key: 'department',
+        header: this.i18n.t('analytics.department'),
+        sortable: true,
+        render: (r) => r.department,
+      },
+      {
+        key: 'orderCount',
+        header: this.i18n.t('analytics.orders'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.orderCount),
+      },
+      {
+        key: 'itemCount',
+        header: this.i18n.t('analytics.items'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.itemCount),
+      },
+      {
+        key: 'avgItems',
+        header: this.i18n.t('analytics.avgItemsPerOrder'),
+        mono: true,
+        align: 'end',
+        render: (r) => (r.orderCount ? (r.itemCount / r.orderCount).toFixed(1) : '—'),
+      },
+      {
+        key: 'latestDate',
+        header: this.i18n.t('analytics.lastOrder'),
+        sortable: true,
+        render: (r) =>
+          r.latestDate
+            ? new Date(r.latestDate).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              })
+            : '—',
+      },
+      {
+        key: 'statuses',
+        header: this.i18n.t('common.status'),
+        render: (r) =>
+          Object.entries(r.statuses)
+            .map(([k, v]) => `${k} (${v})`)
+            .join(', ') || '—',
+      },
+    ];
+
+    this.techColumns = [
+      {
+        key: 'name',
+        header: this.i18n.t('analytics.technician'),
+        sortable: true,
+        render: (r) => r.name,
+      },
+      {
+        key: 'orderCount',
+        header: this.i18n.t('analytics.orders'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.orderCount),
+      },
+      {
+        key: 'itemCount',
+        header: this.i18n.t('analytics.items'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.itemCount),
+      },
+      {
+        key: 'vehicles',
+        header: this.i18n.t('analytics.vehicles'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.vehicles.size),
+      },
+      {
+        key: 'departments',
+        header: this.i18n.t('analytics.departments'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.departments.size),
+      },
+    ];
+
+    this.deptColumns = [
+      {
+        key: 'name',
+        header: this.i18n.t('analytics.department'),
+        sortable: true,
+        render: (r) => r.name,
+      },
+      {
+        key: 'orderCount',
+        header: this.i18n.t('analytics.orders'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.orderCount),
+      },
+      {
+        key: 'itemCount',
+        header: this.i18n.t('analytics.items'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.itemCount),
+      },
+      {
+        key: 'vehicles',
+        header: this.i18n.t('analytics.vehicles'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.vehicles.size),
+      },
+      {
+        key: 'technicians',
+        header: this.i18n.t('analytics.technicians'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.technicians.size),
+      },
+    ];
+
+    this.itemColumns = [
+      {
+        key: 'name',
+        header: this.i18n.t('analytics.itemName'),
+        sortable: true,
+        render: (r) => r.name,
+      },
+      {
+        key: 'totalQty',
+        header: this.i18n.t('analytics.totalQty'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.totalQty),
+      },
+      {
+        key: 'orderCount',
+        header: this.i18n.t('analytics.orders'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.orderCount),
+      },
+      {
+        key: 'vehicles',
+        header: this.i18n.t('analytics.vehicles'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.vehicles.size),
+      },
+      {
+        key: 'latestDate',
+        header: this.i18n.t('analytics.lastOrder'),
+        sortable: true,
+        render: (r) =>
+          r.latestDate
+            ? new Date(r.latestDate).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              })
+            : '—',
+      },
+    ];
+
+    this.timelineColumns = [
+      {
+        key: 'month',
+        header: this.i18n.t('analytics.month'),
+        sortable: true,
+        render: (r) => r.month,
+      },
+      {
+        key: 'count',
+        header: this.i18n.t('analytics.orders'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.count),
+      },
+      {
+        key: 'pct',
+        header: this.i18n.t('analytics.percentOfTotal'),
+        mono: true,
+        align: 'end',
+        render: (r) => this.pct(r.count, this.kpis.orders) + '%',
+      },
+    ];
+  }
+
+  onVehicleQueryChange(q: DataTableQuery): void {
+    this.vehicleQuery = q;
+    this.applyVehicleQuery();
+    this.cdr.markForCheck();
+  }
+  onTechQueryChange(q: DataTableQuery): void {
+    this.techQuery = q;
+    this.applyTechQuery();
+    this.cdr.markForCheck();
+  }
+  onDeptQueryChange(q: DataTableQuery): void {
+    this.deptQuery = q;
+    this.applyDeptQuery();
+    this.cdr.markForCheck();
+  }
+  onItemQueryChange(q: DataTableQuery): void {
+    this.itemQuery = q;
+    this.applyItemQuery();
+    this.cdr.markForCheck();
+  }
+  onTimelineQueryChange(q: DataTableQuery): void {
+    this.timelineQuery = q;
+    this.applyTimelineQuery();
+    this.cdr.markForCheck();
+  }
+
+  private clientPage<T>(
+    source: T[],
+    q: DataTableQuery,
+    searchKeys: (keyof T)[],
+    sortValue?: (row: T, field: string) => any,
+  ): { rows: T[]; total: number } {
+    let filtered = [...source];
+    if (q.search?.trim()) {
+      const s = q.search.trim().toLowerCase();
+      filtered = filtered.filter((r) =>
+        searchKeys.some((k) =>
+          String((r as any)[k] ?? '')
+            .toLowerCase()
+            .includes(s),
+        ),
+      );
+    }
+    if (q.sort) {
+      const { field, dir } = q.sort;
+      const mul = dir === 'asc' ? 1 : -1;
+      filtered.sort((a, b) => {
+        const av = sortValue ? sortValue(a, field) : (a as any)[field];
+        const bv = sortValue ? sortValue(b, field) : (b as any)[field];
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * mul;
+        return String(av).localeCompare(String(bv)) * mul;
+      });
+    }
+    const total = filtered.length;
+    const start = (q.page - 1) * q.pageSize;
+    return { rows: filtered.slice(start, start + q.pageSize), total };
+  }
+
+  private applyVehicleQuery(): void {
+    const { rows, total } = this.clientPage(
+      this.vehicleStats,
+      this.vehicleQuery,
+      ['plate', 'department'],
+      (r, f) => {
+        if (f === 'vehicles' || f === 'statuses') return null;
+        return (r as any)[f];
+      },
+    );
+    this.vehicleRows = rows;
+    this.vehicleTotal = total;
+  }
+  private applyTechQuery(): void {
+    const { rows, total } = this.clientPage(this.techStats, this.techQuery, ['name'], (r, f) => {
+      if (f === 'vehicles') return r.vehicles.size;
+      if (f === 'departments') return r.departments.size;
+      return (r as any)[f];
+    });
+    this.techRows = rows;
+    this.techTotal = total;
+  }
+  private applyDeptQuery(): void {
+    const { rows, total } = this.clientPage(this.deptStats, this.deptQuery, ['name'], (r, f) => {
+      if (f === 'vehicles') return r.vehicles.size;
+      if (f === 'technicians') return r.technicians.size;
+      return (r as any)[f];
+    });
+    this.deptRows = rows;
+    this.deptTotal = total;
+  }
+  private applyItemQuery(): void {
+    const { rows, total } = this.clientPage(this.itemStats, this.itemQuery, ['name'], (r, f) => {
+      if (f === 'vehicles') return r.vehicles.size;
+      return (r as any)[f];
+    });
+    this.itemRows = rows;
+    this.itemTotal = total;
+  }
+  private applyTimelineQuery(): void {
+    const { rows, total } = this.clientPage(this.timelineData, this.timelineQuery, ['month']);
+    this.timelineRows = rows;
+    this.timelineTotal = total;
   }
 
   trackByName(_: number, item: { name?: string; plate?: string }): string {

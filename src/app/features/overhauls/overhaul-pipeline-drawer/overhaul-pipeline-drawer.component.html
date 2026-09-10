@@ -15,9 +15,9 @@
             <dt>{{ 'overhauls.machineShop' | translate }}</dt>
             <dd>{{ overhaul.external_workshops?.name || '—' }}</dd>
             <dt>{{ 'overhauls.entryDate' | translate }}</dt>
-            <dd>{{ overhaul.entry_date | date : 'mediumDate' }}</dd>
+            <dd>{{ overhaul.entry_date | date : 'dd/MM/yyyy' }}</dd>
             <dt>{{ 'overhauls.exitDate' | translate }}</dt>
-            <dd>{{ overhaul.exit_date ? (overhaul.exit_date | date : 'mediumDate') : '—' }}</dd>
+            <dd>{{ overhaul.exit_date ? (overhaul.exit_date | date : 'dd/MM/yyyy') : '—' }}</dd>
             <dt>{{ 'overhauls.totalDuration' | translate }}</dt>
             <dd class="mono">{{ totalDurationDays }} {{ 'overhauls.daysUnit' | translate }}</dd>
             <dt>{{ 'overhauls.totalCost' | translate }}</dt>
@@ -66,8 +66,8 @@
                 @for (s of stageHistory; track s.id) {
                   <tr>
                     <td>{{ stageLabels[s.stage] | translate }}</td>
-                    <td>{{ s.entered_at | date : 'mediumDate' }}</td>
-                    <td>{{ s.exited_at ? (s.exited_at | date : 'mediumDate') : '—' }}</td>
+                    <td>{{ s.entered_at | date : 'dd/MM/yyyy' }}</td>
+                    <td>{{ s.exited_at ? (s.exited_at | date : 'dd/MM/yyyy') : '—' }}</td>
                     <td class="mono">{{ formatDuration(s.duration_seconds) }}</td>
                   </tr>
                 }

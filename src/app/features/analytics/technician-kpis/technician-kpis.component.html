@@ -2,91 +2,65 @@
   <header class="panel-header">
     <div>
       <h2>{{ 'analytics.technicianKpisTitle' | translate }}</h2>
-      <p class="panel-subtitle">{{ rows.length }} {{ 'analytics.technicianCount' | translate }}</p>
+      <p class="panel-subtitle">{{ total }} {{ 'analytics.technicianCount' | translate }}</p>
     </div>
 
     <div class="panel-actions">
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!rows.length">
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!allRows.length">
         {{ 'common.exportExcel' | translate }}
       </button>
     </div>
   </header>
 
-  @if (loading) {
-    <div class="state-message">{{ 'analytics.loadingTechnicianKpis' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'analytics.technician' | translate }}</th>
-            <th>{{ 'analytics.workOrders' | translate }}</th>
-            <th>{{ 'analytics.bounces' | translate }}</th>
-            <th>{{ 'analytics.bounceRate' | translate }}</th>
-            <th>{{ 'analytics.disbursementRequests' | translate }}</th>
-            <th>{{ 'analytics.overhaulStages' | translate }}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (r of rows; track r.technician_id) {
-            <tr class="row-clickable" (click)="toggleBounces(r.technician_id)">
-              <td>{{ r.full_name }}</td>
-              <td class="mono">{{ r.work_orders_count }}</td>
-              <td class="mono">{{ r.bounces_count }}</td>
-              <td>
-                <div class="rate-bar" [attr.title]="bouncePercent(r.bounce_rate) + '%'">
-                  <div class="rate-bar__fill" [style.width.%]="bouncePercent(r.bounce_rate)"></div>
-                </div>
-                <span class="rate-label mono">{{ bouncePercent(r.bounce_rate) }}%</span>
-              </td>
-              <td class="mono">{{ r.disbursement_requests_count }}</td>
-              <td class="mono">{{ r.overhaul_stages_worked }}</td>
-              <td class="expand-cell">{{ expandedTechnicianId === r.technician_id ? '▲' : '▼' }}</td>
-            </tr>
-            @if (expandedTechnicianId === r.technician_id) {
-              <tr class="expanded-row">
-                <td colspan="7">
-                  @if (bouncesLoading) {
-                    <div class="state-message state-message--inline">{{ 'analytics.loadingBounceHistory' | translate }}</div>
-                  } @else if (bouncesError) {
-                    <div class="state-message state-message--error">{{ bouncesError }}</div>
-                  } @else if (!bounces.length) {
-                    <div class="state-message state-message--inline">{{ 'analytics.noBouncesRecorded' | translate }}</div>
-                  } @else {
-                    <table class="sub-table">
-                      <thead>
-                        <tr>
-                          <th>{{ 'common.date' | translate }}</th>
-                          <th>{{ 'analytics.reason' | translate }}</th>
-                          <th>{{ 'analytics.daysBetween' | translate }}</th>
-                          <th>{{ 'common.notes' | translate }}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (b of bounces; track b.id) {
-                          <tr>
-                            <td>{{ b.created_at | date : 'mediumDate' }}</td>
-                            <td>{{ b.reason }}</td>
-                            <td class="mono">{{ b.days_between ?? '—' }}</td>
-                            <td>{{ b.notes || '—' }}</td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  }
-                </td>
-              </tr>
-            }
-          } @empty {
-            <tr>
-              <td colspan="7" class="empty-row">{{ 'analytics.noTechnicianKpiData' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <app-data-table
+      [columns]="columns"
+      [rows]="rows"
+      [total]="total"
+      [loading]="loading"
+      [searchPlaceholder]="'analytics.technician' | translate"
+      [emptyMessage]="'analytics.noTechnicianKpiData' | translate"
+      actionsColumnKey="actions"
+      [pageSize]="currentQuery.pageSize"
+      (queryChange)="onQueryChange($event)"
+    ></app-data-table>
+
+    @if (expandedTechnicianId) {
+      <div class="bounce-detail">
+        <h3>{{ 'analytics.bounces' | translate }}</h3>
+        @if (bouncesLoading) {
+          <div class="state-message state-message--inline">{{ 'analytics.loadingBounceHistory' | translate }}</div>
+        } @else if (bouncesError) {
+          <div class="state-message state-message--error">{{ bouncesError }}</div>
+        } @else if (!bounces.length) {
+          <div class="state-message state-message--inline">{{ 'analytics.noBouncesRecorded' | translate }}</div>
+        } @else {
+          <div class="grid-wrapper">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <th>{{ 'common.date' | translate }}</th>
+                  <th>{{ 'analytics.reason' | translate }}</th>
+                  <th>{{ 'analytics.daysBetween' | translate }}</th>
+                  <th>{{ 'common.notes' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (b of bounces; track b.id) {
+                  <tr>
+                    <td>{{ b.created_at | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ b.reason }}</td>
+                    <td class="mono">{{ b.days_between ?? '—' }}</td>
+                    <td>{{ b.notes || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
   }
 </div>

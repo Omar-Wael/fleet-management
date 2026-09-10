@@ -25,7 +25,7 @@
             <dt>{{ 'common.phone' | translate }}</dt>
             <dd>{{ technician.phone || '—' }}</dd>
             <dt>{{ 'technicians.hireDate' | translate }}</dt>
-            <dd>{{ technician.hire_date ? (technician.hire_date | date : 'mediumDate') : '—' }}</dd>
+            <dd>{{ technician.hire_date ? (technician.hire_date | date : 'dd/MM/yyyy') : '—' }}</dd>
             <dt>{{ 'common.status' | translate }}</dt>
             <dd>
               @if (technician.is_active) {
@@ -74,7 +74,7 @@
                   <tr>
                     <td class="mono">{{ w.vehicles?.plate_number || '—' }}</td>
                     <td>{{ w.description }}</td>
-                    <td>{{ w.opened_at | date : 'mediumDate' }}</td>
+                    <td>{{ w.opened_at | date : 'dd/MM/yyyy' }}</td>
                     <td>
                       @if (w.closed_at) {
                         <span class="badge badge--ok">{{ 'technicians.statusClosed' | translate }}</span>
@@ -106,7 +106,7 @@
               <tbody>
                 @for (b of profile.bounces; track b.id) {
                   <tr>
-                    <td>{{ b.created_at | date : 'mediumDate' }}</td>
+                    <td>{{ b.created_at | date : 'dd/MM/yyyy' }}</td>
                     <td>{{ b.reason }}</td>
                     <td class="mono">{{ b.days_between ?? '—' }}</td>
                     <td>{{ b.notes || '—' }}</td>

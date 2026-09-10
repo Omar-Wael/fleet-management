@@ -145,13 +145,13 @@ export class OverhaulsListComponent implements OnInit {
         key: 'entry_date',
         header: this.i18n.t('overhauls.entryDate'),
         sortable: true,
-        render: (o) => this.datePipe.transform(o.entry_date, 'mediumDate') || '—',
+        render: (o) => this.datePipe.transform(o.entry_date, 'dd/MM/yyyy') || '—',
       },
       {
         key: 'exit_date',
         header: this.i18n.t('overhauls.exitDate'),
         sortable: true,
-        render: (o) => (o.exit_date ? this.datePipe.transform(o.exit_date, 'mediumDate') || '—' : '—'),
+        render: (o) => (o.exit_date ? this.datePipe.transform(o.exit_date, 'dd/MM/yyyy') || '—' : '—'),
       },
       {
         key: 'duration',

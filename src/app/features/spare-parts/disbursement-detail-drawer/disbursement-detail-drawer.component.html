@@ -31,7 +31,7 @@
             <dt>{{ 'spareParts.disbursement.colRequestedBy' | translate }}</dt>
             <dd>{{ technicianNames() }}</dd>
             <dt>{{ 'spareParts.disbursement.colRequestedAt' | translate }}</dt>
-            <dd>{{ request.requested_at | date : 'mediumDate' }}</dd>
+            <dd>{{ request.requested_at | date : 'dd/MM/yyyy' }}</dd>
             <dt>{{ 'spareParts.disbursementDrawer.issuedAt' | translate }}</dt>
             <dd>
               @if (editingIssuedAt) {
@@ -59,7 +59,7 @@
                 }
               } @else {
                 <span class="issued-at-view">
-                  {{ request.issued_at ? (request.issued_at | date : 'mediumDate') : '—' }}
+                  {{ request.issued_at ? (request.issued_at | date : 'dd/MM/yyyy') : '—' }}
                   <button type="button" class="icon-btn" (click)="startEditIssuedAt()" [attr.aria-label]="'common.edit' | translate">✏️</button>
                 </span>
               }
@@ -115,7 +115,7 @@
                   <td class="mono">{{ item.qty }}</td>
                   <td>{{ conditionLabel(item.condition) }}</td>
                   <td>{{ item.has_sample ? ('spareParts.yes' | translate) : ('spareParts.no' | translate) }}</td>
-                  <td>{{ item.last_ordered_date ? (item.last_ordered_date | date : 'mediumDate') : '—' }}</td>
+                  <td>{{ item.last_ordered_date ? (item.last_ordered_date | date : 'dd/MM/yyyy') : '—' }}</td>
                   <td class="mono">{{ item.unit_cost_at_issue != null ? (item.unit_cost_at_issue | number : '1.2-2') : '—' }}</td>
                 </tr>
               } @empty {
@@ -145,7 +145,7 @@
               <tbody>
                 @for (h of history; track h.id) {
                   <tr>
-                    <td>{{ h.changed_at | date : 'mediumDate' }}</td>
+                    <td>{{ h.changed_at | date : 'dd/MM/yyyy' }}</td>
                     <td>{{ statusLabelKeys[h.status] | translate }}</td>
                     <td>{{ h.changed_note || '—' }}</td>
                   </tr>

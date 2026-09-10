@@ -122,7 +122,7 @@ export class WorkOrdersListComponent implements OnInit {
         key: 'opened_at',
         header: this.i18n.t('maintenance.opened'),
         sortable: true,
-        render: (w) => this.datePipe.transform(w.opened_at, 'mediumDate') || '—',
+        render: (w) => this.datePipe.transform(w.opened_at, 'dd/MM/yyyy') || '—',
       },
       {
         key: 'status',

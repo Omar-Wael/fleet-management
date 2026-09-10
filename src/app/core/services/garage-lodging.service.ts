@@ -8,13 +8,18 @@ import { GarageLodging, VGarageVisitsThisYear } from '../models/fleet.models';
 
 /** Row shape for the "Garage Lodging" grid. */
 export interface GarageLodgingGridRow extends GarageLodging {
-  vehicles?: { plate_number: string };
+  vehicles?: {
+    plate_number: string;
+    vehicle_types?: { name_ar: string; name_en: string };
+    make?: string;
+    operating_departments?: { name_ar: string; name_en: string | null };
+  };
   garage_locations?: { garage_name: string; zone_label: string };
 }
 
 const GARAGE_LODGING_SELECT = `
   *,
-  vehicles (plate_number),
+  vehicles (plate_number, vehicle_types (name_ar, name_en), make, operating_departments (name_ar, name_en)),
   garage_locations (garage_name, zone_label)
 `;
 
@@ -72,7 +77,7 @@ export class GarageLodgingService {
    */
   checkIn(entry: Partial<GarageLodging>): Observable<GarageLodging> {
     return fromSupabase<GarageLodging>(
-      this.client.from('garage_lodgings').insert(entry).select().single()
+      this.client.from('garage_lodgings').insert(entry).select().single(),
     );
   }
 
@@ -95,7 +100,7 @@ export class GarageLodgingService {
    */
   bulkInsert(entries: Partial<GarageLodging>[]): Observable<GarageLodging[]> {
     return fromSupabase<GarageLodging[]>(
-      this.client.from('garage_lodgings').insert(entries).select()
+      this.client.from('garage_lodgings').insert(entries).select(),
     );
   }
 
@@ -103,16 +108,28 @@ export class GarageLodgingService {
    * Closes an open lodging by setting exit_date. The same trigger clears
    * vehicles.current_garage_location_id back to null.
    */
-  checkOut(lodgingId: string, exitDate: string = new Date().toISOString().slice(0, 10)): Observable<GarageLodging> {
+  checkOut(
+    lodgingId: string,
+    exitDate: string = new Date().toISOString().slice(0, 10),
+  ): Observable<GarageLodging> {
     return fromSupabase<GarageLodging>(
-      this.client.from('garage_lodgings').update({ exit_date: exitDate }).eq('id', lodgingId).select().single()
+      this.client
+        .from('garage_lodgings')
+        .update({ exit_date: exitDate })
+        .eq('id', lodgingId)
+        .select()
+        .single(),
     );
   }
 
   /** "Total Garage Visits this year" summary column, per vehicle. */
   getVisitsThisYear(vehicleId: string): Observable<VGarageVisitsThisYear | null> {
     return fromSupabase<VGarageVisitsThisYear[]>(
-      this.client.from('v_garage_visits_this_year').select('*').eq('vehicle_id', vehicleId).limit(1)
+      this.client
+        .from('v_garage_visits_this_year')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .limit(1),
     ).pipe(switchMap((rows) => of(rows[0] ?? null)));
   }
 }

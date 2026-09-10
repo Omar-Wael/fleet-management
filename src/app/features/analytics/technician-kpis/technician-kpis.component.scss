@@ -202,3 +202,30 @@
     font-size: 0.6875rem;
   }
 }
+
+.bounce-detail {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--fleet-line, #dfe3e8);
+  border-radius: 8px;
+  background: var(--fleet-surface, #fff);
+}
+.bounce-detail h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+.sub-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.sub-table th,
+.sub-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--fleet-line, #dfe3e8);
+  text-align: start;
+}
+.sub-table .mono {
+  font-variant-numeric: tabular-nums;
+}
+

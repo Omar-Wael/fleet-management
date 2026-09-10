@@ -151,7 +151,7 @@ export class VendorDirectoryComponent implements OnInit {
         header: this.i18n.t('spareParts.vendors.colLastPurchase'),
         render: (v) =>
           v.performance?.last_purchase_date
-            ? this.datePipe.transform(v.performance.last_purchase_date, 'mediumDate') || '—'
+            ? this.datePipe.transform(v.performance.last_purchase_date, 'dd/MM/yyyy') || '—'
             : '—',
       },
       {

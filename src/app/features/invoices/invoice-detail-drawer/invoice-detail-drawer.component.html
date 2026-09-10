@@ -15,7 +15,7 @@
             <dt>{{ 'invoices.vendor' | translate }}</dt>
             <dd>{{ invoice.external_workshops?.name || '—' }}</dd>
             <dt>{{ 'invoices.invoiceDate' | translate }}</dt>
-            <dd>{{ invoice.invoice_date | date : 'mediumDate' }}</dd>
+            <dd>{{ invoice.invoice_date | date : 'dd/MM/yyyy' }}</dd>
             <dt>{{ 'invoices.source' | translate }}</dt>
             <dd>{{ invoice.invoice_source || '—' }}</dd>
             <dt>{{ 'invoices.subtotal' | translate }}</dt>

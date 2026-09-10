@@ -142,7 +142,7 @@ export class TechniciansListComponent implements OnInit {
         header: this.i18n.t('technicians.hireDate'),
         sortable: true,
         render: (t) =>
-          t.hire_date ? this.datePipe.transform(t.hire_date, 'mediumDate') || '—' : '—',
+          t.hire_date ? this.datePipe.transform(t.hire_date, 'dd/MM/yyyy') || '—' : '—',
       },
       {
         key: 'status',

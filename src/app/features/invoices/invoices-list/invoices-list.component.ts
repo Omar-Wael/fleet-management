@@ -160,7 +160,7 @@ export class InvoicesListComponent implements OnInit {
         key: 'invoice_date',
         header: this.i18n.t('common.date'),
         sortable: true,
-        render: (inv) => this.datePipe.transform(inv.invoice_date, 'mediumDate') || '—',
+        render: (inv) => this.datePipe.transform(inv.invoice_date, 'dd/MM/yyyy') || '—',
       },
       {
         key: 'subtotal_value',

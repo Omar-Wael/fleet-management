@@ -110,7 +110,7 @@
               }
             </dd>
             <dt>{{ 'vehicles.lastReadingDate' | translate }}</dt>
-            <dd>{{ profile.vehicle.last_odometer_reading_date | date: 'mediumDate' }}</dd>
+            <dd>{{ profile.vehicle.last_odometer_reading_date | date: 'dd/MM/yyyy' }}</dd>
           </dl>
         </section>
 
@@ -129,7 +129,7 @@
           @if (profile.lastWorkOrder) {
             <dl>
               <dt>{{ 'vehicles.opened' | translate }}</dt>
-              <dd>{{ profile.lastWorkOrder.opened_at | date: 'mediumDate' }}</dd>
+              <dd>{{ profile.lastWorkOrder.opened_at | date: 'dd/MM/yyyy' }}</dd>
               <dt>{{ 'vehicles.description' | translate }}</dt>
               <dd>{{ profile.lastWorkOrder.description }}</dd>
               <dt>{{ 'vehicles.totalCost' | translate }}</dt>
@@ -147,7 +147,7 @@
             <dd>
               {{
                 profile.lastOilChange?.change_date
-                  ? (profile.lastOilChange!.change_date | date: 'mediumDate')
+                  ? (profile.lastOilChange!.change_date | date: 'dd/MM/yyyy')
                   : '—'
               }}
             </dd>
@@ -155,7 +155,7 @@
             <dd>
               {{
                 profile.lastFilterChange?.change_date
-                  ? (profile.lastFilterChange!.change_date | date: 'mediumDate')
+                  ? (profile.lastFilterChange!.change_date | date: 'dd/MM/yyyy')
                   : '—'
               }}
             </dd>
@@ -167,11 +167,11 @@
           @if (profile.licensing) {
             <dl>
               <dt>{{ 'vehicles.licenseExpiry' | translate }}</dt>
-              <dd>{{ profile.licensing.license_expiry_date | date: 'mediumDate' }}</dd>
+              <dd>{{ profile.licensing.license_expiry_date | date: 'dd/MM/yyyy' }}</dd>
               <dt>{{ 'vehicles.inspectionDue' | translate }}</dt>
-              <dd>{{ profile.licensing.inspection_due_date | date: 'mediumDate' }}</dd>
+              <dd>{{ profile.licensing.inspection_due_date | date: 'dd/MM/yyyy' }}</dd>
               <dt>{{ 'vehicles.insuranceExpiry' | translate }}</dt>
-              <dd>{{ profile.licensing.insurance_expiry_date | date: 'mediumDate' }}</dd>
+              <dd>{{ profile.licensing.insurance_expiry_date | date: 'dd/MM/yyyy' }}</dd>
             </dl>
           } @else {
             <p class="muted">{{ 'vehicles.noLicensingRecord' | translate }}</p>
@@ -182,7 +182,7 @@
           <h3>{{ 'vehicles.sectionClutchKit' | translate }}</h3>
           <dl>
             <dt>{{ 'vehicles.lastChangeDate' | translate }}</dt>
-            <dd>{{ profile.vehicle.clutch_kit_last_change_date | date: 'mediumDate' }}</dd>
+            <dd>{{ profile.vehicle.clutch_kit_last_change_date | date: 'dd/MM/yyyy' }}</dd>
             <dt>{{ 'vehicles.lastChangeOdometer' | translate }}</dt>
             <dd class="mono">{{ profile.vehicle.clutch_kit_last_change_odometer | number }}</dd>
           </dl>

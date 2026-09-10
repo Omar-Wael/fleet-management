@@ -2,26 +2,39 @@
   <header class="panel-header">
     <div>
       <h2>{{ 'analytics.sparePartsOrdersTitle' | translate }}</h2>
-      <p class="panel-subtitle">
-        {{ kpis.orders }} {{ 'analytics.orderCount' | translate }}
-      </p>
+      <p class="panel-subtitle">{{ kpis.orders }} {{ 'analytics.orderCount' | translate }}</p>
     </div>
 
     <div class="panel-actions">
       <label class="date-field">
         <span>{{ 'analytics.from' | translate }}</span>
-        <input type="date" [(ngModel)]="filterFrom" [ngModelOptions]="{ standalone: true }" (change)="onFilterChange()" />
+        <input
+          type="date"
+          [(ngModel)]="filterFrom"
+          [ngModelOptions]="{ standalone: true }"
+          (change)="onFilterChange()"
+        />
       </label>
       <label class="date-field">
         <span>{{ 'analytics.to' | translate }}</span>
-        <input type="date" [(ngModel)]="filterTo" [ngModelOptions]="{ standalone: true }" (change)="onFilterChange()" />
+        <input
+          type="date"
+          [(ngModel)]="filterTo"
+          [ngModelOptions]="{ standalone: true }"
+          (change)="onFilterChange()"
+        />
       </label>
       @if (filterFrom || filterTo) {
         <button type="button" class="btn btn--ghost" (click)="clearFilters()">
           {{ 'common.clear' | translate }}
         </button>
       }
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!kpis.orders">
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="exportExcel()"
+        [disabled]="!kpis.orders"
+      >
         {{ 'common.exportExcel' | translate }}
       </button>
     </div>
@@ -33,22 +46,52 @@
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
     <div class="sub-tab-nav">
-      <button type="button" class="sub-tab-btn" [class.sub-tab-btn--active]="activeTab === 'overview'" (click)="setTab('overview')">
+      <button
+        type="button"
+        class="sub-tab-btn"
+        [class.sub-tab-btn--active]="activeTab === 'overview'"
+        (click)="setTab('overview')"
+      >
         {{ 'analytics.tabOverview' | translate }}
       </button>
-      <button type="button" class="sub-tab-btn" [class.sub-tab-btn--active]="activeTab === 'vehicles'" (click)="setTab('vehicles')">
+      <button
+        type="button"
+        class="sub-tab-btn"
+        [class.sub-tab-btn--active]="activeTab === 'vehicles'"
+        (click)="setTab('vehicles')"
+      >
         {{ 'analytics.vehicles' | translate }}
       </button>
-      <button type="button" class="sub-tab-btn" [class.sub-tab-btn--active]="activeTab === 'technicians'" (click)="setTab('technicians')">
+      <button
+        type="button"
+        class="sub-tab-btn"
+        [class.sub-tab-btn--active]="activeTab === 'technicians'"
+        (click)="setTab('technicians')"
+      >
         {{ 'analytics.technicians' | translate }}
       </button>
-      <button type="button" class="sub-tab-btn" [class.sub-tab-btn--active]="activeTab === 'departments'" (click)="setTab('departments')">
+      <button
+        type="button"
+        class="sub-tab-btn"
+        [class.sub-tab-btn--active]="activeTab === 'departments'"
+        (click)="setTab('departments')"
+      >
         {{ 'analytics.departments' | translate }}
       </button>
-      <button type="button" class="sub-tab-btn" [class.sub-tab-btn--active]="activeTab === 'items'" (click)="setTab('items')">
+      <button
+        type="button"
+        class="sub-tab-btn"
+        [class.sub-tab-btn--active]="activeTab === 'items'"
+        (click)="setTab('items')"
+      >
         {{ 'analytics.items' | translate }}
       </button>
-      <button type="button" class="sub-tab-btn" [class.sub-tab-btn--active]="activeTab === 'timeline'" (click)="setTab('timeline')">
+      <button
+        type="button"
+        class="sub-tab-btn"
+        [class.sub-tab-btn--active]="activeTab === 'timeline'"
+        (click)="setTab('timeline')"
+      >
         {{ 'analytics.tabTimeline' | translate }}
       </button>
     </div>
@@ -98,7 +141,9 @@
               <tbody>
                 @for (entry of objectEntries(kpis.byStatus); track entry[0]) {
                   <tr>
-                    <td><span class="badge">{{ entry[0] }}</span></td>
+                    <td>
+                      <span class="badge">{{ entry[0] }}</span>
+                    </td>
                     <td>{{ entry[1] }}</td>
                     <td>{{ pct(entry[1], kpis.orders) }}%</td>
                   </tr>
@@ -109,209 +154,68 @@
         }
 
         @case ('vehicles') {
-          <div class="sort-row">
-            <span>{{ 'analytics.sortBy' | translate }}</span>
-            <button type="button" class="sort-btn" [class.sort-btn--active]="vehicleSort === 'orders'" (click)="setVehicleSort('orders')">{{ 'analytics.orders' | translate }}</button>
-            <button type="button" class="sort-btn" [class.sort-btn--active]="vehicleSort === 'items'" (click)="setVehicleSort('items')">{{ 'analytics.items' | translate }}</button>
-          </div>
-          <div class="grid-wrapper">
-            <table class="grid-table">
-              <thead>
-                <tr>
-                  <th>{{ 'analytics.plateNumber' | translate }}</th>
-                  <th>{{ 'analytics.department' | translate }}</th>
-                  <th>{{ 'analytics.orders' | translate }}</th>
-                  <th>{{ 'analytics.items' | translate }}</th>
-                  <th>{{ 'analytics.avgItemsPerOrder' | translate }}</th>
-                  <th>{{ 'analytics.lastOrder' | translate }}</th>
-                  <th>{{ 'common.status' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (v of vehicleStats; track trackByName($index, v)) {
-                  <tr>
-                    <td>{{ v.plate }}</td>
-                    <td>{{ v.department }}</td>
-                    <td>
-                      <div class="inline-bar-wrap">
-                        <div class="sl-bar-wrap"><div class="inline-bar" [style.width.%]="barPct(v.orderCount, vehicleStats, 'orderCount')"></div></div>
-                        <span>{{ v.orderCount }}</span>
-                      </div>
-                    </td>
-                    <td>{{ v.itemCount }}</td>
-                    <td>{{ v.orderCount ? (v.itemCount / v.orderCount | number: '1.1-1') : '—' }}</td>
-                    <td>{{ v.latestDate | date: 'mediumDate' }}</td>
-                    <td>
-                      @for (entry of objectEntries(v.statuses); track entry[0]) {
-                        <span class="badge">{{ entry[0] }} ({{ entry[1] }})</span>
-                      }
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="7" class="empty-row">{{ 'analytics.noSparePartsOrdersData' | translate }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
+          <app-data-table
+            [columns]="vehicleColumns"
+            [rows]="vehicleRows"
+            [total]="vehicleTotal"
+            [loading]="false"
+            [searchPlaceholder]="'analytics.plateNumber' | translate"
+            [emptyMessage]="'analytics.noSparePartsOrdersData' | translate"
+            [pageSize]="10"
+            (queryChange)="onVehicleQueryChange($event)"
+          ></app-data-table>
         }
 
         @case ('technicians') {
-          <div class="sort-row">
-            <span>{{ 'analytics.sortBy' | translate }}</span>
-            <button type="button" class="sort-btn" [class.sort-btn--active]="techSort === 'orders'" (click)="setTechSort('orders')">{{ 'analytics.orders' | translate }}</button>
-            <button type="button" class="sort-btn" [class.sort-btn--active]="techSort === 'items'" (click)="setTechSort('items')">{{ 'analytics.items' | translate }}</button>
-          </div>
-          <div class="grid-wrapper">
-            <table class="grid-table">
-              <thead>
-                <tr>
-                  <th>{{ 'analytics.technician' | translate }}</th>
-                  <th>{{ 'analytics.orders' | translate }}</th>
-                  <th>{{ 'analytics.percentOfTotal' | translate }}</th>
-                  <th>{{ 'analytics.items' | translate }}</th>
-                  <th>{{ 'analytics.vehicles' | translate }}</th>
-                  <th>{{ 'analytics.department' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (t of techStats; track trackByName($index, t)) {
-                  <tr>
-                    <td>{{ t.name }}</td>
-                    <td>
-                      <div class="inline-bar-wrap">
-                        <div class="sl-bar-wrap"><div class="inline-bar bar-teal" [style.width.%]="barPct(t.orderCount, techStats, 'orderCount')"></div></div>
-                        <span>{{ t.orderCount }}</span>
-                      </div>
-                    </td>
-                    <td>{{ pct(t.orderCount, kpis.orders) }}%</td>
-                    <td>{{ t.itemCount }}</td>
-                    <td>{{ t.vehicles.size }}</td>
-                    <td>{{ t.departments.size }}</td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="6" class="empty-row">{{ 'analytics.noSparePartsOrdersData' | translate }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
+          <app-data-table
+            [columns]="techColumns"
+            [rows]="techRows"
+            [total]="techTotal"
+            [loading]="false"
+            [searchPlaceholder]="'analytics.technician' | translate"
+            [emptyMessage]="'analytics.noSparePartsOrdersData' | translate"
+            [pageSize]="10"
+            (queryChange)="onTechQueryChange($event)"
+          ></app-data-table>
         }
 
         @case ('departments') {
-          <div class="sort-row">
-            <span>{{ 'analytics.sortBy' | translate }}</span>
-            <button type="button" class="sort-btn" [class.sort-btn--active]="deptSort === 'orders'" (click)="setDeptSort('orders')">{{ 'analytics.orders' | translate }}</button>
-            <button type="button" class="sort-btn" [class.sort-btn--active]="deptSort === 'items'" (click)="setDeptSort('items')">{{ 'analytics.items' | translate }}</button>
-          </div>
-          <div class="grid-wrapper">
-            <table class="grid-table">
-              <thead>
-                <tr>
-                  <th>{{ 'analytics.department' | translate }}</th>
-                  <th>{{ 'analytics.orders' | translate }}</th>
-                  <th>{{ 'analytics.percentOfTotal' | translate }}</th>
-                  <th>{{ 'analytics.items' | translate }}</th>
-                  <th>{{ 'analytics.vehicles' | translate }}</th>
-                  <th>{{ 'analytics.technician' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (d of deptStats; track trackByName($index, d)) {
-                  <tr>
-                    <td>{{ d.name }}</td>
-                    <td>
-                      <div class="inline-bar-wrap">
-                        <div class="sl-bar-wrap"><div class="inline-bar bar-green" [style.width.%]="barPct(d.orderCount, deptStats, 'orderCount')"></div></div>
-                        <span>{{ d.orderCount }}</span>
-                      </div>
-                    </td>
-                    <td>{{ pct(d.orderCount, kpis.orders) }}%</td>
-                    <td>{{ d.itemCount }}</td>
-                    <td>{{ d.vehicles.size }}</td>
-                    <td>{{ d.technicians.size }}</td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="6" class="empty-row">{{ 'analytics.noSparePartsOrdersData' | translate }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
+          <app-data-table
+            [columns]="deptColumns"
+            [rows]="deptRows"
+            [total]="deptTotal"
+            [loading]="false"
+            [searchPlaceholder]="'analytics.department' | translate"
+            [emptyMessage]="'analytics.noSparePartsOrdersData' | translate"
+            [pageSize]="10"
+            (queryChange)="onDeptQueryChange($event)"
+          ></app-data-table>
         }
 
         @case ('items') {
-          <div class="sort-row">
-            <input
-              type="text"
-              class="item-search"
-              [(ngModel)]="itemSearch"
-              [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="onItemSearchChange()"
-              [placeholder]="'analytics.searchItems' | translate"
-            />
-            <span>{{ 'analytics.sortBy' | translate }}</span>
-            <button type="button" class="sort-btn" [class.sort-btn--active]="itemSort === 'qty'" (click)="setItemSort('qty')">{{ 'analytics.totalQty' | translate }}</button>
-            <button type="button" class="sort-btn" [class.sort-btn--active]="itemSort === 'orders'" (click)="setItemSort('orders')">{{ 'analytics.orders' | translate }}</button>
-          </div>
-          <div class="grid-wrapper">
-            <table class="grid-table">
-              <thead>
-                <tr>
-                  <th>{{ 'analytics.itemName' | translate }}</th>
-                  <th>{{ 'analytics.totalQty' | translate }}</th>
-                  <th>{{ 'analytics.orders' | translate }}</th>
-                  <th>{{ 'analytics.vehicles' | translate }}</th>
-                  <th>{{ 'analytics.lastOrder' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (it of itemStats; track trackByName($index, it)) {
-                  <tr>
-                    <td>{{ it.name }}</td>
-                    <td>
-                      <div class="inline-bar-wrap">
-                        <div class="sl-bar-wrap"><div class="inline-bar bar-amber" [style.width.%]="barPct(it.totalQty, itemStats, 'totalQty')"></div></div>
-                        <span>{{ it.totalQty }}</span>
-                      </div>
-                    </td>
-                    <td>{{ it.orderCount }}</td>
-                    <td>{{ it.vehicles.size }}</td>
-                    <td>{{ it.latestDate | date: 'mediumDate' }}</td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="5" class="empty-row">{{ 'analytics.noSparePartsOrdersData' | translate }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
+          <app-data-table
+            [columns]="itemColumns"
+            [rows]="itemRows"
+            [total]="itemTotal"
+            [loading]="false"
+            [searchPlaceholder]="'analytics.searchItems' | translate"
+            [emptyMessage]="'analytics.noSparePartsOrdersData' | translate"
+            [pageSize]="10"
+            (queryChange)="onItemQueryChange($event)"
+          ></app-data-table>
         }
 
         @case ('timeline') {
-          <div class="grid-wrapper">
-            <table class="grid-table">
-              <thead>
-                <tr>
-                  <th>{{ 'analytics.month' | translate }}</th>
-                  <th>{{ 'analytics.orders' | translate }}</th>
-                  <th>{{ 'analytics.percentOfTotal' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of timelineData; track row.month) {
-                  <tr>
-                    <td>{{ row.month }}</td>
-                    <td>
-                      <div class="inline-bar-wrap wide">
-                        <div class="sl-bar-wrap"><div class="inline-bar bar-blue" [style.width.%]="barPct(row.count, timelineData, 'count')"></div></div>
-                        <span>{{ row.count }}</span>
-                      </div>
-                    </td>
-                    <td>{{ pct(row.count, kpis.orders) }}%</td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="3" class="empty-row">{{ 'analytics.noSparePartsOrdersData' | translate }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
+          <app-data-table
+            [columns]="timelineColumns"
+            [rows]="timelineRows"
+            [total]="timelineTotal"
+            [loading]="false"
+            [searchPlaceholder]="'analytics.month' | translate"
+            [emptyMessage]="'analytics.noSparePartsOrdersData' | translate"
+            [pageSize]="10"
+            (queryChange)="onTimelineQueryChange($event)"
+          ></app-data-table>
         }
       }
     }

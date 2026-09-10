@@ -5,8 +5,9 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges, ChangeDetectionStrategy,
-  ChangeDetectorRef
+  SimpleChanges,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -21,14 +22,16 @@ import {
 } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
 
 @Component({
   selector: 'app-garage-lodging-form',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule, TranslatePipe, SharedSearchableSelectComponent],
   templateUrl: './garage-lodging-form.component.html',
   styleUrls: ['./garage-lodging-form.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GarageLodgingFormComponent implements OnInit, OnChanges {
   @Input() open = false;
@@ -38,8 +41,8 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
 
   form: FormGroup;
 
-  vehicles: VehicleWithLookups[] = [];
-  garageLocations: GarageLocation[] = [];
+  vehicles: SearchableSelectOption[] = [];
+  garageLocations: SearchableSelectOption[] = [];
 
   lookupsLoading = true;
   lookupsError: string | null = null;
@@ -85,13 +88,20 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
       garageLocations: this.lookupsService.listGarageLocations(),
     }).subscribe({
       next: ({ vehicles, garageLocations }) => {
-        this.vehicles = vehicles;
-        this.garageLocations = garageLocations;
+        this.vehicles = vehicles.map((v) => ({
+          value: v.id,
+          label: v.plate_number,
+        }));
+        this.garageLocations = garageLocations.map((l) => ({
+          value: l.id,
+          label: l.garage_name,
+        }));
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.lookupsError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
@@ -118,7 +128,8 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
       error: (err) => {
         this.saving = false;
         this.cdr.markForCheck();
-        this.saveError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.saveError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
