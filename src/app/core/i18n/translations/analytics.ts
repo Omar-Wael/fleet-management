@@ -51,6 +51,8 @@ export const ANALYTICS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'analytics.noBouncesRecorded': { en: 'No repair bounces recorded.', ar: 'لا توجد أعطال متكررة مسجلة.' },
   'analytics.reason': { en: 'Reason', ar: 'السبب' },
   'analytics.daysBetween': { en: 'Days Between', ar: 'عدد الأيام بين البلاغين' },
+  'analytics.viewBounces': { en: 'View bounces', ar: 'عرض الأعطال' },
+  'analytics.hideBounces': { en: 'Hide bounces', ar: 'إخفاء الأعطال' },
   'analytics.noTechnicianKpiData': { en: 'No technician KPI data yet.', ar: 'لا توجد بيانات أداء للفنيين بعد.' },
   'analytics.failedLoadTechnicianKpis': {
     en: 'Failed to load technician KPIs.',

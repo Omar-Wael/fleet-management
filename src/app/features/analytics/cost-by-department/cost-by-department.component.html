@@ -3,52 +3,34 @@
     <div>
       <h2>{{ 'analytics.departmentCostTitle' | translate }}</h2>
       <p class="panel-subtitle">
-        {{ rows.length }} {{ 'analytics.departmentCount' | translate }} &middot;
-        {{ 'analytics.total' | translate }} {{ totalCost | number : '1.2-2' }}
+        {{ total }} {{ 'analytics.departmentCount' | translate }} &middot;
+        {{ 'analytics.total' | translate }} {{ totalCost | number: '1.2-2' }}
       </p>
     </div>
 
     <div class="panel-actions">
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!rows.length">
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()" [disabled]="!allRows.length">
         {{ 'common.exportExcel' | translate }}
       </button>
     </div>
   </header>
 
-  @if (loading) {
-    <div class="state-message">{{ 'analytics.loadingDepartmentCost' | translate }}</div>
-  } @else if (loadError) {
+  @if (loadError) {
     <div class="state-message state-message--error">{{ loadError }}</div>
   } @else {
     <div class="chart-card">
       <canvas #costChartCanvas></canvas>
     </div>
 
-    <div class="grid-wrapper">
-      <table class="grid-table">
-        <thead>
-          <tr>
-            <th>{{ 'analytics.department' | translate }}</th>
-            <th>{{ 'analytics.vehicles' | translate }}</th>
-            <th>{{ 'analytics.totalCost' | translate }}</th>
-            <th>{{ 'analytics.avgCostPerVehicle' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (r of rows; track r.operating_department_id) {
-            <tr>
-              <td>{{ r.department_name_en || r.department_name_ar }}</td>
-              <td class="mono">{{ r.vehicle_count }}</td>
-              <td class="mono">{{ r.total_cost | number : '1.2-2' }}</td>
-              <td class="mono">{{ r.avg_cost_per_vehicle | number : '1.2-2' }}</td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="4" class="empty-row">{{ 'analytics.noDepartmentCostData' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <app-data-table
+      [columns]="columns"
+      [rows]="rows"
+      [total]="total"
+      [loading]="loading"
+      [searchPlaceholder]="'analytics.department' | translate"
+      [emptyMessage]="'analytics.noDepartmentCostData' | translate"
+      [pageSize]="currentQuery.pageSize"
+      (queryChange)="onQueryChange($event)"
+    ></app-data-table>
   }
 </div>

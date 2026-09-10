@@ -18,26 +18,26 @@
         <div class="field-grid">
           <label class="field">
             <span>{{ 'garageLodging.vehicle' | translate }} *</span>
-            <select formControlName="vehicle_id">
-              <option [ngValue]="''" disabled>{{ 'garageLodging.selectVehicle' | translate }}</option>
-              @for (v of vehicles; track v.id) {
-                <option [ngValue]="v.id">{{ v.plate_number }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="vehicle_id"
+              [options]="vehicles"
+              [placeholder]="'garageLodging.selectVehicle' | translate"
+              [clearable]="true"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
             <span>{{ 'garageLodging.garageLocation' | translate }}</span>
-            <select formControlName="garage_location_id">
-              <option [ngValue]="null">{{ 'garageLodging.unassigned' | translate }}</option>
-              @for (g of garageLocations; track g.id) {
-                <option [ngValue]="g.id">{{ g.garage_name }} ({{ g.zone_label }})</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="garage_location_id"
+              [options]="garageLocations"
+              [placeholder]="'garageLodging.garage' | translate"
+              [clearable]="true"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
-            <span>{{ 'garageLodging.entryDate' | translate }} *</span>
+            <span>{{ 'garageLodging.entryDate' | translate }} * (mm/dd/yyyy)</span>
             <input type="date" formControlName="entry_date" />
           </label>
 
@@ -52,7 +52,9 @@
         }
 
         <footer class="slide-over-footer">
-          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
+          <button type="button" class="btn btn--ghost" (click)="close()" [disabled]="saving">
+            {{ 'common.cancel' | translate }}
+          </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
             {{ (saving ? 'common.saving' : 'garageLodging.checkIn') | translate }}
           </button>

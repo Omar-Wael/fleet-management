@@ -23,6 +23,11 @@
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   white-space: nowrap;
+  text-decoration: none;
+}
+
+.tab-btn:hover {
+  color: var(--fleet-primary, #1e3a5f);
 }
 
 .tab-btn--active {

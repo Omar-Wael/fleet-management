@@ -1,62 +1,41 @@
 <div class="tab-nav">
-  <button
-    type="button"
+  <a
+    routerLink="vehicle-cost"
+    routerLinkActive="tab-btn--active"
     class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'vehicle-cost'"
-    (click)="setTab('vehicle-cost')"
   >
     {{ 'analytics.tabVehicleCost' | translate }}
-  </button>
-  <button
-    type="button"
+  </a>
+  <a
+    routerLink="department-cost"
+    routerLinkActive="tab-btn--active"
     class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'department-cost'"
-    (click)="setTab('department-cost')"
   >
     {{ 'analytics.tabDepartmentCost' | translate }}
-  </button>
-  <button
-    type="button"
+  </a>
+  <a
+    routerLink="technician-kpis"
+    routerLinkActive="tab-btn--active"
     class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'technician-kpis'"
-    (click)="setTab('technician-kpis')"
   >
     {{ 'analytics.tabTechnicianKpis' | translate }}
-  </button>
-  <button
-    type="button"
+  </a>
+  <a
+    routerLink="vendor-pricing"
+    routerLinkActive="tab-btn--active"
     class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'vendor-pricing'"
-    (click)="setTab('vendor-pricing')"
   >
     {{ 'analytics.tabVendorPricing' | translate }}
-  </button>
-  <button
-    type="button"
+  </a>
+  <a
+    routerLink="spare-parts-orders"
+    routerLinkActive="tab-btn--active"
     class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'spare-parts-orders'"
-    (click)="setTab('spare-parts-orders')"
   >
     {{ 'analytics.tabSparePartsOrders' | translate }}
-  </button>
+  </a>
 </div>
 
 <div class="tab-content">
-  @switch (activeTab) {
-    @case ('vehicle-cost') {
-      <app-cost-by-vehicle></app-cost-by-vehicle>
-    }
-    @case ('department-cost') {
-      <app-cost-by-department></app-cost-by-department>
-    }
-    @case ('technician-kpis') {
-      <app-technician-kpis></app-technician-kpis>
-    }
-    @case ('vendor-pricing') {
-      <app-vendor-price-comparison></app-vendor-price-comparison>
-    }
-    @case ('spare-parts-orders') {
-      <app-spare-parts-orders></app-spare-parts-orders>
-    }
-  }
+  <router-outlet></router-outlet>
 </div>

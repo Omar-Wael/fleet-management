@@ -95,7 +95,7 @@
               <tbody>
                 @for (h of history; track h.id) {
                   <tr>
-                    <td>{{ h.purchase_date | date : 'mediumDate' }}</td>
+                    <td>{{ h.purchase_date | date : 'dd/MM/yyyy' }}</td>
                     <td>{{ vendorName(h.vendor_id) }}</td>
                     <td class="mono">{{ h.unit_price | number : '1.2-2' }}</td>
                     <td class="mono">{{ h.quantity }}</td>

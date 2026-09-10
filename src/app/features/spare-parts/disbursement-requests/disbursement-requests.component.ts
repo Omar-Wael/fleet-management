@@ -219,13 +219,13 @@ export class DisbursementRequestsComponent implements OnInit {
         key: 'requested_at',
         header: this.i18n.t('spareParts.disbursement.requestedAt'),
         sortable: true,
-        render: (r) => this.datePipe.transform(r.requested_at, 'mediumDate') || '—',
+        render: (r) => this.datePipe.transform(r.requested_at, 'dd/MM/yyyy') || '—',
       },
       {
         key: 'issued_at',
         header: this.i18n.t('spareParts.disbursement.issuedAt'),
         sortable: true,
-        render: (r) => (r.issued_at ? this.datePipe.transform(r.issued_at, 'mediumDate') || '—' : '—'),
+        render: (r) => (r.issued_at ? this.datePipe.transform(r.issued_at, 'dd/MM/yyyy') || '—' : '—'),
       },
       {
         key: 'parts',

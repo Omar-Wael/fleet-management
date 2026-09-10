@@ -1,38 +1,14 @@
-import { Component, ChangeDetectionStrategy} from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
-import { CostByVehicleComponent } from '../cost-by-vehicle/cost-by-vehicle.component';
-import { CostByDepartmentComponent } from '../cost-by-department/cost-by-department.component';
-import { TechnicianKpisComponent } from '../technician-kpis/technician-kpis.component';
-import { VendorPriceComparisonComponent } from '../vendor-price-comparison/vendor-price-comparison.component';
-import { SparePartsOrdersComponent } from '../spare-parts-orders/spare-parts-orders.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-
-type AnalyticsTab =
-  | 'vehicle-cost'
-  | 'department-cost'
-  | 'technician-kpis'
-  | 'vendor-pricing'
-  | 'spare-parts-orders';
 
 @Component({
   selector: 'app-analytics-page',
   standalone: true,
-  imports: [
-    TranslatePipe,
-    CostByVehicleComponent,
-    CostByDepartmentComponent,
-    TechnicianKpisComponent,
-    VendorPriceComparisonComponent,
-    SparePartsOrdersComponent,
-  ],
+  imports: [TranslatePipe, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './analytics-page.component.html',
   styleUrls: ['./analytics-page.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AnalyticsPageComponent {
-  activeTab: AnalyticsTab = 'vehicle-cost';
-
-  setTab(tab: AnalyticsTab): void {
-    this.activeTab = tab;
-  }
-}
+export class AnalyticsPageComponent {}

@@ -91,7 +91,7 @@
               <tbody>
                 @for (s of profile.swapHistory; track s.id) {
                   <tr>
-                    <td>{{ s.swap_date | date : 'mediumDate' }}</td>
+                    <td>{{ s.swap_date | date : 'dd/MM/yyyy' }}</td>
                     <td>{{ (s.new_engine_id === engine.id ? 'engines.roleInstalled' : 'engines.roleRemoved') | translate }}</td>
                     <td class="mono">{{ s.odometer_km_at_swap ?? '—' }}</td>
                     <td>{{ s.reason || '—' }}</td>

@@ -120,11 +120,11 @@
             <tbody>
               @for (c of changes; track c.id) {
                 <tr>
-                  <td>{{ c.change_date | date : 'mediumDate' }}</td>
+                  <td>{{ c.change_date | date : 'dd/MM/yyyy' }}</td>
                   <td>{{ c.change_type }}</td>
                   <td class="mono">{{ c.odometer_reading | number }} {{ c.odometer_unit }}</td>
                   <td class="mono">{{ c.next_due_reading ?? '—' }}</td>
-                  <td>{{ c.next_due_date ? (c.next_due_date | date : 'mediumDate') : '—' }}</td>
+                  <td>{{ c.next_due_date ? (c.next_due_date | date : 'dd/MM/yyyy') : '—' }}</td>
                   <td>{{ technicianName(c.technician_id) }}</td>
                   <td class="notes-cell" [title]="c.notes || ''">{{ c.notes || '—' }}</td>
                 </tr>

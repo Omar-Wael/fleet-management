@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { GarageLodgingFormComponent } from '../garage-lodging-form/garage-lodging-form.component';
@@ -10,8 +10,16 @@ import {
 } from '../../../core/services/garage-lodging.service';
 import { VehiclesService } from '../../../core/services/vehicles.service';
 import { LookupsService } from '../../../core/services/lookups.service';
-import { GarageLocation, VGarageVisitsThisYear, VehicleWithLookups } from '../../../core/models/fleet.models';
-import { exportToExcel, ExcelExportColumn, downloadImportTemplate } from '../../../shared/utils/excel-import-export.util';
+import {
+  GarageLocation,
+  VGarageVisitsThisYear,
+  VehicleWithLookups,
+} from '../../../core/models/fleet.models';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { importFileWithMapping } from '../../../shared/utils/document-import.util';
 import {
@@ -24,7 +32,11 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 @Component({
   selector: 'app-garage-lodging-list',
@@ -33,8 +45,9 @@ import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../share
   templateUrl: './garage-lodging-list.component.html',
   styleUrls: ['./garage-lodging-list.component.scss'],
   providers: [DatePipe],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
+
 export class GarageLodgingListComponent implements OnInit {
   rows: GarageLodgingGridRow[] = [];
   total = 0;
@@ -104,7 +117,32 @@ export class GarageLodgingListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
-      { key: 'vehicle', header: this.i18n.t('garageLodging.vehicle'), mono: true, render: (l) => l.vehicles?.plate_number || '—' },
+      {
+        key: 'vehicle',
+        header: this.i18n.t('garageLodging.vehicle'),
+        mono: true,
+        render: (l) => l.vehicles?.plate_number || '—',
+      },
+      {
+        key: 'vehicle_type',
+        header: this.i18n.t('vehicles.vehicleType'),
+        render: (l) =>
+          l.vehicles?.vehicle_types?.name_ar || l.vehicles?.vehicle_types?.name_en || '—',
+      },
+      {
+        key: 'make',
+        header: this.i18n.t('vehicles.make'),
+        sortable: true,
+        render: (l) => l.vehicles?.make || '—',
+      },
+      {
+        key: 'operating_dept',
+        header: this.i18n.t('vehicles.operatingDept'),
+        render: (l) =>
+          l.vehicles?.operating_departments?.name_ar ||
+          l.vehicles?.operating_departments?.name_en ||
+          '—',
+      },
       {
         key: 'garage',
         header: this.i18n.t('garageLodging.garage'),
@@ -125,13 +163,14 @@ export class GarageLodgingListComponent implements OnInit {
         key: 'entry_date',
         header: this.i18n.t('garageLodging.entryDate'),
         sortable: true,
-        render: (l) => this.datePipe.transform(l.entry_date, 'mediumDate') || '—',
+        render: (l) => this.datePipe.transform(l.entry_date, 'dd/MM/yyyy') || '—',
       },
       {
         key: 'exit_date',
         header: this.i18n.t('garageLodging.exitDate'),
         sortable: true,
-        render: (l) => (l.exit_date ? this.datePipe.transform(l.exit_date, 'mediumDate') || '—' : '—'),
+        render: (l) =>
+          l.exit_date ? this.datePipe.transform(l.exit_date, 'dd/MM/yyyy') || '—' : '—',
       },
       {
         key: 'duration',
@@ -154,7 +193,9 @@ export class GarageLodgingListComponent implements OnInit {
         align: 'end',
         actions: (l) => [
           {
-            label: this.i18n.t(this.checkingOutId === l.id ? 'garageLodging.checkingOut' : 'garageLodging.checkOut'),
+            label: this.i18n.t(
+              this.checkingOutId === l.id ? 'garageLodging.checkingOut' : 'garageLodging.checkOut',
+            ),
             onClick: (l) => this.checkOut(l),
             hidden: (l) => !!l.exit_date,
             disabled: (l) => this.checkingOutId === l.id,
@@ -201,7 +242,8 @@ export class GarageLodgingListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -266,7 +308,8 @@ export class GarageLodgingListComponent implements OnInit {
       },
       error: (err) => {
         this.checkingOutId = null;
-        this.checkOutError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.checkOutError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -320,24 +363,30 @@ export class GarageLodgingListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+            this.importError =
+              err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       });
   }
 
   downloadTemplate(): void {
-    downloadImportTemplate(GARAGE_LODGING_IMPORT_TEMPLATE_HEADERS, 'garage-lodging-import-template', {
-      'Plate Number': this.vehicles[0]?.plate_number || 'e.g. ABC-1234',
-      Garage: this.garageLocations[0]?.garage_name || '',
-      Reason: 'Body work',
-      'Entry Date': new Date().toISOString().slice(0, 10),
-      'Exit Date': '',
-    });
+    downloadImportTemplate(
+      GARAGE_LODGING_IMPORT_TEMPLATE_HEADERS,
+      'garage-lodging-import-template',
+      {
+        'Plate Number': this.vehicles[0]?.plate_number || 'e.g. ABC-1234',
+        Garage: this.garageLocations[0]?.garage_name || '',
+        Reason: 'Body work',
+        'Entry Date': new Date().toISOString().slice(0, 10),
+        'Exit Date': '',
+      },
+    );
   }
 
   // -------------------------------------------------------------
@@ -349,7 +398,8 @@ export class GarageLodgingListComponent implements OnInit {
     this.garageLodgingService.listAllMatching(this.currentQuery).subscribe({
       next: (rows) => exportToExcel(rows, this.excelColumns(), 'garage-lodging-export'),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -368,7 +418,8 @@ export class GarageLodgingListComponent implements OnInit {
           'garage-lodging-report',
         ),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
