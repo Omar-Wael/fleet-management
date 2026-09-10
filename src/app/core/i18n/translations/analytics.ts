@@ -15,6 +15,12 @@ export const ANALYTICS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'analytics.totalCost': { en: 'Total Cost', ar: 'إجمالي التكلفة' },
   'analytics.plateNumber': { en: 'Plate Number', ar: 'رقم اللوحة' },
   'analytics.allDepartments': { en: 'All Departments', ar: 'كل الإدارات' },
+  'analytics.garageVisits': { en: 'Garage Visits', ar: 'زيارات الورشة' },
+  'analytics.garageDays': { en: 'Garage Days', ar: 'أيام المبيت' },
+  'analytics.frequencyComparison': {
+    en: 'Frequency (orders / disbursements / visits)',
+    ar: 'التردد (أوامر شغل / صرف / زيارات)',
+  },
 
   // Cost by Department
   'analytics.departmentCostTitle': { en: 'Cost by Department', ar: 'التكلفة حسب الإدارة' },

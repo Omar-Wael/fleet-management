@@ -49,6 +49,14 @@ export const routes: Routes = [
     title: 'Garage Lodging',
   },
   {
+    path: 'vehicle-missions',
+    loadChildren: () =>
+      import('./features/vehicle-missions/vehicle-missions.routes').then(
+        (m) => m.VEHICLE_MISSIONS_ROUTES,
+      ),
+    title: 'Vehicle Missions',
+  },
+  {
     path: 'engines',
     loadChildren: () => import('./features/engines/engines.routes').then((m) => m.ENGINES_ROUTES),
     title: 'Engines',

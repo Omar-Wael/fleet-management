@@ -3,7 +3,14 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>{{ 'garageLodging.checkInTitle' | translate }}</h2>
+      <h2>
+        {{
+          (isEditMode || savedEntityId
+            ? 'garageLodging.editTitle'
+            : 'garageLodging.checkInTitle'
+          ) | translate
+        }}
+      </h2>
       <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
     </header>
 
@@ -37,15 +44,39 @@
           </label>
 
           <label class="field">
-            <span>{{ 'garageLodging.entryDate' | translate }} * (mm/dd/yyyy)</span>
+            <span>{{ 'garageLodging.entryDate' | translate }} *</span>
             <input type="date" formControlName="entry_date" />
           </label>
+
+          @if (isEditMode) {
+            <label class="field">
+              <span>{{ 'garageLodging.exitDate' | translate }}</span>
+              <input type="date" formControlName="exit_date" />
+            </label>
+          }
 
           <label class="field field--wide">
             <span>{{ 'garageLodging.reason' | translate }} *</span>
             <textarea formControlName="reason" rows="3"></textarea>
           </label>
+
+          <label class="field field--wide">
+            <span>{{ 'garageLodging.notes' | translate }}</span>
+            <textarea formControlName="notes" rows="2" [placeholder]="'garageLodging.notesPlaceholder' | translate"></textarea>
+          </label>
         </div>
+
+        @if (savedEntityId) {
+          <div class="images-section">
+            <h3 class="section-title">{{ 'garageLodging.images' | translate }}</h3>
+            <app-entity-image-upload
+              entityType="garage_lodging"
+              [entityId]="savedEntityId"
+            ></app-entity-image-upload>
+          </div>
+        } @else {
+          <p class="hint">{{ 'garageLodging.imagesAfterSaveHint' | translate }}</p>
+        }
 
         @if (saveError) {
           <div class="state-message state-message--error">{{ saveError }}</div>
@@ -56,7 +87,14 @@
             {{ 'common.cancel' | translate }}
           </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ (saving ? 'common.saving' : 'garageLodging.checkIn') | translate }}
+            {{
+              (saving
+                ? 'common.saving'
+                : isEditMode
+                  ? 'common.save'
+                  : 'garageLodging.checkIn'
+              ) | translate
+            }}
           </button>
         </footer>
       </form>

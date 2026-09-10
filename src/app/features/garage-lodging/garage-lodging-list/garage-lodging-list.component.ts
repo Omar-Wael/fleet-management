@@ -70,6 +70,7 @@ export class GarageLodgingListComponent implements OnInit {
   vehicleStatLoading = false;
 
   formOpen = false;
+  editingLodging: GarageLodgingGridRow | null = null;
 
   checkingOutId: string | null = null;
   checkOutError: string | null = null;
@@ -160,6 +161,12 @@ export class GarageLodgingListComponent implements OnInit {
         render: (l) => l.reason,
       },
       {
+        key: 'notes',
+        header: this.i18n.t('garageLodging.notes'),
+        truncate: true,
+        render: (l) => l.notes || '—',
+      },
+      {
         key: 'entry_date',
         header: this.i18n.t('garageLodging.entryDate'),
         sortable: true,
@@ -193,12 +200,16 @@ export class GarageLodgingListComponent implements OnInit {
         align: 'end',
         actions: (l) => [
           {
+            label: this.i18n.t('garageLodging.edit'),
+            onClick: (row) => this.openEditForm(row),
+          },
+          {
             label: this.i18n.t(
               this.checkingOutId === l.id ? 'garageLodging.checkingOut' : 'garageLodging.checkOut',
             ),
-            onClick: (l) => this.checkOut(l),
-            hidden: (l) => !!l.exit_date,
-            disabled: (l) => this.checkingOutId === l.id,
+            onClick: (row) => this.checkOut(row),
+            hidden: (row) => !!row.exit_date,
+            disabled: (row) => this.checkingOutId === row.id,
           },
         ],
       },
@@ -280,15 +291,23 @@ export class GarageLodgingListComponent implements OnInit {
   }
 
   openCheckInForm(): void {
+    this.editingLodging = null;
+    this.formOpen = true;
+  }
+
+  openEditForm(lodging: GarageLodgingGridRow): void {
+    this.editingLodging = lodging;
     this.formOpen = true;
   }
 
   onFormClosed(): void {
     this.formOpen = false;
+    this.editingLodging = null;
   }
 
   onFormSaved(): void {
     this.formOpen = false;
+    this.editingLodging = null;
     this.reloadLodgingsOnly();
   }
 

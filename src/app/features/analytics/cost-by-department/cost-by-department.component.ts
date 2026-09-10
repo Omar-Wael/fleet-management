@@ -111,6 +111,30 @@ export class CostByDepartmentComponent implements OnInit, AfterViewInit, OnDestr
             maximumFractionDigits: 2,
           }).format(Number(r.avg_cost_per_vehicle) || 0),
       },
+      {
+        key: 'work_orders_count',
+        header: this.i18n.t('analytics.workOrders'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.work_orders_count ?? 0),
+      },
+      {
+        key: 'disbursement_requests_count',
+        header: this.i18n.t('analytics.disbursementRequests'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.disbursement_requests_count ?? 0),
+      },
+      {
+        key: 'garage_visits_count',
+        header: this.i18n.t('analytics.garageVisits'),
+        sortable: true,
+        mono: true,
+        align: 'end',
+        render: (r) => String(r.garage_visits_count ?? 0),
+      },
     ];
   }
 
