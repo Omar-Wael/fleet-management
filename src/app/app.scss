@@ -41,13 +41,6 @@
   display: none;
 }
 
-// Below this width the sidebar can no longer share space with the content
-// column (240px eats too much of a phone/tablet viewport), so it becomes
-// an off-canvas drawer instead — toggled by the hamburger button in
-// AppHeaderComponent via LayoutService, and closed by tapping the
-// backdrop or a nav link. `inset-inline-start` (rather than `left`/
-// `transform: translateX`) keeps the slide-in direction correct for both
-// LTR and RTL without any extra overrides.
 @media (max-width: 1024px) {
   .shell {
     grid-template-columns: 1fr;
@@ -104,6 +97,12 @@
   font-size: 1.0625rem;
 }
 
+.shell-nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .shell-nav-link {
   display: flex;
   flex-direction: column;
@@ -137,16 +136,98 @@
   }
 }
 
+.shell-nav-link--sub {
+  padding-inline-start: 1.25rem;
+  font-size: 0.8125rem;
+}
+
 .shell-nav-label-ar {
-  // font-size: 0.75rem;
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.55);
 }
 
+.shell-nav-link.active .shell-nav-label-ar,
+.shell-nav-link:hover .shell-nav-label-ar {
+  color: #fff;
+}
+
+.nav-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.nav-category-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.875rem;
+  text-align: start;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  .shell-nav-label-ar {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+}
+
+.nav-category-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+
+  .shell-nav-label-ar {
+    color: #fff;
+  }
+}
+
+.nav-chevron {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.nav-category.expanded .nav-chevron {
+  transform: rotate(180deg);
+}
+
+.nav-subitems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  padding-bottom: 0.25rem;
+}
+
 .shell-main {
   background: var(--fleet-bg);
-  min-height: 100vh;
+  /* ارتفاع ثابت لنافذة العرض — الـ header يفضل فوق والمحتوى يسكرول تحته */
+  height: 100vh;
+  max-height: 100vh;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* مهم: مفيش scroll على الـ main نفسه */
+}
+
+.shell-content {
+  flex: 1 1 auto;
+  min-height: 0; /* يسمح لـ overflow يشتغل جوه flex child */
   min-width: 0;
   overflow-x: hidden;
-  max-width: 100%;
+  overflow-y: auto; /* السكرول هنا فقط */
 }

@@ -3,8 +3,17 @@
 
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
-      <h2>{{ overhaul?.vehicles?.plate_number || ('overhauls.detailFallbackTitle' | translate) }}</h2>
-      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
+      <h2>
+        {{ overhaul?.vehicles?.plate_number || ('overhauls.detailFallbackTitle' | translate) }}
+      </h2>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="close()"
+        [attr.aria-label]="'common.close' | translate"
+      >
+        ✕
+      </button>
     </header>
 
     @if (overhaul) {
@@ -15,13 +24,15 @@
             <dt>{{ 'overhauls.machineShop' | translate }}</dt>
             <dd>{{ overhaul.external_workshops?.name || '—' }}</dd>
             <dt>{{ 'overhauls.entryDate' | translate }}</dt>
-            <dd>{{ overhaul.entry_date | date : 'dd/MM/yyyy' }}</dd>
+            <dd>{{ overhaul.entry_date | date: 'dd/MM/yyyy' }}</dd>
             <dt>{{ 'overhauls.exitDate' | translate }}</dt>
-            <dd>{{ overhaul.exit_date ? (overhaul.exit_date | date : 'dd/MM/yyyy') : '—' }}</dd>
+            <dd>{{ overhaul.exit_date ? (overhaul.exit_date | date: 'dd/MM/yyyy') : '—' }}</dd>
             <dt>{{ 'overhauls.totalDuration' | translate }}</dt>
             <dd class="mono">{{ totalDurationDays }} {{ 'overhauls.daysUnit' | translate }}</dd>
             <dt>{{ 'overhauls.totalCost' | translate }}</dt>
-            <dd class="mono">{{ totalCost | number : '1.2-2' }}</dd>
+            <dd class="mono">{{ totalCost | number: '1.2-2' }}</dd>
+            <dt>{{ 'overhauls.technicians' | translate }}</dt>
+            <dd>{{ technicianLabel }}</dd>
           </dl>
         </section>
 
@@ -46,6 +57,66 @@
           </div>
         </section>
 
+        <section class="linked-finance">
+          <h3>{{ 'overhauls.linkedFinance' | translate }}</h3>
+
+          @if (linkedLoading) {
+            <p class="muted">{{ 'common.loading' | translate }}</p>
+          } @else if (!linkedFinance.length) {
+            <p class="muted">{{ 'overhauls.noLinkedFinance' | translate }}</p>
+          } @else {
+            <ul class="linked-list">
+              @for (tx of linkedFinance; track tx.id) {
+                <li class="linked-item">
+                  <div class="linked-main">
+                    <span class="badge">{{
+                      tx.channel === 'check'
+                        ? ('overhauls.check' | translate)
+                        : ('overhauls.pettyCash' | translate)
+                    }}</span>
+                    <strong class="mono">{{ tx.amount | number: '1.2-2' }}</strong>
+                    @if (tx.check_number) {
+                      <span class="muted">#{{ tx.check_number }}</span>
+                    }
+                    @if (tx.check_stage) {
+                      <span class="muted">({{ tx.check_stage }})</span>
+                    }
+                  </div>
+
+                  @if (tx.invoices?.length) {
+                    <div class="linked-sub">
+                      {{ 'overhauls.invoices' | translate }}:
+                      @for (inv of tx.invoices; track inv.id) {
+                        <span class="mono">{{ inv.invoice_no }}</span>
+                        @if (inv.total_value != null) {
+                          <span>({{ inv.total_value | number: '1.2-2' }})</span>
+                        }
+                      }
+                    </div>
+                  }
+
+                  @if (tx.stock_disbursement_requests) {
+                    <div class="linked-sub">
+                      {{ 'overhauls.disbursement' | translate }}:
+                      <span class="mono">
+                        {{
+                          tx.stock_disbursement_requests.request_number ||
+                            tx.stock_disbursement_requests.id
+                        }}
+                      </span>
+                      <span class="muted">({{ tx.stock_disbursement_requests.status }})</span>
+                    </div>
+                  }
+
+                  <button type="button" class="btn btn--ghost btn--sm" (click)="unlinkTx(tx.id)">
+                    {{ 'overhauls.unlink' | translate }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
         <section class="profile-section">
           <h3>{{ 'overhauls.stageHistorySection' | translate }}</h3>
           @if (loading) {
@@ -66,8 +137,8 @@
                 @for (s of stageHistory; track s.id) {
                   <tr>
                     <td>{{ stageLabels[s.stage] | translate }}</td>
-                    <td>{{ s.entered_at | date : 'dd/MM/yyyy' }}</td>
-                    <td>{{ s.exited_at ? (s.exited_at | date : 'dd/MM/yyyy') : '—' }}</td>
+                    <td>{{ s.entered_at | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ s.exited_at ? (s.exited_at | date: 'dd/MM/yyyy') : '—' }}</td>
                     <td class="mono">{{ formatDuration(s.duration_seconds) }}</td>
                   </tr>
                 }
@@ -88,7 +159,12 @@
 
             <div class="advance-actions">
               @for (stage of remainingStages; track stage) {
-                <button type="button" class="btn btn--primary" [disabled]="advancing" (click)="advanceTo(stage)">
+                <button
+                  type="button"
+                  class="btn btn--primary"
+                  [disabled]="advancing"
+                  (click)="advanceTo(stage)"
+                >
                   @if (advancing) {
                     {{ 'overhauls.updatingStatus' | translate }}
                   } @else {

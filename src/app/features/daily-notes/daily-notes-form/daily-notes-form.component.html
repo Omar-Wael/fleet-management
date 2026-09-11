@@ -1,0 +1,69 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="slide-over" role="dialog" aria-modal="true">
+    <header class="slide-over-header">
+      <h2>
+        {{
+          (isEditMode ? 'dailyNotes.formTitleEdit' : 'dailyNotes.formTitleNew') | translate
+        }}
+      </h2>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="close()"
+        [attr.aria-label]="'common.close' | translate"
+      >
+        ✕
+      </button>
+    </header>
+
+    @if (lookupsLoading) {
+      <div class="state-message">{{ 'dailyNotes.loadingList' | translate }}</div>
+    } @else {
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
+        @if (lookupsError) {
+          <div class="state-message state-message--error">{{ lookupsError }}</div>
+        }
+        @if (saveError) {
+          <div class="state-message state-message--error">{{ saveError }}</div>
+        }
+
+        <div class="field-grid">
+          <label class="field">
+            <span>{{ 'dailyNotes.vehicle' | translate }}</span>
+            <app-searchable-select
+              formControlName="vehicle_id"
+              [options]="vehicles"
+              [placeholder]="'dailyNotes.selectVehicle' | translate"
+              [clearable]="true"
+            ></app-searchable-select>
+          </label>
+
+          <label class="field">
+            <span>{{ 'dailyNotes.noteDate' | translate }} *</span>
+            <input type="date" formControlName="note_date" />
+          </label>
+
+          <label class="field field--wide">
+            <span>{{ 'dailyNotes.notes' | translate }} *</span>
+            <textarea
+              formControlName="notes"
+              rows="5"
+              [placeholder]="'dailyNotes.notesPlaceholder' | translate"
+            ></textarea>
+          </label>
+        </div>
+
+        <footer class="slide-over-footer">
+          <button type="button" class="btn btn--ghost" (click)="close()">
+            {{ 'dailyNotes.cancel' | translate }}
+          </button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving">
+            {{ 'dailyNotes.save' | translate }}
+          </button>
+        </footer>
+      </form>
+    }
+  </aside>
+}

@@ -1,9 +1,20 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy,
-  ChangeDetectorRef
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
 } from '@angular/core';
 
-import { OverhaulsService, OverhaulGridRow } from '../../../core/services/overhauls.service';
+import {
+  OverhaulsService,
+  OverhaulGridRow,
+  OverhaulLinkedTransaction,
+} from '../../../core/services/overhauls.service';
 import { OverhaulStage, OverhaulStageName } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -36,9 +47,11 @@ const STAGE_LABEL_KEYS: Record<OverhaulStageName, string> = {
   imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './overhaul-pipeline-drawer.component.html',
   styleUrls: ['./overhaul-pipeline-drawer.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverhaulPipelineDrawerComponent implements OnChanges {
+  linkedFinance: OverhaulLinkedTransaction[] = [];
+  linkedLoading = false;
   @Input() overhaul: OverhaulGridRow | null = null;
   @Input() open = false;
 
@@ -60,15 +73,14 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
 
     private overhaulsService: OverhaulsService,
     readonly i18n: TranslationService,
-  ) {
-
-  }
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     const shouldLoad =
       this.open && this.overhaul && (changes['overhaul'] || (changes['open'] && this.open));
     if (shouldLoad) {
       this.loadHistory();
+      this.loadLinkedFinance();
     }
   }
 
@@ -87,7 +99,8 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedLoadStageHistory');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('overhauls.failedLoadStageHistory');
         this.cdr.markForCheck();
         this.loading = false;
         this.cdr.markForCheck();
@@ -110,6 +123,13 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
 
   get totalCost(): number {
     return (this.overhaul?.financial_transactions ?? []).reduce((sum, ft) => sum + ft.amount, 0);
+  }
+
+  get technicianLabel(): string {
+    const names = (this.overhaul?.overhaul_technicians ?? [])
+      .map((t) => t.technicians?.full_name)
+      .filter(Boolean);
+    return names.length ? names.join('، ') : '—';
   }
 
   formatDuration(seconds: number | null): string {
@@ -136,12 +156,37 @@ export class OverhaulPipelineDrawerComponent implements OnChanges {
       error: (err) => {
         this.advancing = false;
         this.cdr.markForCheck();
-        this.advanceError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedAdvanceStage');
+        this.advanceError =
+          err instanceof Error ? err.message : this.i18n.t('overhauls.failedAdvanceStage');
       },
     });
   }
 
   close(): void {
     this.closed.emit();
+  }
+
+  loadLinkedFinance(): void {
+    if (!this.overhaul) return;
+    this.linkedLoading = true;
+    this.cdr.markForCheck();
+    this.overhaulsService.getLinkedFinance(this.overhaul.id).subscribe({
+      next: (rows) => {
+        this.linkedFinance = rows;
+        this.linkedLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.linkedFinance = [];
+        this.linkedLoading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  unlinkTx(txId: string): void {
+    this.overhaulsService.unlinkFinancialTransaction(txId).subscribe({
+      next: () => this.loadLinkedFinance(),
+    });
   }
 }

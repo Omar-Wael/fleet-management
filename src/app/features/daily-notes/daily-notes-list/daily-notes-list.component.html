@@ -1,0 +1,36 @@
+<div class="notes-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'dailyNotes.title' | translate }}</h1>
+      <p class="page-subtitle">{{ total }} {{ 'dailyNotes.shown' | translate }}</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn--primary" (click)="openNew()">
+        {{ 'dailyNotes.addButton' | translate }}
+      </button>
+    </div>
+  </header>
+
+  @if (loadError) {
+    <div class="state-message state-message--error">{{ loadError }}</div>
+  }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [searchPlaceholder]="'dailyNotes.searchPlaceholder' | translate"
+    [emptyMessage]="'dailyNotes.noResults' | translate"
+    actionsColumnKey="actions"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
+</div>
+
+<app-daily-notes-form
+  [open]="formOpen"
+  [note]="editingNote"
+  (closed)="onFormClosed()"
+  (saved)="onFormSaved()"
+></app-daily-notes-form>

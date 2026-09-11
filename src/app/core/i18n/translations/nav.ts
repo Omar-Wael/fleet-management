@@ -15,6 +15,11 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'nav.analytics': { en: 'Analytics', ar: 'التحليلات' },
   'nav.reports': { en: 'Reports', ar: 'التقارير' },
   'nav.settings': { en: 'Settings', ar: 'الإعدادات' },
+  'nav.dailyNotes': { en: 'Daily Notes', ar: 'الملاحظات اليومية' },
   'nav.langToggle': { en: 'العربية', ar: 'English' },
   'nav.menu': { en: 'Menu', ar: 'القائمة' },
+  'nav.catFleet': { en: 'Fleet', ar: 'الأسطول' },
+  'nav.catMaintenance': { en: 'Maintenance', ar: 'الصيانة' },
+  'nav.catPartsFinance': { en: 'Parts & Finance', ar: 'القطع والمالية' },
+  'nav.catInsights': { en: 'Insights', ar: 'التقارير والتحليلات' },
 };
