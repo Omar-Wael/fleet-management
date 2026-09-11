@@ -3,8 +3,17 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>{{ 'overhauls.formTitle' | translate }}</h2>
-      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
+      <h2>
+        {{ (isEditMode ? 'overhauls.editTitle' : 'overhauls.formTitle') | translate }}
+      </h2>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="close()"
+        [attr.aria-label]="'common.close' | translate"
+      >
+        ✕
+      </button>
     </header>
 
     @if (lookupsLoading) {
@@ -15,37 +24,134 @@
           <div class="state-message state-message--error">{{ lookupsError }}</div>
         }
 
-        <div class="field-grid">
-          <label class="field">
-            <span>{{ 'overhauls.fieldVehicle' | translate }}</span>
-            <select formControlName="vehicle_id">
-              <option [ngValue]="''" disabled>{{ 'overhauls.selectVehicle' | translate }}</option>
-              @for (v of vehicles; track v.id) {
-                <option [ngValue]="v.id">{{ v.plate_number }}</option>
-              }
-            </select>
-          </label>
+        <section class="form-section">
+          <h3 class="form-section-title">{{ 'overhauls.sectionBasics' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'overhauls.fieldVehicle' | translate }}</span>
+              <app-searchable-select
+                formControlName="vehicle_id"
+                [options]="vehicles"
+                [placeholder]="'overhauls.selectVehicle' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
+            </label>
 
-          <label class="field">
-            <span>{{ 'overhauls.machineShop' | translate }}</span>
-            <select formControlName="machine_shop_id">
-              <option [ngValue]="null">{{ 'overhauls.tbd' | translate }}</option>
-              @for (m of machineShops; track m.id) {
-                <option [ngValue]="m.id">{{ m.name }}</option>
-              }
-            </select>
-          </label>
+            <label class="field">
+              <span>{{ 'overhauls.department' | translate }}</span>
+              <input
+                type="text"
+                [value]="selectedVehicleMeta?.department || ('overhauls.autoFill' | translate)"
+                disabled
+              />
+            </label>
 
-          <label class="field">
-            <span>{{ 'overhauls.fieldEntryDate' | translate }}</span>
-            <input type="date" formControlName="entry_date" />
-          </label>
+            <label class="field">
+              <span>{{ 'overhauls.scope' | translate }} *</span>
+              <input
+                type="text"
+                formControlName="scope_description"
+                [placeholder]="'overhauls.scopePlaceholder' | translate"
+              />
+            </label>
 
-          <label class="field field--wide">
-            <span>{{ 'overhauls.fieldScopeDescription' | translate }}</span>
-            <textarea formControlName="scope_description" rows="4"></textarea>
-          </label>
-        </div>
+            <label class="field">
+              <span>{{ 'overhauls.currentStage' | translate }} *</span>
+              <app-searchable-select
+                formControlName="current_stage"
+                [options]="stageOptions"
+                [placeholder]="'overhauls.selectStage' | translate"
+                [clearable]="false"
+              ></app-searchable-select>
+            </label>
+
+            <label class="field">
+              <span>{{ 'overhauls.make' | translate }}</span>
+              <input type="text" [value]="selectedVehicleMeta?.make || '—'" disabled />
+            </label>
+
+            <label class="field">
+              <span>{{ 'overhauls.model' | translate }}</span>
+              <input type="text" [value]="selectedVehicleMeta?.model || '—'" disabled />
+            </label>
+
+            <label class="field">
+              <span>{{ 'overhauls.year' | translate }}</span>
+              <input type="text" [value]="selectedVehicleMeta?.year || '—'" disabled />
+            </label>
+
+            <label class="field">
+              <span>{{ 'overhauls.machineShop' | translate }}</span>
+              <app-searchable-select
+                formControlName="machine_shop_id"
+                [options]="machineShops"
+                [placeholder]="'overhauls.selectMachineShop' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
+            </label>
+
+            <label class="field">
+              <span>{{ 'overhauls.fieldEntryDate' | translate }}</span>
+              <input type="date" formControlName="entry_date" />
+            </label>
+
+            <label class="field">
+              <span>{{ 'overhauls.exitDate' | translate }}</span>
+              <input type="date" formControlName="exit_date" />
+            </label>
+
+            <label class="field field--wide">
+              <span>{{ 'overhauls.technicians' | translate }}</span>
+              <app-searchable-select
+                formControlName="technician_ids"
+                [options]="technicianOptions"
+                [multiple]="true"
+                [clearable]="true"
+                [placeholder]="'overhauls.selectTechnicians' | translate"
+              ></app-searchable-select>
+            </label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <h3 class="form-section-title">{{ 'overhauls.linkedFinance' | translate }}</h3>
+          <p class="form-hint">{{ 'overhauls.linkedFinanceHint' | translate }}</p>
+
+          <div class="field-grid">
+            <label class="field field--wide">
+              <span>{{ 'overhauls.linkedChecks' | translate }}</span>
+              <app-searchable-select
+                formControlName="linked_check_ids"
+                [options]="checkOptions"
+                [multiple]="true"
+                [clearable]="true"
+                [placeholder]="'overhauls.selectChecks' | translate"
+              ></app-searchable-select>
+            </label>
+
+            <label class="field field--wide">
+              <span>{{ 'overhauls.linkedInvoices' | translate }}</span>
+              <app-searchable-select
+                formControlName="linked_invoice_ids"
+                [options]="invoiceOptions"
+                [multiple]="true"
+                [clearable]="true"
+                [placeholder]="'overhauls.selectInvoices' | translate"
+              ></app-searchable-select>
+            </label>
+
+            <label class="field field--wide">
+              <span>{{ 'overhauls.linkedDisbursements' | translate }}</span>
+              <app-searchable-select
+                formControlName="linked_disbursement_ids"
+                [options]="disbursementOptions"
+                [multiple]="true"
+                [clearable]="true"
+                [placeholder]="'overhauls.selectDisbursements' | translate"
+              ></app-searchable-select>
+            </label>
+          </div>
+        </section>
 
         @if (saveError) {
           <div class="state-message state-message--error">{{ saveError }}</div>

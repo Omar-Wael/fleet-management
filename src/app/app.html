@@ -5,16 +5,48 @@
       <span class="shell-brand-name">Fleet Ops</span>
     </div>
 
-    <nav>
-      @for (item of navItems; track item.path) {
-        <a
-          [routerLink]="[item.path]"
-          routerLinkActive="active"
-          class="shell-nav-link"
-          (click)="layout.closeSidebar()"
-        >
-          <span class="shell-nav-label-ar">{{ item.labelKey | translate }}</span>
-        </a>
+    <nav class="shell-nav-menu">
+      @for (cat of navCategories; track cat.id) {
+        @if (cat.children?.length) {
+          <div
+            class="nav-category"
+            [class.expanded]="isCategoryExpanded(cat)"
+            [class.has-active]="hasActiveChild(cat)"
+          >
+            <button
+              type="button"
+              class="nav-category-toggle"
+              (click)="toggleCategory(cat)"
+              [attr.aria-expanded]="isCategoryExpanded(cat)"
+            >
+              <span class="shell-nav-label-ar">{{ cat.labelKey | translate }}</span>
+              <span class="nav-chevron" aria-hidden="true">▾</span>
+            </button>
+            @if (isCategoryExpanded(cat)) {
+              <div class="nav-subitems">
+                @for (item of cat.children; track item.path) {
+                  <a
+                    [routerLink]="[item.path]"
+                    routerLinkActive="active"
+                    class="shell-nav-link shell-nav-link--sub"
+                    (click)="layout.closeSidebar()"
+                  >
+                    <span class="shell-nav-label-ar">{{ item.labelKey | translate }}</span>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        } @else if (cat.path) {
+          <a
+            [routerLink]="[cat.path]"
+            routerLinkActive="active"
+            class="shell-nav-link"
+            (click)="layout.closeSidebar()"
+          >
+            <span class="shell-nav-label-ar">{{ cat.labelKey | translate }}</span>
+          </a>
+        }
       }
     </nav>
   </aside>
@@ -25,6 +57,8 @@
 
   <main class="shell-main">
     <app-header></app-header>
-    <router-outlet></router-outlet>
+    <div class="shell-content">
+      <router-outlet></router-outlet>
+    </div>
   </main>
 </div>

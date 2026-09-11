@@ -16,7 +16,12 @@
       <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">
         {{ 'common.downloadTemplate' | translate }}
       </button>
-      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="onImportButtonClick(importFileInput)"
+        [disabled]="importing"
+      >
         {{ (importing ? 'common.importing' : 'common.import') | translate }}
       </button>
       <button type="button" class="btn btn--ghost" (click)="exportExcel()">
@@ -64,6 +69,7 @@
 
 <app-overhaul-form
   [open]="formOpen"
+  [overhaul]="editingOverhaul"
   (closed)="onFormClosed()"
   (saved)="onFormSaved()"
 ></app-overhaul-form>

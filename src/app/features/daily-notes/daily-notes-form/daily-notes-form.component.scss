@@ -78,55 +78,21 @@
   textarea {
     font-family: inherit;
     font-size: 0.875rem;
-    color: var(--fleet-ink, #1f2430);
+    padding: 0.5rem 0.75rem;
     border: 1px solid var(--fleet-line, #dfe3e8);
-    border-radius: 0.375rem;
-    padding: 0.5rem 0.625rem;
+    border-radius: 0.5rem;
+    color: var(--fleet-ink, #1f2430);
     background: #fff;
   }
 
-  input:focus,
-  select:focus,
-  textarea:focus {
-    outline: none;
-    border-color: var(--fleet-primary, #1e3a5f);
+  textarea {
+    resize: vertical;
+    min-height: 100px;
   }
 }
 
 .field--wide {
   grid-column: 1 / -1;
-}
-
-.state-message {
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  background: var(--fleet-bg, #f4f6f8);
-  color: var(--fleet-ink-muted, #5b6472);
-  font-size: 0.875rem;
-}
-
-.state-message--error {
-  background: rgba(196, 67, 43, 0.1);
-  color: var(--fleet-rust, #c4432b);
-}
-
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.form-section-title {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--fleet-ink, #1f2430);
-}
-
-.field input:disabled {
-  background: var(--fleet-bg, #f4f6f8);
-  color: var(--fleet-ink-muted, #5b6472);
-  cursor: default;
 }
 
 .slide-over-footer {
@@ -164,11 +130,23 @@
   color: var(--fleet-primary, #1e3a5f);
 }
 
+.state-message {
+  padding: 0.75rem 1rem;
+  margin: 1rem 1.5rem 0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: var(--fleet-bg, #f4f6f8);
+  border: 1px solid var(--fleet-line, #dfe3e8);
+}
+
+.state-message--error {
+  border-color: #f0c2ba;
+  background: #fdf2f0;
+  color: var(--fleet-rust, #c4432b);
+}
+
 @media (max-width: 640px) {
   .field-grid {
     grid-template-columns: 1fr;
-  }
-  .slide-over {
-    width: 100vw;
   }
 }

@@ -80,6 +80,12 @@ export const routes: Routes = [
     title: 'Reports',
   },
   {
+    path: 'daily-notes',
+    loadChildren: () =>
+      import('./features/daily-notes/daily-notes.routes').then((m) => m.DAILY_NOTES_ROUTES),
+    title: 'Daily Notes',
+  },
+  {
     path: 'settings',
     loadChildren: () =>
       import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),

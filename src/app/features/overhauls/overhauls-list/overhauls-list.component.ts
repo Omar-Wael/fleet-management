@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { OverhaulFormComponent } from '../overhaul-form/overhaul-form.component';
@@ -8,8 +8,16 @@ import { OverhaulPipelineDrawerComponent } from '../overhaul-pipeline-drawer/ove
 import { OverhaulsService, OverhaulGridRow } from '../../../core/services/overhauls.service';
 import { VehiclesService } from '../../../core/services/vehicles.service';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
-import { ExternalWorkshop, OverhaulStageName, VehicleWithLookups } from '../../../core/models/fleet.models';
-import { exportToExcel, ExcelExportColumn, downloadImportTemplate } from '../../../shared/utils/excel-import-export.util';
+import {
+  ExternalWorkshop,
+  OverhaulStageName,
+  VehicleWithLookups,
+} from '../../../core/models/fleet.models';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { importFileWithMapping } from '../../../shared/utils/document-import.util';
 import {
@@ -22,7 +30,11 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 // English labels — used only for Excel/PDF export columns (deliberately
 // left untranslated, per repo convention). UI display uses STAGE_LABEL_KEYS
@@ -50,11 +62,17 @@ const STAGE_LABEL_KEYS: Record<OverhaulStageName, string> = {
 @Component({
   selector: 'app-overhauls-list',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, OverhaulFormComponent, OverhaulPipelineDrawerComponent],
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    SharedDataTableComponent,
+    OverhaulFormComponent,
+    OverhaulPipelineDrawerComponent,
+  ],
   templateUrl: './overhauls-list.component.html',
   styleUrls: ['./overhauls-list.component.scss'],
   providers: [DatePipe],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverhaulsListComponent implements OnInit {
   rows: OverhaulGridRow[] = [];
@@ -80,6 +98,8 @@ export class OverhaulsListComponent implements OnInit {
 
   drawerOpen = false;
   selectedOverhaul: OverhaulGridRow | null = null;
+  editingOverhaul: OverhaulGridRow | null = null;
+  deletingId: string | null = null;
 
   // ---- import state ----
   importing = false;
@@ -126,11 +146,42 @@ export class OverhaulsListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
-      { key: 'vehicle', header: this.i18n.t('overhauls.vehicle'), mono: true, render: (o) => o.vehicles?.plate_number || '—' },
       {
-        key: 'machine_shop',
-        header: this.i18n.t('overhauls.machineShop'),
-        render: (o) => o.external_workshops?.name || '—',
+        key: 'vehicle',
+        header: this.i18n.t('overhauls.vehicle'),
+        mono: true,
+        render: (o) => o.vehicles?.plate_number || '—',
+      },
+      {
+        key: 'department',
+        header: this.i18n.t('overhauls.department'),
+        render: (o) =>
+          o.vehicles?.operating_departments?.name_ar ||
+          o.vehicles?.operating_departments?.name_en ||
+          '—',
+      },
+      {
+        key: 'make',
+        header: this.i18n.t('overhauls.make'),
+        render: (o) => o.vehicles?.make || '—',
+      },
+      // {
+      //   key: 'model',
+      //   header: this.i18n.t('overhauls.model'),
+      //   render: (o) => o.vehicles?.model || '—',
+      // },
+      {
+        key: 'year',
+        header: this.i18n.t('overhauls.year'),
+        mono: true,
+        render: (o) =>
+          o.vehicles?.manufacture_year != null ? String(o.vehicles.manufacture_year) : '—',
+      },
+      {
+        key: 'scope',
+        header: this.i18n.t('overhauls.scope'),
+        truncate: '180px',
+        render: (o) => o.scope_description || '—',
       },
       {
         key: 'current_stage',
@@ -151,26 +202,71 @@ export class OverhaulsListComponent implements OnInit {
         key: 'exit_date',
         header: this.i18n.t('overhauls.exitDate'),
         sortable: true,
-        render: (o) => (o.exit_date ? this.datePipe.transform(o.exit_date, 'dd/MM/yyyy') || '—' : '—'),
+        render: (o) =>
+          o.exit_date ? this.datePipe.transform(o.exit_date, 'dd/MM/yyyy') || '—' : '—',
       },
       {
-        key: 'duration',
-        header: this.i18n.t('overhauls.duration'),
+        key: 'machine_shop',
+        header: this.i18n.t('overhauls.machineShop'),
+        render: (o) => o.external_workshops?.name || '—',
+      },
+      {
+        key: 'total_duration',
+        header: this.i18n.t('overhauls.totalDuration'),
         mono: true,
-        render: (o) => `${this.totalDurationDays(o)} d`,
+        render: (o) => {
+          const d = this.totalDurationDays(o);
+          return d ? d.toFixed(2) : '—';
+        },
+      },
+      {
+        key: 'technicians',
+        header: this.i18n.t('overhauls.technicians'),
+        truncate: '160px',
+        render: (o) => {
+          const names = (o.overhaul_technicians ?? [])
+            .map((t) => t.technicians?.full_name)
+            .filter(Boolean);
+          return names.length ? names.join('، ') : '—';
+        },
       },
       {
         key: 'total_cost',
         header: this.i18n.t('overhauls.totalCost'),
         mono: true,
-        render: (o) => this.totalCost(o).toFixed(2),
+        render: (o) => {
+          const c = this.totalCost(o);
+          return c ? c.toFixed(2) : '—';
+        },
       },
       {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (o) => [{ label: this.i18n.t('common.view'), icon: '👁️️',
-            variant: 'info', display: 'icon', onClick: (o) => this.openPipeline(o) }],
+        actions: () => [
+          {
+            label: this.i18n.t('common.view'),
+            icon: '👁️️',
+            variant: 'info',
+            display: 'icon',
+            onClick: (o) => this.openPipeline(o),
+          },
+          {
+            label: this.i18n.t('common.edit'),
+            icon: '✏️',
+            variant: 'default',
+            display: 'icon',
+            onClick: (o) => this.openEdit(o),
+          },
+          {
+            label: this.i18n.t('common.delete'),
+            icon: '🗑️️',
+            variant: 'danger',
+            display: 'icon',
+            onClick: (o) => this.confirmDelete(o),
+            disabled: (o) => this.deletingId === o.id,
+          },
+        ],
       },
     ];
   }
@@ -239,18 +335,42 @@ export class OverhaulsListComponent implements OnInit {
   }
 
   openCreateForm(): void {
+    this.editingOverhaul = null;
+    this.formOpen = true;
+  }
+
+  openEdit(row: OverhaulGridRow): void {
+    this.editingOverhaul = row;
     this.formOpen = true;
   }
 
   onFormClosed(): void {
     this.formOpen = false;
+    this.editingOverhaul = null;
   }
 
   onFormSaved(): void {
     this.formOpen = false;
-    this.reloadOverhaulsOnly();
+    this.editingOverhaul = null;
+    this.loadOverhauls(this.currentQuery);
   }
 
+  confirmDelete(row: OverhaulGridRow): void {
+    if (!confirm(this.i18n.t('overhauls.confirmDelete'))) return;
+    this.deletingId = row.id;
+    this.cdr.markForCheck();
+    this.overhaulsService.delete(row.id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        this.loadOverhauls(this.currentQuery);
+      },
+      error: (err) => {
+        this.deletingId = null;
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('overhauls.failedDelete');
+        this.cdr.markForCheck();
+      },
+    });
+  }
   openPipeline(overhaul: OverhaulGridRow): void {
     this.selectedOverhaul = overhaul;
     this.drawerOpen = true;
@@ -313,13 +433,15 @@ export class OverhaulsListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : this.i18n.t('overhauls.importFailed');
+            this.importError =
+              err instanceof Error ? err.message : this.i18n.t('overhauls.importFailed');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : this.i18n.t('overhauls.importParseFailed');
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('overhauls.importParseFailed');
       });
   }
 
@@ -341,7 +463,8 @@ export class OverhaulsListComponent implements OnInit {
     this.overhaulsService.listAllMatching(this.currentQuery).subscribe({
       next: (rows) => exportToExcel(rows, this.excelColumns(), 'overhauls-export'),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -360,7 +483,8 @@ export class OverhaulsListComponent implements OnInit {
           'overhauls-report',
         ),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

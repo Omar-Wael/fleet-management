@@ -636,3 +636,13 @@ export interface VAlertMaintenanceDue extends MaintenanceSchedule {
   plate_number: string;
   operating_department_id: string | null;
 }
+
+/** ملاحظات يومية على السيارات أو عامة */
+export interface DailyNote {
+  id: string;
+  vehicle_id: string | null;
+  notes: string;
+  note_date: string;
+  created_at: string;
+  updated_at: string | null;
+}

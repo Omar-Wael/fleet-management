@@ -1,0 +1,35 @@
+import { TranslationEntry } from './types';
+
+export const DAILY_NOTES_TRANSLATIONS: Record<string, TranslationEntry> = {
+  'dailyNotes.title': { en: 'Daily Notes', ar: 'الملاحظات اليومية' },
+  'dailyNotes.shown': { en: 'notes', ar: 'ملاحظة' },
+  'dailyNotes.addButton': { en: 'Add note', ar: 'إضافة ملاحظة' },
+  'dailyNotes.searchPlaceholder': {
+    en: 'Search notes or plate number…',
+    ar: 'بحث في الملاحظات أو رقم السيارة…',
+  },
+  'dailyNotes.noResults': { en: 'No notes found', ar: 'لا توجد ملاحظات' },
+  'dailyNotes.serial': { en: '#', ar: 'مسلسل' },
+  'dailyNotes.vehicle': { en: 'Vehicle', ar: 'رقم السيارة' },
+  'dailyNotes.notes': { en: 'Notes', ar: 'الملحوظات' },
+  'dailyNotes.noteDate': { en: 'Date', ar: 'التاريخ' },
+  'dailyNotes.actions': { en: 'Actions', ar: 'الإجراءات' },
+  'dailyNotes.edit': { en: 'Edit', ar: 'تعديل' },
+  'dailyNotes.delete': { en: 'Delete', ar: 'حذف' },
+  'dailyNotes.formTitleNew': { en: 'New daily note', ar: 'ملاحظة يومية جديدة' },
+  'dailyNotes.formTitleEdit': { en: 'Edit daily note', ar: 'تعديل ملاحظة يومية' },
+  'dailyNotes.selectVehicle': { en: 'Select vehicle (optional)', ar: 'اختر السيارة (اختياري)' },
+  'dailyNotes.notesPlaceholder': { en: 'Write the note…', ar: 'اكتب الملحوظة…' },
+  'dailyNotes.save': { en: 'Save', ar: 'حفظ' },
+  'dailyNotes.cancel': { en: 'Cancel', ar: 'إلغاء' },
+  'dailyNotes.loadingList': { en: 'Loading notes…', ar: 'جاري تحميل الملاحظات…' },
+  'dailyNotes.failedLoad': { en: 'Failed to load notes', ar: 'فشل تحميل الملاحظات' },
+  'dailyNotes.failedSave': { en: 'Failed to save note', ar: 'فشل حفظ الملاحظة' },
+  'dailyNotes.failedDelete': { en: 'Failed to delete note', ar: 'فشل حذف الملاحظة' },
+  'dailyNotes.confirmDelete': {
+    en: 'Delete this note?',
+    ar: 'هل تريد حذف هذه الملاحظة؟',
+  },
+  'dailyNotes.allVehicles': { en: 'All vehicles', ar: 'كل السيارات' },
+  'dailyNotes.general': { en: 'General (no vehicle)', ar: 'عامة (بدون سيارة)' },
+};
