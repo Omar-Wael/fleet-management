@@ -38,6 +38,12 @@
   }
 }
 
+.btns {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .icon-btn {
   border: none;
   background: none;
@@ -139,4 +145,55 @@
 
 .state-message--error {
   color: var(--fleet-rust, #c4432b);
+}
+
+.dt-link-btn {
+  display: inline-block;
+  border: none;
+  background: none;
+  color: var(--fleet-primary, #1e3a5f);
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-decoration: underline;
+  align-items: center;
+  gap: 0.3rem;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.dt-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1.5px solid transparent;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.12s;
+  background: none;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dt-link-btn--default {
+  color: var(--fleet-primary, #1e3a5f);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  border-radius: 0.25rem;
+}
+
+.dt-link-btn--danger {
+  color: var(--fleet-rust, #c4432b);
+  background: #fff1f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 0.25rem;
 }

@@ -353,7 +353,11 @@ export class OverhaulsService {
    * path does differently.
    */
   bulkInsert(overhauls: Partial<Overhaul>[]): Observable<Overhaul[]> {
-    return fromSupabase<Overhaul[]>(this.client.from('overhauls').insert(overhauls).select());
+    const rows = overhauls.map((o) => ({
+      ...o,
+      current_stage: o.current_stage || 'price_quotes',
+    }));
+    return fromSupabase<Overhaul[]>(this.client.from('overhauls').insert(rows).select());
   }
 
   /**

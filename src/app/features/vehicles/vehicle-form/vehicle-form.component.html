@@ -49,6 +49,27 @@
           </label>
 
           <label class="field">
+            <span>{{ 'vehicles.fuelType' | translate }}</span>
+            <div class="field-with-action">
+              <app-searchable-select
+                formControlName="fuel_type"
+                [options]="fuelTypeOptions"
+                [clearable]="true"
+                [placeholder]="'vehicles.selectFuelType' | translate"
+              ></app-searchable-select>
+              <button
+                type="button"
+                class="btn btn--ghost btn--sm"
+                (click)="copyFuelFromEngine()"
+                [disabled]="!form.value.current_engine_id"
+              >
+                {{ 'vehicles.fuelFromEngine' | translate }}
+              </button>
+            </div>
+            <small class="hint">{{ 'vehicles.fuelTypeHint' | translate }}</small>
+          </label>
+
+          <label class="field">
             <span>{{ 'vehicles.currentEngine' | translate }}</span>
             <app-searchable-select
               formControlName="current_engine_id"
@@ -158,7 +179,10 @@
             {{ 'common.cancel' | translate }}
           </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ (saving ? 'common.saving' : (isEditMode ? 'common.saveChanges' : 'vehicles.addButton')) | translate }}
+            {{
+              (saving ? 'common.saving' : isEditMode ? 'common.saveChanges' : 'vehicles.addButton')
+                | translate
+            }}
           </button>
         </footer>
       </form>

@@ -3,8 +3,22 @@
 
   <aside class="drawer" role="dialog" aria-modal="true">
     <header class="drawer-header">
-      <h2>{{ profile?.vehicle?.plate_number || ('vehicles.profileFallbackTitle' | translate) }}</h2>
-      <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
+      <h2>
+        {{ profile?.vehicle?.plate_number || ('vehicles.profileFallbackTitle' | translate) }}
+      </h2>
+      <div class="btns">
+        <a class="dt-link-btn dt-link-btn--default" [routerLink]="['/vehicles', vehicle?.id]">
+          <span class="dt-action-icon" aria-hidden="true">🚘</span>
+        </a>
+        <button
+          type="button"
+          class="dt-link-btn dt-link-btn--danger"
+          (click)="close()"
+          aria-label="Close"
+        >
+          <span class="dt-action-icon" aria-hidden="true">✕</span>
+        </button>
+      </div>
     </header>
 
     @if (loading) {
@@ -86,8 +100,7 @@
               @for (e of profile.compatibleEngines; track e.id) {
                 <li>
                   <span class="mono">{{ e.engine_serial_number }}</span>
-                  — {{ e.model_name || '—' }}
-                  ({{ e.fuel_type || '—' }})
+                  — {{ e.model_name || '—' }} ({{ e.fuel_type || '—' }})
                 </li>
               }
             </ul>
@@ -213,12 +226,11 @@
             <h3>{{ 'common.notes' | translate }}</h3>
             <p class="notes-text">{{ profile.vehicle.notes }}</p>
           </section>
-        <app-entity-image-upload
-          entityType="vehicle"
-          [entityId]="profile.vehicle.id"
-          [editable]="true"
-        ></app-entity-image-upload>
-
+          <app-entity-image-upload
+            entityType="vehicle"
+            [entityId]="profile.vehicle.id"
+            [editable]="true"
+          ></app-entity-image-upload>
         }
       </div>
     }

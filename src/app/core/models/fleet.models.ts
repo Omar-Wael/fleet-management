@@ -232,6 +232,12 @@ export interface Vehicle {
   clutch_kit_last_change_odometer: number | null;
   notes?: string | null;
   engine_number?: string | null; // for import mapping only, not stored in DB
+  fuel_type?: string | null;
+}
+
+/** وقود فعّال: يدوي على السيارة أولاً، وإلا من المحرك */
+export function effectiveFuelType(v: VehicleWithLookups): string | null {
+  return v.fuel_type || v.engines?.fuel_type || null;
 }
 
 /** Vehicle joined with its most commonly-needed lookups, for grid rows. */

@@ -8,11 +8,10 @@ import {
   SimpleChanges,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-
 } from '@angular/core';
-
+import { RouterLink, Router } from '@angular/router';
 import { VehicleFullProfile, VehiclesService } from '../../../core/services/vehicles.service';
-import { Engine } from '../../../core/models/fleet.models';
+import { Engine, Vehicle } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EntityImageUploadComponent } from '../../../shared/components/entity-image-upload/entity-image-upload.component';
@@ -20,7 +19,14 @@ import { EntityImageUploadComponent } from '../../../shared/components/entity-im
 @Component({
   selector: 'app-vehicle-profile-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TranslatePipe, CommonModule, EntityImageUploadComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    TranslatePipe,
+    CommonModule,
+    EntityImageUploadComponent,
+    RouterLink,
+  ],
   templateUrl: './vehicle-profile-drawer.component.html',
   styleUrls: ['./vehicle-profile-drawer.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +38,7 @@ export class VehicleProfileDrawerComponent implements OnChanges {
   @Output() closed = new EventEmitter<void>();
 
   profile: VehicleFullProfile | null = null;
+  vehicle: Vehicle | undefined = undefined;
   loading = false;
   loadError: string | null = null;
 
@@ -55,6 +62,7 @@ export class VehicleProfileDrawerComponent implements OnChanges {
   constructor(
     private vehiclesService: VehiclesService,
     readonly i18n: TranslationService,
+    private router: Router,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -63,6 +71,7 @@ export class VehicleProfileDrawerComponent implements OnChanges {
       this.open && this.vehicleId && (changes['vehicleId'] || (changes['open'] && this.open));
     if (shouldLoad) {
       this.loadProfile();
+      this.getVehicleData();
       this.cdr.markForCheck(); // OnPush: ensure async loadProfile() updates re-render
     }
   }
@@ -89,7 +98,27 @@ export class VehicleProfileDrawerComponent implements OnChanges {
     });
   }
 
+  private getVehicleData(): void {
+    if (!this.vehicleId) return;
+    this.vehiclesService.getById(this.vehicleId).subscribe({
+      next: (vehicle) => {
+        if (this.profile) {
+          this.vehicle = vehicle;
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // ignore errors here, we only want to update the vehicle data if it loads successfully
+      },
+    });
+  }
+
   close(): void {
     this.closed.emit();
+  }
+  moveToVehiclePage(vehicleId: string | null): void {
+    if (!vehicleId) return;
+    this.router.navigate(['/vehicles', vehicleId]);
+    this.close();
   }
 }

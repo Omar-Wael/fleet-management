@@ -1,0 +1,532 @@
+<div class="profile-page">
+  @if (!loading && vehicle) {
+    <!-- اختيار سيارة -->
+    <div class="profile-picker card">
+      <h1>{{ 'vehicles.fullProfileTitle' | translate }}</h1>
+      <app-searchable-select
+        [options]="vehicleOptions"
+        [ngModel]="selectedVehicleId"
+        (ngModelChange)="onVehiclePick($event)"
+        [placeholder]="'vehicles.selectVehicle' | translate"
+      ></app-searchable-select>
+    </div>
+
+    <!-- الهيدر -->
+    <header class="profile-hero card">
+      <div class="plate">{{ vehicle.plate_number }}</div>
+      <div class="badges">
+        <span class="badge">{{ vehicle.make || '—' }}</span>
+        <span class="badge">{{ vehicle.model || '—' }}</span>
+        <span class="badge">{{ fuelLabel }}</span>
+        <span class="badge">{{ vehicle.operating_departments?.name_ar || '—' }}</span>
+        <span class="badge">{{ 'vehicles.ageYears' | translate }}: {{ ageYears }}</span>
+        <span class="badge status">{{ vehicle.status | translate }}</span>
+      </div>
+      <div class="odometer mono">
+        {{ vehicle.odometer_km != null ? vehicle.odometer_km : '—' }}
+        {{ vehicle.odometer_unit || 'km' }}
+      </div>
+    </header>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi">
+        <strong>{{ kpi.workOrders }}</strong
+        ><span>{{ 'vehicles.kpiWorkOrders' | translate }}</span>
+      </div>
+      <div class="kpi">
+        <strong>{{ kpi.overhauls }}</strong
+        ><span>{{ 'vehicles.kpiOverhauls' | translate }}</span>
+      </div>
+      <div class="kpi">
+        <strong>{{ kpi.disbursements }}</strong
+        ><span>{{ 'vehicles.kpiParts' | translate }}</span>
+      </div>
+      <div class="kpi">
+        <strong>{{ kpi.invoices }}</strong
+        ><span>{{ 'vehicles.kpiInvoices' | translate }}</span>
+      </div>
+      <div class="kpi">
+        <strong>{{ kpi.totalCost | number: '1.0-0' }}</strong
+        ><span>{{ 'vehicles.kpiCost' | translate }}</span>
+      </div>
+      <div class="kpi">
+        <strong>{{ kpi.checks }}</strong
+        ><span>{{ 'vehicles.kpiChecks' | translate }}</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button type="button" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+        {{ 'vehicles.tabOverview' | translate }}
+      </button>
+      <button
+        type="button"
+        [class.active]="activeTab === 'maintenance'"
+        (click)="setTab('maintenance')"
+      >
+        {{ 'vehicles.tabMaintenance' | translate }}
+      </button>
+      <button
+        type="button"
+        [class.active]="activeTab === 'overhauls'"
+        (click)="setTab('overhauls')"
+      >
+        {{ 'vehicles.tabOverhauls' | translate }}
+      </button>
+      <button type="button" [class.active]="activeTab === 'parts'" (click)="setTab('parts')">
+        {{ 'vehicles.tabParts' | translate }}
+      </button>
+      <button type="button" [class.active]="activeTab === 'finance'" (click)="setTab('finance')">
+        {{ 'vehicles.tabFinance' | translate }}
+      </button>
+      <button type="button" [class.active]="activeTab === 'timeline'" (click)="setTab('timeline')">
+        {{ 'vehicles.tabTimeline' | translate }}
+      </button>
+    </nav>
+
+    <!-- Overview -->
+    @if (activeTab === 'overview') {
+      <div class="overview-grid">
+        <section class="card">
+          <h3>{{ 'vehicles.sectionBasic' | translate }}</h3>
+          <dl>
+            <dt>{{ 'vehicles.make' | translate }}</dt>
+            <dd>{{ vehicle.make || '—' }}</dd>
+            <dt>{{ 'vehicles.model' | translate }}</dt>
+            <dd>{{ vehicle.model || '—' }}</dd>
+            <dt>{{ 'vehicles.year' | translate }}</dt>
+            <dd>{{ vehicle.manufacture_year || '—' }}</dd>
+            <dt>{{ 'vehicles.fuelType' | translate }}</dt>
+            <dd>{{ fuelLabel }}</dd>
+            <dt>{{ 'vehicles.chassis' | translate }}</dt>
+            <dd class="mono">{{ vehicle.chassis_number || '—' }}</dd>
+            <dt>{{ 'vehicles.engineNumber' | translate }}</dt>
+            <dd class="mono">
+              {{ vehicle.engines?.engine_serial_number || vehicle.engine_number || '—' }}
+            </dd>
+            <dt>{{ 'vehicles.department' | translate }}</dt>
+            <dd>{{ vehicle.operating_departments?.name_ar || '—' }}</dd>
+          </dl>
+        </section>
+
+        <section class="card">
+          <h3>{{ 'vehicles.sectionEngine' | translate }}</h3>
+          @if (vehicle.engines; as eng) {
+            <dl>
+              <dt>{{ 'vehicles.serialNumber' | translate }}</dt>
+              <dd class="mono">{{ eng.engine_serial_number }}</dd>
+              <dt>{{ 'vehicles.fuelType' | translate }}</dt>
+              <dd>{{ eng.fuel_type || '—' }}</dd>
+              <dt>{{ 'vehicles.horsepower' | translate }}</dt>
+              <dd>{{ eng.horsepower ?? '—' }}</dd>
+              <dt>CC</dt>
+              <dd>{{ eng.cc ?? '—' }}</dd>
+            </dl>
+          } @else {
+            <p class="muted">{{ 'vehicles.noEngine' | translate }}</p>
+          }
+        </section>
+
+        <section class="card">
+          <h3>{{ 'vehicles.sectionOilFilter' | translate }}</h3>
+
+          <div class="oil-grid">
+            <div class="oil-tile">
+              <span class="oil-tile-label">{{ 'vehicles.lastOilChange' | translate }}</span>
+              @if (profile?.lastOilChange; as oil) {
+                <strong class="oil-tile-value mono">
+                  {{ oil.odometer_reading }} {{ oil.odometer_unit || 'km' }}
+                </strong>
+                <span class="oil-tile-meta">
+                  {{ oil.change_date | date: 'yyyy-MM-dd' }}
+                </span>
+                @if (oil.next_due_reading != null) {
+                  <span class="oil-tile-meta">
+                    {{ 'vehicles.nextDue' | translate }}: {{ oil.next_due_reading }}
+                    {{ oil.odometer_unit || 'km' }}
+                  </span>
+                }
+                @if (oil.next_due_date) {
+                  <span class="oil-tile-meta">
+                    {{ 'vehicles.nextDueDate' | translate }}:
+                    {{ oil.next_due_date | date: 'yyyy-MM-dd' }}
+                  </span>
+                }
+              } @else {
+                <strong class="oil-tile-value muted">—</strong>
+              }
+            </div>
+
+            <div class="oil-tile">
+              <span class="oil-tile-label">{{ 'vehicles.lastFilterChange' | translate }}</span>
+              @if (profile?.lastFilterChange; as filter) {
+                <strong class="oil-tile-value mono">
+                  {{ filter.odometer_reading }} {{ filter.odometer_unit || 'km' }}
+                </strong>
+                <span class="oil-tile-meta">
+                  {{ filter.change_date | date: 'yyyy-MM-dd' }}
+                </span>
+                @if (filter.next_due_reading != null) {
+                  <span class="oil-tile-meta">
+                    {{ 'vehicles.nextDue' | translate }}: {{ filter.next_due_reading }}
+                    {{ filter.odometer_unit || 'km' }}
+                  </span>
+                }
+              } @else {
+                <strong class="oil-tile-value muted">—</strong>
+              }
+            </div>
+
+            <div class="oil-tile">
+              <span class="oil-tile-label">{{ 'vehicles.clutchKit' | translate }}</span>
+              @if (
+                vehicle?.clutch_kit_last_change_date ||
+                vehicle?.clutch_kit_last_change_odometer != null
+              ) {
+                <strong class="oil-tile-value mono">
+                  {{ vehicle?.clutch_kit_last_change_odometer ?? '—' }}
+                </strong>
+                <span class="oil-tile-meta">
+                  {{ vehicle?.clutch_kit_last_change_date | date: 'yyyy-MM-dd' }}
+                </span>
+              } @else {
+                <strong class="oil-tile-value muted">—</strong>
+              }
+            </div>
+          </div>
+        </section>
+      </div>
+      <!-- ملخص سريع -->
+      <section class="card summary-card">
+        <h3>{{ 'vehicles.summaryTitle' | translate }}</h3>
+        <div class="summary-row">
+          <div>
+            <span class="muted">{{ 'vehicles.kpiWorkOrders' | translate }}</span
+            ><strong>{{ kpi.workOrders }}</strong>
+          </div>
+          <div>
+            <span class="muted">{{ 'vehicles.kpiOverhauls' | translate }}</span
+            ><strong>{{ kpi.overhauls }}</strong>
+          </div>
+          <div>
+            <span class="muted">{{ 'vehicles.kpiParts' | translate }}</span
+            ><strong>{{ kpi.disbursements }}</strong>
+          </div>
+          <div>
+            <span class="muted">{{ 'vehicles.kpiCost' | translate }}</span
+            ><strong class="mono">{{ kpi.totalCost | number: '1.0-0' }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <!-- رسوم بسيطة -->
+      <div class="charts-grid">
+        <section class="card">
+          <h3>{{ 'vehicles.maintenanceStatus' | translate }}</h3>
+          @if (chart.openWorkOrders + chart.closedWorkOrders === 0) {
+            <p class="empty">{{ 'vehicles.noWorkOrders' | translate }}</p>
+          } @else {
+            <div class="donut-wrap">
+              <div
+                class="donut"
+                [style.background]="
+                  'conic-gradient(#2563eb 0% ' + openPct + '%, #10b981 ' + openPct + '% 100%)'
+                "
+              >
+                <div class="donut-hole">
+                  <strong>{{ openPct }}%</strong>
+                  <span>{{ 'vehicles.openJobs' | translate }}</span>
+                </div>
+              </div>
+              <ul class="legend">
+                <li>
+                  <i class="swatch open"></i>{{ 'vehicles.openJobs' | translate }}:
+                  {{ chart.openWorkOrders }}
+                </li>
+                <li>
+                  <i class="swatch closed"></i>{{ 'vehicles.closedJobs' | translate }}:
+                  {{ chart.closedWorkOrders }}
+                </li>
+              </ul>
+            </div>
+          }
+        </section>
+
+        <section class="card">
+          <h3>{{ 'vehicles.costAnalysis' | translate }}</h3>
+          @if (kpi.totalCost === 0) {
+            <p class="empty">{{ 'vehicles.noCostData' | translate }}</p>
+          } @else {
+            <div class="bars">
+              <div class="bar-row">
+                <span>{{ 'vehicles.tabMaintenance' | translate }}</span>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill maint"
+                    [style.width.%]="
+                      kpi.totalCost ? (chart.costMaintenance / kpi.totalCost) * 100 : 0
+                    "
+                  ></div>
+                </div>
+                <span class="mono">{{ chart.costMaintenance | number: '1.0-0' }}</span>
+              </div>
+              <div class="bar-row">
+                <span>{{ 'vehicles.tabOverhauls' | translate }}</span>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill overhaul"
+                    [style.width.%]="kpi.totalCost ? (chart.costOverhaul / kpi.totalCost) * 100 : 0"
+                  ></div>
+                </div>
+                <span class="mono">{{ chart.costOverhaul | number: '1.0-0' }}</span>
+              </div>
+            </div>
+          }
+        </section>
+      </div>
+    }
+
+    <!-- ========== MAINTENANCE ========== -->
+    @if (activeTab === 'maintenance') {
+      <section class="card">
+        <div class="card-head">
+          <h3>{{ 'vehicles.tabMaintenance' | translate }}</h3>
+          <span class="count-pill">{{ workOrders.length }}</span>
+        </div>
+
+        @if (tabLoading) {
+          <p class="muted">{{ 'common.loading' | translate }}</p>
+        } @else if (!workOrders.length) {
+          <p class="empty">{{ 'vehicles.noWorkOrders' | translate }}</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="profile-table">
+              <thead>
+                <tr>
+                  <th>{{ 'vehicles.opened' | translate }}</th>
+                  <th>{{ 'vehicles.description' | translate }}</th>
+                  <th>{{ 'common.status' | translate }}</th>
+                  <th>{{ 'vehicles.totalCost' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (wo of workOrders; track wo.id) {
+                  <tr>
+                    <td class="mono">{{ wo.opened_at | date: 'yyyy-MM-dd' }}</td>
+                    <td>{{ wo.description || '—' }}</td>
+                    <td>
+                      <span class="badge" [class.badge--ok]="!!wo.closed_at">
+                        {{
+                          wo.closed_at ? ('common.closed' | translate) : ('common.open' | translate)
+                        }}
+                      </span>
+                    </td>
+                    <td class="mono">
+                      {{ wo.total_cost != null ? (wo.total_cost | number: '1.2-2') : '—' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ========== OVERHAULS ========== -->
+    @if (activeTab === 'overhauls') {
+      <section class="card">
+        <div class="card-head">
+          <h3>{{ 'vehicles.tabOverhauls' | translate }}</h3>
+          <span class="count-pill">{{ overhauls.length }}</span>
+        </div>
+
+        @if (tabLoading) {
+          <p class="muted">{{ 'common.loading' | translate }}</p>
+        } @else if (!overhauls.length) {
+          <p class="empty">{{ 'vehicles.noOverhauls' | translate }}</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="profile-table">
+              <thead>
+                <tr>
+                  <th>{{ 'overhauls.entryDate' | translate }}</th>
+                  <th>{{ 'overhauls.exitDate' | translate }}</th>
+                  <th>{{ 'overhauls.scope' | translate }}</th>
+                  <th>{{ 'overhauls.currentStage' | translate }}</th>
+                  <th>{{ 'overhauls.machineShop' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (oh of overhauls; track oh.id) {
+                  <tr>
+                    <td class="mono">{{ oh.entry_date | date: 'yyyy-MM-dd' }}</td>
+                    <td class="mono">
+                      {{ oh.exit_date ? (oh.exit_date | date: 'yyyy-MM-dd') : '—' }}
+                    </td>
+                    <td>{{ oh.scope_description || '—' }}</td>
+                    <td>
+                      <span class="badge" [class.badge--ok]="oh.current_stage === 'completed'">
+                        {{ oh.current_stage }}
+                      </span>
+                    </td>
+                    <td>{{ oh.external_workshops?.name || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ========== PARTS / DISBURSEMENTS ========== -->
+    @if (activeTab === 'parts') {
+      <section class="card">
+        <div class="card-head">
+          <h3>{{ 'vehicles.tabParts' | translate }}</h3>
+          <span class="count-pill">{{ disbursements.length }}</span>
+        </div>
+
+        @if (tabLoading) {
+          <p class="muted">{{ 'common.loading' | translate }}</p>
+        } @else if (!disbursements.length) {
+          <p class="empty">{{ 'vehicles.noDisbursements' | translate }}</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="profile-table">
+              <thead>
+                <tr>
+                  <th>{{ 'vehicles.requestNo' | translate }}</th>
+                  <th>{{ 'vehicles.requestedAt' | translate }}</th>
+                  <th>{{ 'common.status' | translate }}</th>
+                  <th>{{ 'vehicles.issuedAt' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (d of disbursements; track d.id) {
+                  <tr>
+                    <td class="mono">{{ d.request_number || d.id.slice(0, 8) }}</td>
+                    <td class="mono">{{ d.requested_at | date: 'yyyy-MM-dd' }}</td>
+                    <td>
+                      <span class="badge">{{ d.status }}</span>
+                    </td>
+                    <td class="mono">
+                      {{ d.issued_at ? (d.issued_at | date: 'yyyy-MM-dd') : '—' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ========== FINANCE ========== -->
+    @if (activeTab === 'finance') {
+      <div class="finance-grid">
+        <section class="card">
+          <div class="card-head">
+            <h3>{{ 'vehicles.invoices' | translate }}</h3>
+            <span class="count-pill">{{ invoices.length }}</span>
+          </div>
+          @if (!invoices.length) {
+            <p class="empty">{{ 'vehicles.noInvoices' | translate }}</p>
+          } @else {
+            <div class="table-wrap">
+              <table class="profile-table">
+                <thead>
+                  <tr>
+                    <th>{{ 'vehicles.invoiceNo' | translate }}</th>
+                    <th>{{ 'vehicles.invoiceDate' | translate }}</th>
+                    <th>{{ 'vehicles.totalCost' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (inv of invoices; track inv.id) {
+                    <tr>
+                      <td class="mono">{{ inv.invoice_no }}</td>
+                      <td class="mono">{{ inv.invoice_date | date: 'yyyy-MM-dd' }}</td>
+                      <td class="mono">
+                        {{ inv.total_value != null ? (inv.total_value | number: '1.2-2') : '—' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h3>{{ 'vehicles.checks' | translate }}</h3>
+            <span class="count-pill">{{ checks.length }}</span>
+          </div>
+          @if (!checks.length) {
+            <p class="empty">{{ 'vehicles.noChecks' | translate }}</p>
+          } @else {
+            <div class="table-wrap">
+              <table class="profile-table">
+                <thead>
+                  <tr>
+                    <th>{{ 'vehicles.checkNo' | translate }}</th>
+                    <th>{{ 'vehicles.amount' | translate }}</th>
+                    <th>{{ 'common.status' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of checks; track c.id) {
+                    <tr>
+                      <td class="mono">{{ c.check_number || c.id.slice(0, 8) }}</td>
+                      <td class="mono">{{ c.amount | number: '1.2-2' }}</td>
+                      <td>
+                        <span class="badge">{{ c.check_stage || c.channel }}</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      </div>
+    }
+
+    <!-- ========== TIMELINE ========== -->
+    @if (activeTab === 'timeline') {
+      <section class="card">
+        <div class="card-head">
+          <h3>{{ 'vehicles.tabTimeline' | translate }}</h3>
+        </div>
+
+        @if (!timeline.length) {
+          <p class="empty">{{ 'vehicles.noTimeline' | translate }}</p>
+        } @else {
+          <ol class="timeline">
+            @for (ev of timeline; track $index) {
+              <li class="timeline-item" [attr.data-kind]="ev.kind">
+                <div class="timeline-dot"></div>
+                <div class="timeline-body">
+                  <div class="timeline-top">
+                    <span class="timeline-kind">{{ ev.kind }}</span>
+                    <time class="mono">{{ ev.at | date: 'yyyy-MM-dd' }}</time>
+                  </div>
+                  <div class="timeline-title">{{ ev.title }}</div>
+                  @if (ev.meta) {
+                    <div class="timeline-meta muted">{{ ev.meta }}</div>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+    }
+  } @else {
+    <div class="state-message">{{ 'common.loading' | translate }}</div>
+  }
+</div>
