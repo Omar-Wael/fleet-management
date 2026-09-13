@@ -7,7 +7,7 @@ import {
   Output,
   SimpleChanges,
   ChangeDetectionStrategy,
-  ChangeDetectorRef
+  ChangeDetectorRef,
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -88,6 +88,12 @@ export class VehicleFormComponent implements OnInit, OnChanges {
   /** Client-generated id used so images can be attached before the vehicle row exists (create flow). */
   pendingEntityId = crypto.randomUUID();
 
+  // options
+  fuelTypeOptions: SearchableSelectOption[] = [
+    { value: 'diesel', label: 'Diesel / ديزل' },
+    { value: 'gasoline', label: 'Gasoline' },
+  ];
+
   constructor(
     private cdr: ChangeDetectorRef,
 
@@ -144,7 +150,16 @@ export class VehicleFormComponent implements OnInit, OnChanges {
       custodian_phone: [null],
       color: [null],
       notes: [null],
+      fuel_type: [null as string | null],
     });
+  }
+
+  copyFuelFromEngine(): void {
+    // const engineId = this.form.value.current_engine_id;
+    const engine = this.vehicle?.engines?.fuel_type;
+    if (engine) {
+      this.form.patchValue({ fuel_type: engine });
+    }
   }
 
   private patchFormFromVehicle(): void {

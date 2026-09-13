@@ -441,27 +441,88 @@ export interface OverhaulImportRow {
   scope_description: string;
   machine_shop_name: string | null;
   entry_date: string | null;
+  exit_date: string | null;
+  /** stage key or Arabic/English label */
+  current_stage: string | null;
+  /** comma-separated technician full names */
+  technicians: string | null;
 }
 
 export const OVERHAUL_IMPORT_MAP: ColumnMapping<OverhaulImportRow> = {
-  plate_number: { headers: ['Plate Number', 'رقم اللوحة'], required: true },
-  scope_description: { headers: ['Scope', 'Scope Description', 'نطاق العمرة'], required: true },
-  machine_shop_name: { headers: ['Machine Shop', 'ورشة العمرة'] },
-  entry_date: { headers: ['Entry Date', 'تاريخ الدخول'], type: 'date' },
+  plate_number: {
+    headers: ['Plate Number', 'رقم اللوحة', 'السيارة'],
+    required: true,
+  },
+  scope_description: {
+    headers: ['Scope', 'Scope Description', 'نطاق العمرة', 'نوع العمرة'],
+    required: true,
+  },
+  machine_shop_name: {
+    headers: ['Machine Shop', 'ورشة العمرة', 'ورشة المكن'],
+  },
+  entry_date: {
+    headers: ['Entry Date', 'تاريخ الدخول'],
+    type: 'date',
+  },
+  exit_date: {
+    headers: ['Exit Date', 'تاريخ الخروج'],
+    type: 'date',
+  },
+  current_stage: {
+    headers: ['Stage', 'Current Stage', 'المرحلة', 'الحالة'],
+  },
+  technicians: {
+    headers: ['Technicians', 'Technician', 'الفنيون', 'الفنيين', 'الفني'],
+  },
 };
 
+/** Map free-text stage labels → enum */
+const STAGE_ALIASES: Record<string, string> = {
+  price_quotes: 'price_quotes',
+  'price quotes': 'price_quotes',
+  'عروض الأسعار': 'price_quotes',
+  check_issued: 'check_issued',
+  'check issued': 'check_issued',
+  'إصدار الشيك': 'check_issued',
+  delivered_to_machine_shop: 'delivered_to_machine_shop',
+  'delivered to machine shop': 'delivered_to_machine_shop',
+  'تسليم لورشة المكن': 'delivered_to_machine_shop',
+  installation: 'installation',
+  التركيب: 'installation',
+  break_in: 'break_in',
+  'break-in': 'break_in',
+  'التشغيل التجريبي': 'break_in',
+  engine_replacement: 'engine_replacement',
+  'engine replacement': 'engine_replacement',
+  'استبدال المحرك': 'engine_replacement',
+  completed: 'completed',
+  مكتمل: 'completed',
+  منتهي: 'completed',
+};
+
+function normalizeStage(raw: string | null | undefined): string {
+  if (!raw?.trim()) return 'price_quotes';
+  const key = raw.trim().toLowerCase();
+  return STAGE_ALIASES[key] || STAGE_ALIASES[raw.trim()] || 'price_quotes';
+}
+
 /**
- * Resolves plate_number -> vehicle_id and machine_shop_name -> machine_shop_id.
- * current_stage is deliberately left unset — same as the Overhaul form,
- * which never sets it either, relying on the table's own DB default
- * (the first pipeline stage) rather than hardcoding 'price_quotes' here.
+ * Resolves FKs. Also returns technician names per row so the caller can
+ * call syncTechnicians after bulkInsert.
  */
 export function resolveOverhaulForeignKeys(
   rows: OverhaulImportRow[],
   vehicleIdByPlate: Map<string, string>,
   machineShopIdByName: Map<string, string>,
-): { resolved: Partial<Overhaul>[]; unresolved: { row: OverhaulImportRow; reason: string }[] } {
+  technicianIdByName?: Map<string, string>,
+): {
+  resolved: Partial<Overhaul>[];
+  /** parallel to resolved — technician ids for each saved row */
+  technicianIdsPerRow: string[][];
+  unresolved: { row: OverhaulImportRow; reason: string }[];
+} {
   const resolved: Partial<Overhaul>[] = [];
+  const technicianIdsPerRow: string[][] = [];
   const unresolved: { row: OverhaulImportRow; reason: string }[] = [];
 
   for (const row of rows) {
@@ -471,6 +532,14 @@ export function resolveOverhaulForeignKeys(
       continue;
     }
 
+    const techIds: string[] = [];
+    if (row.technicians && technicianIdByName) {
+      for (const name of row.technicians.split(/[,،;]/)) {
+        const id = technicianIdByName.get(name.trim().toLowerCase());
+        if (id) techIds.push(id);
+      }
+    }
+
     resolved.push({
       vehicle_id: vehicleId,
       scope_description: row.scope_description,
@@ -478,10 +547,13 @@ export function resolveOverhaulForeignKeys(
         ? (machineShopIdByName.get(row.machine_shop_name.trim().toLowerCase()) ?? null)
         : null,
       entry_date: row.entry_date || new Date().toISOString().slice(0, 10),
+      exit_date: row.exit_date || null,
+      current_stage: normalizeStage(row.current_stage) as any,
     });
+    technicianIdsPerRow.push(techIds);
   }
 
-  return { resolved, unresolved };
+  return { resolved, technicianIdsPerRow, unresolved };
 }
 
 export const OVERHAUL_IMPORT_TEMPLATE_HEADERS = [
@@ -489,6 +561,9 @@ export const OVERHAUL_IMPORT_TEMPLATE_HEADERS = [
   'Scope',
   'Machine Shop',
   'Entry Date',
+  'Exit Date',
+  'Stage',
+  'Technicians',
 ];
 
 // ---------------------------------------------------------------------

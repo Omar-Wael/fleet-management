@@ -16,6 +16,7 @@ import { VehiclesService } from '../../../core/services/vehicles.service';
 import { LookupsService } from '../../../core/services/lookups.service';
 import { EnginesService } from '../../../core/services/engines.service';
 import {
+  effectiveFuelType,
   Engine,
   MaintenanceWorkshop,
   OperatingDepartment,
@@ -217,7 +218,7 @@ export class VehiclesListComponent implements OnInit {
       {
         key: 'fuel_type',
         header: this.i18n.t('vehicles.fuelType'),
-        render: (v) => this.resolveEngine(v)?.fuel_type || '—',
+        render: (v) => this.resolveEngine(v)?.fuel_type || effectiveFuelType(v) || '—',
       },
       {
         key: 'repair_dept',

@@ -35,6 +35,8 @@ import {
   DataTableFilter,
   DataTableQuery,
 } from '../../../shared/components/data-table/data-table.models';
+import { TechniciansService } from '../../../core/services/technicians.service';
+import { forkJoin } from 'rxjs';
 
 // English labels — used only for Excel/PDF export columns (deliberately
 // left untranslated, per repo convention). UI display uses STAGE_LABEL_KEYS
@@ -107,11 +109,13 @@ export class OverhaulsListComponent implements OnInit {
   importSummary: { savedCount: number; unresolvedCount: number } | null = null;
   private vehicles: VehicleWithLookups[] = [];
   private machineShops: ExternalWorkshop[] = [];
+  private technicians: { id: string; full_name: string }[] = [];
 
   constructor(
     private overhaulsService: OverhaulsService,
     private vehiclesService: VehiclesService,
     private sparePartsService: SparePartsService,
+    private techniciansService: TechniciansService,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
@@ -121,7 +125,10 @@ export class OverhaulsListComponent implements OnInit {
     this.buildColumns();
     this.buildFilters();
     this.loadOverhauls(this.currentQuery);
-
+    this.techniciansService.list(true).subscribe({
+      next: (list) => (this.technicians = list),
+      error: () => {},
+    });
     // Full unpaginated vehicle list — needed for the vehicle filter dropdown and for resolving plate → id during import.
     this.vehiclesService.list().subscribe({
       next: (vehicles) => {
@@ -409,32 +416,59 @@ export class OverhaulsListComponent implements OnInit {
     const machineShopIdByName = new Map(
       this.machineShops.map((s) => [s.name.trim().toLowerCase(), s.id]),
     );
+    const technicianIdByName = new Map(
+      this.technicians.map((t) => [t.full_name.trim().toLowerCase(), t.id]),
+    );
 
     importFileWithMapping<OverhaulImportRow>(file, OVERHAUL_IMPORT_MAP)
       .then((result) => {
-        const { resolved, unresolved } = resolveOverhaulForeignKeys(
+        const { resolved, technicianIdsPerRow, unresolved } = resolveOverhaulForeignKeys(
           result.valid,
           vehicleIdByPlate,
           machineShopIdByName,
+          technicianIdByName,
         );
         const totalUnresolved = unresolved.length + result.errors.length;
 
         if (resolved.length === 0) {
           this.importing = false;
           this.importError = this.i18n.t('overhauls.importNoRows');
+          this.cdr.markForCheck();
           return;
         }
 
         this.overhaulsService.bulkInsert(resolved).subscribe({
           next: (saved) => {
-            this.importing = false;
-            this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
-            this.reloadOverhaulsOnly();
+            // اربط الفنيين لكل صف محفوظ (نفس الترتيب)
+            const syncOps = saved.map((overhaul, i) =>
+              this.overhaulsService.syncTechnicians(overhaul.id, technicianIdsPerRow[i] ?? []),
+            );
+
+            const finish = () => {
+              this.importing = false;
+              this.importSummary = {
+                savedCount: saved.length,
+                unresolvedCount: totalUnresolved,
+              };
+              this.reloadOverhaulsOnly();
+              this.cdr.markForCheck();
+            };
+
+            if (!syncOps.length) {
+              finish();
+              return;
+            }
+
+            forkJoin(syncOps).subscribe({
+              next: () => finish(),
+              error: () => finish(), // العمرات اتحفظت حتى لو ربط فني فشل
+            });
           },
           error: (err) => {
             this.importing = false;
             this.importError =
               err instanceof Error ? err.message : this.i18n.t('overhauls.importFailed');
+            this.cdr.markForCheck();
           },
         });
       })
@@ -442,6 +476,7 @@ export class OverhaulsListComponent implements OnInit {
         this.importing = false;
         this.importError =
           err instanceof Error ? err.message : this.i18n.t('overhauls.importParseFailed');
+        this.cdr.markForCheck();
       });
   }
 
@@ -451,6 +486,9 @@ export class OverhaulsListComponent implements OnInit {
       Scope: 'Full engine overhaul',
       'Machine Shop': this.machineShops[0]?.name || '',
       'Entry Date': new Date().toISOString().slice(0, 10),
+      'Exit Date': '',
+      Stage: 'price_quotes',
+      Technicians: this.technicians[0]?.full_name || 'Name1, Name2',
     });
   }
 
@@ -492,24 +530,66 @@ export class OverhaulsListComponent implements OnInit {
   private excelColumns(): ExcelExportColumn<OverhaulGridRow>[] {
     return [
       { header: 'Vehicle', accessor: (o) => o.vehicles?.plate_number },
-      { header: 'Machine Shop', accessor: (o) => o.external_workshops?.name },
-      { header: 'Current Stage', accessor: (o) => this.stageLabels[o.current_stage] },
+      {
+        header: 'Department',
+        accessor: (o) =>
+          o.vehicles?.operating_departments?.name_ar ||
+          o.vehicles?.operating_departments?.name_en ||
+          '',
+      },
+      { header: 'Make', accessor: (o) => o.vehicles?.make },
+      { header: 'Model', accessor: (o) => o.vehicles?.model },
+      { header: 'Year', accessor: (o) => o.vehicles?.manufacture_year },
+      { header: 'Scope', accessor: (o) => o.scope_description },
+      {
+        header: 'Stage',
+        accessor: (o) => this.stageLabels[o.current_stage] ?? o.current_stage,
+      },
       { header: 'Entry Date', accessor: (o) => o.entry_date },
       { header: 'Exit Date', accessor: (o) => o.exit_date },
-      { header: 'Total Duration (days)', accessor: (o) => this.totalDurationDays(o) },
+      { header: 'Machine Shop', accessor: (o) => o.external_workshops?.name },
+      {
+        header: 'Technicians',
+        accessor: (o) =>
+          (o.overhaul_technicians ?? [])
+            .map((t) => t.technicians?.full_name)
+            .filter(Boolean)
+            .join(', '),
+      },
+      {
+        header: 'Total Duration (days)',
+        accessor: (o) => this.totalDurationDays(o),
+      },
       { header: 'Total Cost', accessor: (o) => this.totalCost(o) },
-      { header: 'Scope', accessor: (o) => o.scope_description },
     ];
   }
 
   private pdfColumns(): PdfReportColumn<OverhaulGridRow>[] {
     return [
       { header: 'Vehicle', accessor: (o) => o.vehicles?.plate_number },
-      { header: 'Machine Shop', accessor: (o) => o.external_workshops?.name },
-      { header: 'Stage', accessor: (o) => this.stageLabels[o.current_stage] },
+      {
+        header: 'Department',
+        accessor: (o) =>
+          o.vehicles?.operating_departments?.name_ar ||
+          o.vehicles?.operating_departments?.name_en ||
+          '',
+      },
+      { header: 'Scope', accessor: (o) => o.scope_description },
+      {
+        header: 'Stage',
+        accessor: (o) => this.stageLabels[o.current_stage] ?? o.current_stage,
+      },
       { header: 'Entry Date', accessor: (o) => o.entry_date },
-      { header: 'Duration (days)', accessor: (o) => this.totalDurationDays(o) },
-      { header: 'Total Cost', accessor: (o) => this.totalCost(o) },
+      { header: 'Exit Date', accessor: (o) => o.exit_date },
+      {
+        header: 'Technicians',
+        accessor: (o) =>
+          (o.overhaul_technicians ?? [])
+            .map((t) => t.technicians?.full_name)
+            .filter(Boolean)
+            .join(', '),
+      },
+      { header: 'Cost', accessor: (o) => this.totalCost(o) },
     ];
   }
 }
