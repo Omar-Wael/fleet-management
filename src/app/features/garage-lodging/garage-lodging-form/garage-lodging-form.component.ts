@@ -177,13 +177,13 @@ export class GarageLodgingFormComponent implements OnInit, OnChanges {
         this.saved.emit(lodging);
         // في وضع الإضافة نبقى مفتوحين قليلاً لرفع الصور إن رغب المستخدم،
         // أو نغلق مباشرة — نغلق بعد الحفظ ونترك الصور في وضع التعديل لاحقاً
-        if (!this.isEditMode) {
-          // بعد الإضافة الأولى: نبقي النموذج مفتوحاً لرفع الصور
-          this.lodging = lodging;
-          this.form.get('vehicle_id')?.disable();
-        } else {
-          this.close();
-        }
+        // if (!this.isEditMode) {
+        //   // بعد الإضافة الأولى: نبقي النموذج مفتوحاً لرفع الصور
+        //   this.lodging = lodging;
+        //   this.form.get('vehicle_id')?.disable();
+        // } else {
+        this.close();
+        // }
       },
       error: (err) => {
         this.saving = false;
