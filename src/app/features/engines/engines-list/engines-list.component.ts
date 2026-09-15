@@ -103,27 +103,37 @@ export class EnginesListComponent implements OnInit {
         render: (e) => e.manufacturer || '—',
       },
       {
-        key: 'horsepower',
-        header: this.i18n.t('engines.hp'),
-        mono: true,
-        render: (e) => (e.horsepower ?? '—') + '',
-      },
-      {
         key: 'cc',
         header: this.i18n.t('engines.cc'),
         mono: true,
         render: (e) => (e.cc == null ? '—' : new Intl.NumberFormat().format(e.cc)),
       },
       {
-        key: 'fuel_type',
-        header: this.i18n.t('engines.fuelType'),
-        render: (e) => e.fuel_type || '—',
+        key: 'cylinders',
+        header: this.i18n.t('engines.cylinders'),
+        mono: true,
+        render: (e) => (e.cylinders ?? '—') + '',
       },
       {
-        key: 'compatible_types',
-        header: this.i18n.t('engines.colCompatibleTypes'),
-        truncate: true,
-        render: (e) => this.compatibleTypeNames(e),
+        key: 'cam_type',
+        header: this.i18n.t('engines.camType'),
+        render: (e) => e.cam_type || '—',
+      },
+      {
+        key: 'fuel_system',
+        header: this.i18n.t('engines.fuelSystem'),
+        render: (e) => e.fuel_system || '—',
+      },
+      {
+        key: 'horsepower',
+        header: this.i18n.t('engines.hp'),
+        mono: true,
+        render: (e) => (e.horsepower ?? '—') + '',
+      },
+      {
+        key: 'compression_ratio',
+        header: this.i18n.t('engines.compressionRatio'),
+        render: (e) => e.compression_ratio || '—',
       },
       {
         key: 'status',
@@ -133,12 +143,6 @@ export class EnginesListComponent implements OnInit {
           e.is_in_stock
             ? { text: this.i18n.t('engines.statusInStock'), variant: 'ok' }
             : { text: this.i18n.t('engines.statusFitted'), variant: 'warn' },
-      },
-      {
-        key: 'notes',
-        header: this.i18n.t('common.notes'),
-        truncate: true,
-        render: (e) => e.notes || '—',
       },
       {
         key: 'actions',

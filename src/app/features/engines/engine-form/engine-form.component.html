@@ -15,106 +15,270 @@
           <div class="state-message state-message--error">{{ lookupsError }}</div>
         }
 
-        <div class="field-grid">
-          <label class="field">
-            <span>{{ 'engines.serialNumber' | translate }} *</span>
-            <input type="text" formControlName="engine_serial_number" />
-          </label>
+        <!-- التعريف / Definition -->
+        <section class="form-section">
+          <h3 class="section-title">{{ 'engines.sectionDefinition' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'engines.serialNumber' | translate }} *</span>
+              <input type="text" formControlName="engine_serial_number" [placeholder]="'engines.serialPlaceholder' | translate" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.model' | translate }}</span>
+              <input type="text" formControlName="model_name" [placeholder]="'engines.modelPlaceholder' | translate" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.manufacturer' | translate }}</span>
+              <input type="text" formControlName="manufacturer" [placeholder]="'engines.manufacturerPlaceholder' | translate" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.family' | translate }}</span>
+              <input type="text" formControlName="family" [placeholder]="'engines.familyPlaceholder' | translate" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.fuelType' | translate }}</span>
+              <select formControlName="fuel_type">
+                <option value="">{{ 'engines.selectFuelType' | translate }}</option>
+                <option value="diesel">Diesel</option>
+                <option value="petrol_92">Petrol 92</option>
+                <option value="petrol_95">Petrol 95</option>
+                <option value="petrol_90">Petrol 90</option>
+                <option value="gasoline">Gasoline</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="electric">Electric</option>
+                <option value="cng">CNG</option>
+              </select>
+            </label>
+            <label class="field field--checkbox">
+              <input type="checkbox" formControlName="is_in_stock" />
+              <span>{{ 'engines.inStockCheckbox' | translate }}</span>
+            </label>
+          </div>
+        </section>
 
-          <label class="field">
-            <span>{{ 'engines.model' | translate }}</span>
-            <input type="text" formControlName="model_name" />
-          </label>
+        <!-- الأبعاد والهندسة / Dimensions -->
+        <section class="form-section">
+          <h3 class="section-title">{{ 'engines.sectionDimensions' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'engines.cylinders' | translate }}</span>
+              <input type="number" formControlName="cylinders" min="1" max="16" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.boreMm' | translate }}</span>
+              <input type="number" formControlName="bore_mm" step="0.1" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.strokeMm' | translate }}</span>
+              <input type="number" formControlName="stroke_mm" step="0.1" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.displacement' | translate }}</span>
+              <input type="number" formControlName="cc" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.capacityL' | translate }}</span>
+              <input type="number" formControlName="capacity_l" step="0.1" />
+            </label>
+          </div>
+        </section>
 
-          <label class="field">
-            <span>{{ 'engines.manufacturer' | translate }}</span>
-            <input type="text" formControlName="manufacturer" />
-          </label>
+        <!-- توزيع الصمامات / Valves -->
+        <section class="form-section">
+          <h3 class="section-title">{{ 'engines.sectionValves' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'engines.camType' | translate }}</span>
+              <select formControlName="cam_type">
+                <option value="">{{ 'engines.selectCamType' | translate }}</option>
+                <option value="DOHC">DOHC</option>
+                <option value="SOHC">SOHC</option>
+                <option value="OHV">OHV</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>{{ 'engines.valvesPerCylinder' | translate }}</span>
+              <input type="number" formControlName="valves_per_cylinder" min="2" max="5" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.totalValves' | translate }}</span>
+              <input type="number" formControlName="total_valves" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.timingSystem' | translate }}</span>
+              <select formControlName="timing_system">
+                <option value="">{{ 'engines.selectTiming' | translate }}</option>
+                <option value="Chain">Chain</option>
+                <option value="Belt">Belt</option>
+                <option value="Gear">Gear</option>
+              </select>
+            </label>
+          </div>
+        </section>
 
-          <label class="field">
-            <span>{{ 'engines.fuelType' | translate }}</span>
-            <input
-              type="text"
-              formControlName="fuel_type"
-              [placeholder]="'engines.fuelTypePlaceholder' | translate"
-            />
-          </label>
+        <!-- نظام الوقود والأداء / Performance -->
+        <section class="form-section">
+          <h3 class="section-title">{{ 'engines.sectionPerformance' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'engines.fuelSystem' | translate }}</span>
+              <select formControlName="fuel_system">
+                <option value="">{{ 'engines.selectFuelSystem' | translate }}</option>
+                <option value="Carburetor">Carburetor</option>
+                <option value="MPI">Multi-Point Injection</option>
+                <option value="GDI">Direct Injection</option>
+                <option value="Common Rail">Common Rail</option>
+                <option value="TBI">Throttle Body</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>{{ 'engines.horsepower' | translate }}</span>
+              <input type="number" formControlName="horsepower" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.powerRpm' | translate }}</span>
+              <input type="number" formControlName="power_rpm" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.torqueNm' | translate }}</span>
+              <input type="number" formControlName="torque_nm" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.torqueRpm' | translate }}</span>
+              <input type="number" formControlName="torque_rpm" />
+            </label>
+          </div>
+        </section>
 
-          <label class="field">
-            <span>{{ 'engines.horsepower' | translate }}</span>
-            <input type="number" formControlName="horsepower" />
-          </label>
+        <!-- الضغط والضبط / Compression -->
+        <section class="form-section">
+          <h3 class="section-title">{{ 'engines.sectionCompression' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'engines.compressionRatio' | translate }}</span>
+              <input type="text" formControlName="compression_ratio" [placeholder]="'engines.compressionRatioPlaceholder' | translate" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.compressionPressure' | translate }}</span>
+              <input type="number" formControlName="compression_pressure_psi" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.firingOrder' | translate }}</span>
+              <input type="text" formControlName="firing_order" [placeholder]="'engines.firingOrderPlaceholder' | translate" />
+            </label>
+          </div>
+        </section>
 
-          <label class="field">
-            <span>{{ 'engines.displacement' | translate }}</span>
-            <input type="number" formControlName="cc" />
-          </label>
+        <!-- المواد والأبعاد / Materials -->
+        <section class="form-section">
+          <h3 class="section-title">{{ 'engines.sectionMaterials' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'engines.blockMaterial' | translate }}</span>
+              <select formControlName="block_material">
+                <option value="">{{ 'engines.selectMaterial' | translate }}</option>
+                <option value="Aluminum">Aluminum</option>
+                <option value="Cast Iron">Cast Iron</option>
+                <option value="Aluminum / Iron">Aluminum / Iron</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>{{ 'engines.headMaterial' | translate }}</span>
+              <select formControlName="head_material">
+                <option value="">{{ 'engines.selectMaterial' | translate }}</option>
+                <option value="Aluminum">Aluminum</option>
+                <option value="Cast Iron">Cast Iron</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>{{ 'engines.lengthMm' | translate }}</span>
+              <input type="number" formControlName="length_mm" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.widthMm' | translate }}</span>
+              <input type="number" formControlName="width_mm" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.heightMm' | translate }}</span>
+              <input type="number" formControlName="height_mm" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.dryWeightKg' | translate }}</span>
+              <input type="number" formControlName="dry_weight_kg" step="0.1" />
+            </label>
+          </div>
+        </section>
 
-          <label class="field field--checkbox">
-            <input type="checkbox" formControlName="is_in_stock" />
-            <span>{{ 'engines.inStockCheckbox' | translate }}</span>
-          </label>
+        <!-- التشحيم والتبريد / Lubrication -->
+        <section class="form-section">
+          <h3 class="section-title">{{ 'engines.sectionLubrication' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'engines.oilCapacityL' | translate }}</span>
+              <input type="number" formControlName="oil_capacity_l" step="0.1" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.oilType' | translate }}</span>
+              <input type="text" formControlName="oil_type" [placeholder]="'engines.oilTypePlaceholder' | translate" />
+            </label>
+            <label class="field">
+              <span>{{ 'engines.coolingType' | translate }}</span>
+              <select formControlName="cooling_type">
+                <option value="">{{ 'engines.selectCooling' | translate }}</option>
+                <option value="Water">Water</option>
+                <option value="Air">Air</option>
+                <option value="Oil">Oil</option>
+              </select>
+            </label>
+          </div>
+        </section>
 
-          <label class="field field--wide">
-            <span>{{ 'common.notes' | translate }}</span>
-            <textarea formControlName="notes" rows="3"></textarea>
-          </label>
-        </div>
+        <!-- ملاحظات -->
+        <section class="form-section">
+          <h3 class="section-title">{{ 'common.notes' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field field--wide">
+              <textarea formControlName="notes" rows="3" [placeholder]="'engines.notesPlaceholder' | translate"></textarea>
+            </label>
+          </div>
+        </section>
 
+        <!-- Compatibility — searchable multi-selects -->
         <section class="compat-section">
           <h3>{{ 'engines.compatibleVehicleTypes' | translate }}</h3>
-          <div class="chip-grid">
-            @for (t of vehicleTypes; track t.id) {
-              <label class="chip" [class.chip--active]="selectedVehicleTypeIds.has(t.id)">
-                <input
-                  type="checkbox"
-                  [checked]="selectedVehicleTypeIds.has(t.id)"
-                  (change)="toggleVehicleType(t.id)"
-                />
-                {{ t.name_en || t.name_ar }}
-              </label>
-            }
-          </div>
+          <app-searchable-select
+            [options]="vehicleTypeOptions"
+            [(ngModel)]="selectedVehicleTypeIds"
+            [ngModelOptions]="{ standalone: true }"
+            [multiple]="true"
+            [placeholder]="'engines.compatibleVehicleTypes' | translate"
+            [searchPlaceholder]="'common.search' | translate"
+          ></app-searchable-select>
         </section>
 
         <section class="compat-section">
           <h3>{{ 'engines.compatibleVehicleMakes' | translate }}</h3>
-          <!-- <div class="make-search">
-            <input
-              type="text"
-              [(ngModel)]="vehicleMakeSearchTerm"
-              [placeholder]="'engines.searchMakePlaceholder' | translate"
-            />
-          </div> -->
-          <div class="chip-grid">
-            @for (make of filteredVehicleMakes; track make) {
-              <label class="chip" [class.chip--active]="selectedVehicleMakes.has(make)">
-                <input
-                  type="checkbox"
-                  [checked]="selectedVehicleMakes.has(make)"
-                  (change)="toggleVehicleMake(make)"
-                />
-                {{ make }}
-              </label>
-            }
-          </div>
+          <app-searchable-select
+            [options]="vehicleMakeOptions"
+            [(ngModel)]="selectedVehicleMakes"
+            [ngModelOptions]="{ standalone: true }"
+            [multiple]="true"
+            [placeholder]="'engines.compatibleVehicleMakes' | translate"
+            [searchPlaceholder]="'engines.searchMakePlaceholder' | translate"
+          ></app-searchable-select>
           <div class="hint">{{ 'engines.vehicleMakeCompatHint' | translate }}</div>
         </section>
 
         <section class="compat-section">
           <h3>{{ 'engines.compatibleSpareParts' | translate }}</h3>
-          <div class="chip-grid">
-            @for (p of spareParts; track p.id) {
-              <label class="chip" [class.chip--active]="selectedPartIds.has(p.id)">
-                <input
-                  type="checkbox"
-                  [checked]="selectedPartIds.has(p.id)"
-                  (change)="togglePart(p.id)"
-                />
-                {{ p.name_en || p.name_ar }}
-              </label>
-            }
-          </div>
+          <app-searchable-select
+            [options]="sparePartOptions"
+            [(ngModel)]="selectedPartIds"
+            [ngModelOptions]="{ standalone: true }"
+            [multiple]="true"
+            [placeholder]="'engines.compatibleSpareParts' | translate"
+            [searchPlaceholder]="'common.search' | translate"
+          ></app-searchable-select>
         </section>
 
         @if (saveError) {

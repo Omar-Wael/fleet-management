@@ -241,3 +241,9 @@
   border-color: var(--fleet-line, #dfe3e8);
   color: var(--fleet-ink, #1f2430);
 }
+
+@media (max-width: 768px) {
+  .drawer {
+    width: 100% !important;
+  }
+}

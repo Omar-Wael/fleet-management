@@ -179,3 +179,9 @@
 .state-message--error {
   color: var(--fleet-rust, #c4432b);
 }
+
+@media (max-width: 768px) {
+  .drawer {
+    width: 100% !important;
+  }
+}
