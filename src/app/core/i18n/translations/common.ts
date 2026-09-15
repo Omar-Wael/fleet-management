@@ -7,12 +7,12 @@ import { TranslationEntry } from './types';
  * from ballooning as more tabs get translated.
  */
 export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
-  'active': { en: 'Active', ar: 'نشط' },
-  'inactive': { en: 'Inactive', ar: 'غير نشط' },
-  'requested': { en: 'Requested', ar: 'تم الطلب' },
-  'issued': { en: 'Issued', ar: 'تم الصرف' },
-  'new': { en: 'New', ar: 'جديد' },
-  'total': { en: 'Total', ar: 'الإجمالى' },
+  active: { en: 'Active', ar: 'نشط' },
+  inactive: { en: 'Inactive', ar: 'غير نشط' },
+  requested: { en: 'Requested', ar: 'تم الطلب' },
+  issued: { en: 'Issued', ar: 'تم الصرف' },
+  new: { en: 'New', ar: 'جديد' },
+  total: { en: 'Total', ar: 'الإجمالى' },
   'common.ok': { en: 'OK', ar: 'موافق' },
   'common.yes': { en: 'Yes', ar: 'نعم' },
   'common.no': { en: 'No', ar: 'لا' },
@@ -34,6 +34,7 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
   'common.phone': { en: 'Phone', ar: 'رقم الهاتف' },
   'common.notes': { en: 'Notes', ar: 'ملاحظات' },
   'common.date': { en: 'Date', ar: 'التاريخ' },
+  km: { en: 'km', ar: 'كم' },
   'common.search': { en: 'Search…', ar: 'بحث…' },
   'common.allWorkshops': { en: 'All Workshops', ar: 'كل الورش' },
   'common.none': { en: '— None —', ar: '— لا يوجد —' },
@@ -45,5 +46,8 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
   'common.exportPdf': { en: 'Export PDF', ar: 'تصدير PDF' },
   'common.loading': { en: 'Loading…', ar: 'جارٍ التحميل…' },
   'common.somethingWentWrong': { en: 'Something went wrong.', ar: 'حدث خطأ ما.' },
-  'common.noResultsForFilters': { en: 'No results match the current filters.', ar: 'لا توجد نتائج مطابقة للفلاتر الحالية.' },
+  'common.noResultsForFilters': {
+    en: 'No results match the current filters.',
+    ar: 'لا توجد نتائج مطابقة للفلاتر الحالية.',
+  },
 };

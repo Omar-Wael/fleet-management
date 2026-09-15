@@ -279,3 +279,9 @@
   opacity: 0.6;
   cursor: default;
 }
+
+@media (max-width: 768px) {
+  .drawer {
+    width: 100% !important;
+  }
+}

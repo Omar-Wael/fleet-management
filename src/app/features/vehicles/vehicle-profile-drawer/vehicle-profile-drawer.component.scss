@@ -197,3 +197,9 @@
   color: #dc2626;
   border-radius: 0.25rem;
 }
+
+@media (max-width: 768px) {
+  .drawer {
+    width: 100% !important;
+  }
+}

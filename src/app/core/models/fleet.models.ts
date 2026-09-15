@@ -177,6 +177,32 @@ export interface Engine {
   is_in_stock: boolean;
   notes: string | null;
   created_at: string;
+  // Extended technical specs (require corresponding DB columns to persist)
+  family?: string | null;
+  cylinders?: number | null;
+  bore_mm?: number | null;
+  stroke_mm?: number | null;
+  capacity_l?: number | null;
+  cam_type?: string | null;
+  valves_per_cylinder?: number | null;
+  total_valves?: number | null;
+  timing_system?: string | null;
+  fuel_system?: string | null;
+  power_rpm?: number | null;
+  torque_nm?: number | null;
+  torque_rpm?: number | null;
+  compression_ratio?: string | null;
+  compression_pressure_psi?: number | null;
+  firing_order?: string | null;
+  block_material?: string | null;
+  head_material?: string | null;
+  length_mm?: number | null;
+  width_mm?: number | null;
+  height_mm?: number | null;
+  dry_weight_kg?: number | null;
+  oil_capacity_l?: number | null;
+  oil_type?: string | null;
+  cooling_type?: string | null;
 }
 
 export interface SparePart {

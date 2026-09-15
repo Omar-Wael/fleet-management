@@ -85,6 +85,7 @@ export class VehicleProfileDrawerComponent implements OnChanges {
 
     this.vehiclesService.getFullProfile(this.vehicleId).subscribe({
       next: (profile) => {
+        console.log('Vehicle profile loaded:', profile);
         this.profile = profile;
         this.loading = false;
         this.cdr.markForCheck();
@@ -102,9 +103,9 @@ export class VehicleProfileDrawerComponent implements OnChanges {
     if (!this.vehicleId) return;
     this.vehiclesService.getById(this.vehicleId).subscribe({
       next: (vehicle) => {
-        if (this.profile) {
-          this.vehicle = vehicle;
-        }
+        // if (this.profile) {
+        this.vehicle = vehicle;
+        // }
         this.cdr.markForCheck();
       },
       error: () => {

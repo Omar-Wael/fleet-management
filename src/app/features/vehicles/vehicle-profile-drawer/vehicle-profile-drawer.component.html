@@ -76,17 +76,79 @@
         <section class="profile-section">
           <h3>{{ 'vehicles.sectionEngine' | translate }}</h3>
           @if (resolvedEngine; as engine) {
-            <dl>
-              <dt>{{ 'vehicles.serialNumber' | translate }}</dt>
+            <dl class="engine-dl">
+              <dt>{{ 'engines.serialNumber' | translate }}</dt>
               <dd class="mono">{{ engine.engine_serial_number }}</dd>
-              <dt>{{ 'vehicles.model' | translate }}</dt>
+              <dt>{{ 'engines.model' | translate }}</dt>
               <dd>{{ engine.model_name || '—' }}</dd>
-              <dt>{{ 'vehicles.manufacturer' | translate }}</dt>
+              <dt>{{ 'engines.manufacturer' | translate }}</dt>
               <dd>{{ engine.manufacturer || '—' }}</dd>
-              <dt>{{ 'vehicles.fuelType' | translate }}</dt>
+              <dt>{{ 'engines.family' | translate }}</dt>
+              <dd>{{ engine.family || '—' }}</dd>
+              <dt>{{ 'engines.fuelType' | translate }}</dt>
               <dd>{{ engine.fuel_type || '—' }}</dd>
-              <dt>{{ 'vehicles.horsepower' | translate }}</dt>
+              <dt>{{ 'engines.cylinders' | translate }}</dt>
+              <dd>{{ engine.cylinders ?? '—' }}</dd>
+              <dt>{{ 'engines.boreMm' | translate }}</dt>
+              <dd>{{ engine.bore_mm ?? '—' }}</dd>
+              <dt>{{ 'engines.strokeMm' | translate }}</dt>
+              <dd>{{ engine.stroke_mm ?? '—' }}</dd>
+              <dt>{{ 'engines.displacement' | translate }}</dt>
+              <dd>{{ engine.cc ?? '—' }}</dd>
+              <dt>{{ 'engines.capacityL' | translate }}</dt>
+              <dd>{{ engine.capacity_l ?? '—' }}</dd>
+              <dt>{{ 'engines.camType' | translate }}</dt>
+              <dd>{{ engine.cam_type || '—' }}</dd>
+              <dt>{{ 'engines.valvesPerCylinder' | translate }}</dt>
+              <dd>{{ engine.valves_per_cylinder ?? '—' }}</dd>
+              <dt>{{ 'engines.totalValves' | translate }}</dt>
+              <dd>{{ engine.total_valves ?? '—' }}</dd>
+              <dt>{{ 'engines.timingSystem' | translate }}</dt>
+              <dd>{{ engine.timing_system || '—' }}</dd>
+              <dt>{{ 'engines.fuelSystem' | translate }}</dt>
+              <dd>{{ engine.fuel_system || '—' }}</dd>
+              <dt>{{ 'engines.horsepower' | translate }}</dt>
               <dd>{{ engine.horsepower != null ? engine.horsepower : '—' }}</dd>
+              <dt>{{ 'engines.powerRpm' | translate }}</dt>
+              <dd>{{ engine.power_rpm ?? '—' }}</dd>
+              <dt>{{ 'engines.torqueNm' | translate }}</dt>
+              <dd>{{ engine.torque_nm ?? '—' }}</dd>
+              <dt>{{ 'engines.torqueRpm' | translate }}</dt>
+              <dd>{{ engine.torque_rpm ?? '—' }}</dd>
+              <dt>{{ 'engines.compressionRatio' | translate }}</dt>
+              <dd>{{ engine.compression_ratio || '—' }}</dd>
+              <dt>{{ 'engines.compressionPressure' | translate }}</dt>
+              <dd>{{ engine.compression_pressure_psi ?? '—' }}</dd>
+              <dt>{{ 'engines.firingOrder' | translate }}</dt>
+              <dd>{{ engine.firing_order || '—' }}</dd>
+              <dt>{{ 'engines.blockMaterial' | translate }}</dt>
+              <dd>{{ engine.block_material || '—' }}</dd>
+              <dt>{{ 'engines.headMaterial' | translate }}</dt>
+              <dd>{{ engine.head_material || '—' }}</dd>
+              <dt>{{ 'engines.lengthMm' | translate }}</dt>
+              <dd>{{ engine.length_mm ?? '—' }}</dd>
+              <dt>{{ 'engines.widthMm' | translate }}</dt>
+              <dd>{{ engine.width_mm ?? '—' }}</dd>
+              <dt>{{ 'engines.heightMm' | translate }}</dt>
+              <dd>{{ engine.height_mm ?? '—' }}</dd>
+              <dt>{{ 'engines.dryWeightKg' | translate }}</dt>
+              <dd>{{ engine.dry_weight_kg ?? '—' }}</dd>
+              <dt>{{ 'engines.oilCapacityL' | translate }}</dt>
+              <dd>{{ engine.oil_capacity_l ?? '—' }}</dd>
+              <dt>{{ 'engines.oilType' | translate }}</dt>
+              <dd>{{ engine.oil_type || '—' }}</dd>
+              <dt>{{ 'engines.coolingType' | translate }}</dt>
+              <dd>{{ engine.cooling_type || '—' }}</dd>
+              <dt>{{ 'common.notes' | translate }}</dt>
+              <dd>{{ engine.notes || '—' }}</dd>
+              <dt>{{ 'common.status' | translate }}</dt>
+              <dd>
+                @if (engine.is_in_stock) {
+                  {{ 'engines.statusInStock' | translate }}
+                } @else {
+                  {{ 'engines.statusFitted' | translate }}
+                }
+              </dd>
             </dl>
             @if (!profile.vehicle.engines) {
               <p class="muted">{{ 'vehicles.engineMatchedByNumber' | translate }}</p>

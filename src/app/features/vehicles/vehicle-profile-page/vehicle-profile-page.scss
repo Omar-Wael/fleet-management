@@ -80,11 +80,41 @@
   color: #92400e;
 }
 
+.badges-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.5rem;
   flex: 1;
+}
+
+.hi-badge {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.identity-year {
+  font-family:
+    JetBrains Mono,
+    monospace;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .badge {
@@ -194,9 +224,24 @@
   dl {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 0.4rem 0.85rem;
+    column-gap: 0;
+    row-gap: 0;
     margin: 0;
     font-size: 0.875rem;
+    max-height: 450px;
+    overflow: auto;
+
+    dt,
+    dd {
+      padding: 0.45rem 0;
+      border-bottom: 1px solid var(--fleet-border, #e2e5ea);
+    }
+
+    // remove the border on the last row
+    dt:last-of-type,
+    dd:last-of-type {
+      border-bottom: none;
+    }
   }
 
   dt {
@@ -206,6 +251,8 @@
 
   dd {
     margin: 0;
+    text-align: end;
+    width: 100%;
   }
 }
 
