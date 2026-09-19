@@ -96,6 +96,7 @@ export class GarageLocationsTabComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'garage_name',
         header: this.i18n.t('settings.garageLocations.colGarageName'),

@@ -76,6 +76,7 @@ export class DailyNotesListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'serial',
         header: this.i18n.t('dailyNotes.serial'),
@@ -97,9 +98,7 @@ export class DailyNotesListComponent implements OnInit {
         key: 'note_date',
         header: this.i18n.t('dailyNotes.noteDate'),
         render: (n) =>
-          n.note_date
-            ? this.datePipe.transform(n.note_date, 'yyyy-MM-dd') || n.note_date
-            : '—',
+          n.note_date ? this.datePipe.transform(n.note_date, 'yyyy-MM-dd') || n.note_date : '—',
       },
       {
         key: 'actions',
@@ -145,8 +144,7 @@ export class DailyNotesListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError =
-          err instanceof Error ? err.message : this.i18n.t('dailyNotes.failedLoad');
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('dailyNotes.failedLoad');
         this.loading = false;
         this.cdr.markForCheck();
       },

@@ -3,7 +3,10 @@ import { TranslationEntry } from './types';
 export const MAINTENANCE_TRANSLATIONS: Record<string, TranslationEntry> = {
   // Maintenance page (tab nav)
   'maintenance.tabWorkOrders': { en: 'Work Orders', ar: 'أوامر الشغل' },
-  'maintenance.tabOilFilterTracker': { en: 'Oil & Filter Tracker', ar: 'متابعة تغيير الزيت والفلتر' },
+  'maintenance.tabOilFilterTracker': {
+    en: 'Oil & Filter Tracker',
+    ar: 'متابعة تغيير الزيت والفلتر',
+  },
 
   // Shared vocabulary across maintenance sub-components
   'maintenance.shown': { en: 'shown', ar: 'معروض' },
@@ -20,9 +23,18 @@ export const MAINTENANCE_TRANSLATIONS: Record<string, TranslationEntry> = {
   'maintenance.totalCost': { en: 'Total Cost', ar: 'التكلفة الإجمالية' },
   'maintenance.yes': { en: 'Yes', ar: 'نعم' },
   'maintenance.no': { en: 'No', ar: 'لا' },
-  'maintenance.loadingFormOptions': { en: 'Loading form options…', ar: 'جارٍ تحميل خيارات النموذج…' },
-  'maintenance.failedLoadFormOptions': { en: 'Failed to load form options.', ar: 'فشل تحميل خيارات النموذج.' },
-  'maintenance.importParseFailed': { en: 'Could not parse the import file.', ar: 'تعذر قراءة ملف الاستيراد.' },
+  'maintenance.loadingFormOptions': {
+    en: 'Loading form options…',
+    ar: 'جارٍ تحميل خيارات النموذج…',
+  },
+  'maintenance.failedLoadFormOptions': {
+    en: 'Failed to load form options.',
+    ar: 'فشل تحميل خيارات النموذج.',
+  },
+  'maintenance.importParseFailed': {
+    en: 'Could not parse the import file.',
+    ar: 'تعذر قراءة ملف الاستيراد.',
+  },
 
   // Oil & Filter Tracker
   'maintenance.loadingVehicles': { en: 'Loading vehicles…', ar: 'جارٍ تحميل السيارات…' },
@@ -41,13 +53,44 @@ export const MAINTENANCE_TRANSLATIONS: Record<string, TranslationEntry> = {
   'maintenance.nextDueReading': { en: 'Next Due Reading', ar: 'القراءة المستحقة القادمة' },
   'maintenance.nextDueDate': { en: 'Next Due Date', ar: 'التاريخ المستحق القادم' },
   'maintenance.saveChangeButton': { en: 'Save Change', ar: 'حفظ التغيير' },
-  'maintenance.loadingChangeHistory': { en: 'Loading change history…', ar: 'جارٍ تحميل سجل التغييرات…' },
+  'maintenance.loadingChangeHistory': {
+    en: 'Loading change history…',
+    ar: 'جارٍ تحميل سجل التغييرات…',
+  },
   'maintenance.noOilFilterChanges': {
     en: 'No oil/filter changes recorded for this vehicle yet.',
     ar: 'لا توجد تغييرات زيت/فلتر مسجلة لهذه السيارة بعد.',
   },
-  'maintenance.failedLoadChangeHistory': { en: 'Failed to load change history.', ar: 'فشل تحميل سجل التغييرات.' },
+  'maintenance.failedLoadChangeHistory': {
+    en: 'Failed to load change history.',
+    ar: 'فشل تحميل سجل التغييرات.',
+  },
   'maintenance.failedRecordChange': { en: 'Failed to record change.', ar: 'فشل تسجيل التغيير.' },
+  'maintenance.allVehicles': { en: 'All vehicles', ar: 'كل السيارات' },
+  'maintenance.changeRecordsShown': { en: 'record(s) shown', ar: 'سجل/سجلات معروضة' },
+  'maintenance.oilFilterSearchPlaceholder': {
+    en: 'Search plate, type, notes, technician…',
+    ar: 'ابحث باللوحة أو النوع أو الملاحظات أو الفني…',
+  },
+  'maintenance.editChangeTitle': {
+    en: 'Edit Oil / Filter Change',
+    ar: 'تعديل تغيير الزيت / الفلتر',
+  },
+  'maintenance.prevChangeDate': { en: 'Previous change date', ar: 'تاريخ التغيير السابق' },
+  'maintenance.currentChangeDate': { en: 'Current change date', ar: 'تاريخ التغيير الحالي' },
+  'maintenance.prevChangeMeter': { en: 'Previous meter', ar: 'العداد السابق' },
+  'maintenance.currentMeter': { en: 'Current meter', ar: 'العداد الحالي' },
+  'maintenance.meterDifference': { en: 'Difference', ar: 'الفرق' },
+  'maintenance.oilInterval': { en: 'Oil interval', ar: 'فترة الزيت' },
+  'maintenance.interval2000': { en: '2000 km', ar: '2000 كم' },
+  'maintenance.interval5000': { en: '5000 km', ar: '5000 كم' },
+  'maintenance.diffOnTarget': { en: 'On target', ar: 'ضمن المعدل' },
+  'maintenance.diffEarly': { en: 'Early', ar: 'مبكر' },
+  'maintenance.diffLate': { en: 'Late', ar: 'متأخر' },
+  'maintenance.deleteChangeConfirm': {
+    en: 'Delete this oil/filter change for',
+    ar: 'حذف سجل تغيير الزيت/الفلتر لـ',
+  },
 
   // Work order detail drawer
   'maintenance.workOrderFallbackTitle': { en: 'Work Order', ar: 'أمر الشغل' },
@@ -56,7 +99,10 @@ export const MAINTENANCE_TRANSLATIONS: Record<string, TranslationEntry> = {
   'maintenance.prematureFailure': { en: 'Premature Failure', ar: 'عطل مبكر' },
   'maintenance.repairTypes': { en: 'Repair Types', ar: 'أنواع الإصلاح' },
   'maintenance.categories': { en: 'Categories', ar: 'الفئات' },
-  'maintenance.noTechniciansAssigned': { en: 'No technicians assigned.', ar: 'لا يوجد فنيون مسندون.' },
+  'maintenance.noTechniciansAssigned': {
+    en: 'No technicians assigned.',
+    ar: 'لا يوجد فنيون مسندون.',
+  },
   'maintenance.financialTransactions': { en: 'Financial Transactions', ar: 'الحركات المالية' },
   'maintenance.channel': { en: 'Channel', ar: 'القناة' },
   'maintenance.amount': { en: 'Amount', ar: 'المبلغ' },
@@ -67,7 +113,10 @@ export const MAINTENANCE_TRANSLATIONS: Record<string, TranslationEntry> = {
   'maintenance.closeWorkOrder': { en: 'Close Work Order', ar: 'إغلاق أمر الشغل' },
   'maintenance.finalTotalCost': { en: 'Final Total Cost', ar: 'التكلفة الإجمالية النهائية' },
   'maintenance.closingEllipsis': { en: 'Closing…', ar: 'جارٍ الإغلاق…' },
-  'maintenance.failedCloseWorkOrder': { en: 'Failed to close work order.', ar: 'فشل إغلاق أمر الشغل.' },
+  'maintenance.failedCloseWorkOrder': {
+    en: 'Failed to close work order.',
+    ar: 'فشل إغلاق أمر الشغل.',
+  },
 
   // Work order form
   'maintenance.newWorkOrderTitle': { en: 'New Work Order', ar: 'أمر شغل جديد' },
@@ -77,12 +126,21 @@ export const MAINTENANCE_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'e.g. corrective, preventive, inspection',
     ar: 'مثال: تصحيحية، وقائية، فحص',
   },
-  'maintenance.repairTypesCommaSeparated': { en: 'Repair Types (comma-separated)', ar: 'أنواع الإصلاح (مفصولة بفواصل)' },
-  'maintenance.repairTypesPlaceholder': { en: 'e.g. brakes, electrical', ar: 'مثال: فرامل، كهرباء' },
+  'maintenance.repairTypesCommaSeparated': {
+    en: 'Repair Types (comma-separated)',
+    ar: 'أنواع الإصلاح (مفصولة بفواصل)',
+  },
+  'maintenance.repairTypesPlaceholder': {
+    en: 'e.g. brakes, electrical',
+    ar: 'مثال: فرامل، كهرباء',
+  },
   'maintenance.maintenanceCategories': { en: 'Maintenance Categories', ar: 'فئات الصيانة' },
   'maintenance.assignTechnicians': { en: 'Assign Technicians', ar: 'إسناد الفنيين' },
   'maintenance.createWorkOrderButton': { en: 'Create Work Order', ar: 'إنشاء أمر شغل' },
-  'maintenance.failedCreateWorkOrder': { en: 'Failed to create work order.', ar: 'فشل إنشاء أمر الشغل.' },
+  'maintenance.failedCreateWorkOrder': {
+    en: 'Failed to create work order.',
+    ar: 'فشل إنشاء أمر الشغل.',
+  },
   'maintenance.workOrderCreatedAssignFailed': {
     en: 'Work order created, but assigning technicians failed.',
     ar: 'تم إنشاء أمر الشغل، لكن فشل إسناد الفنيين.',
@@ -96,18 +154,30 @@ export const MAINTENANCE_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'row(s) skipped — check plate numbers.',
     ar: 'صف/صفوف تم تخطيها — تحقق من أرقام اللوحات.',
   },
-  'maintenance.searchPlaceholder': { en: 'Search plate, description, type…', ar: 'ابحث باللوحة أو الوصف أو النوع…' },
+  'maintenance.searchPlaceholder': {
+    en: 'Search plate, description, type…',
+    ar: 'ابحث باللوحة أو الوصف أو النوع…',
+  },
   'maintenance.openOnly': { en: 'Open only', ar: 'المفتوحة فقط' },
   'maintenance.loadingWorkOrders': { en: 'Loading work orders…', ar: 'جارٍ تحميل أوامر الشغل…' },
   'maintenance.noWorkOrdersMatch': {
     en: 'No work orders match the current filters.',
     ar: 'لا توجد أوامر شغل مطابقة للفلاتر الحالية.',
   },
-  'maintenance.failedLoadWorkOrders': { en: 'Failed to load work orders.', ar: 'فشل تحميل أوامر الشغل.' },
-  'maintenance.failedReloadWorkOrders': { en: 'Failed to reload work orders.', ar: 'فشل إعادة تحميل أوامر الشغل.' },
+  'maintenance.failedLoadWorkOrders': {
+    en: 'Failed to load work orders.',
+    ar: 'فشل تحميل أوامر الشغل.',
+  },
+  'maintenance.failedReloadWorkOrders': {
+    en: 'Failed to reload work orders.',
+    ar: 'فشل إعادة تحميل أوامر الشغل.',
+  },
   'maintenance.importNoRowsResolved': {
     en: 'No rows could be resolved. Check that plate numbers match existing vehicles.',
     ar: 'تعذر التعرف على أي صف. تأكد من مطابقة أرقام اللوحات لسيارات موجودة.',
   },
-  'maintenance.importFailedPartway': { en: 'Import failed partway through.', ar: 'فشل الاستيراد في منتصف العملية.' },
+  'maintenance.importFailedPartway': {
+    en: 'Import failed partway through.',
+    ar: 'فشل الاستيراد في منتصف العملية.',
+  },
 };

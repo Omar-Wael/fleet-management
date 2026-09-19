@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -11,7 +11,11 @@ import { SparePartsService } from '../../../core/services/spare-parts.service';
 import { VehiclesService } from '../../../core/services/vehicles.service';
 import { LookupsService } from '../../../core/services/lookups.service';
 import { ExternalWorkshop } from '../../../core/models/fleet.models';
-import { exportToExcel, ExcelExportColumn, downloadImportTemplate } from '../../../shared/utils/excel-import-export.util';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { importFileWithMapping } from '../../../shared/utils/document-import.util';
 import {
@@ -24,16 +28,26 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 @Component({
   selector: 'app-invoices-list',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, InvoiceFormComponent, InvoiceDetailDrawerComponent],
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    SharedDataTableComponent,
+    InvoiceFormComponent,
+    InvoiceDetailDrawerComponent,
+  ],
   templateUrl: './invoices-list.component.html',
   styleUrls: ['./invoices-list.component.scss'],
   providers: [DatePipe],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InvoicesListComponent implements OnInit {
   rows: InvoiceGridRow[] = [];
@@ -148,6 +162,7 @@ export class InvoicesListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'invoice_no',
         header: this.i18n.t('invoices.invoiceNo'),
@@ -155,7 +170,11 @@ export class InvoicesListComponent implements OnInit {
         mono: true,
         render: (inv) => inv.invoice_no,
       },
-      { key: 'vendor', header: this.i18n.t('invoices.vendor'), render: (inv) => inv.external_workshops?.name || '—' },
+      {
+        key: 'vendor',
+        header: this.i18n.t('invoices.vendor'),
+        render: (inv) => inv.external_workshops?.name || '—',
+      },
       {
         key: 'invoice_date',
         header: this.i18n.t('common.date'),
@@ -191,8 +210,15 @@ export class InvoicesListComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (inv) => [{ label: this.i18n.t('common.view'), icon: '👁️️',
-            variant: 'info', display: 'icon', onClick: (inv) => this.openDetail(inv) }],
+        actions: (inv) => [
+          {
+            label: this.i18n.t('common.view'),
+            icon: '👁️️',
+            variant: 'info',
+            display: 'icon',
+            onClick: (inv) => this.openDetail(inv),
+          },
+        ],
       },
     ];
   }
@@ -215,7 +241,8 @@ export class InvoicesListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('invoices.failedLoadInvoices');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('invoices.failedLoadInvoices');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -300,13 +327,15 @@ export class InvoicesListComponent implements OnInit {
           },
           error: (err) => {
             this.importing = false;
-            this.importError = err instanceof Error ? err.message : this.i18n.t('invoices.importUpsertFailed');
+            this.importError =
+              err instanceof Error ? err.message : this.i18n.t('invoices.importUpsertFailed');
           },
         });
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : this.i18n.t('invoices.importParseFailed');
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('invoices.importParseFailed');
       });
   }
 
@@ -331,7 +360,8 @@ export class InvoicesListComponent implements OnInit {
     this.invoicesService.listAllMatching(this.currentQuery).subscribe({
       next: (rows) => exportToExcel(rows, this.excelColumns(), 'invoices-export'),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -350,7 +380,8 @@ export class InvoicesListComponent implements OnInit {
           'invoices-report',
         ),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

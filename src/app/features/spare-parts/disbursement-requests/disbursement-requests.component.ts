@@ -104,7 +104,14 @@ export class DisbursementRequestsComponent implements OnInit {
     pageSize: 10,
     search: '',
     sort: { field: 'requested_at', dir: 'desc' },
-    filters: { status: '', vehicleId: '', technicianId: '', departmentId: '', workshopId: '', vehicleMake: '' },
+    filters: {
+      status: '',
+      vehicleId: '',
+      technicianId: '',
+      departmentId: '',
+      workshopId: '',
+      vehicleMake: '',
+    },
   };
 
   formOpen = false;
@@ -192,6 +199,7 @@ export class DisbursementRequestsComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'request_number',
         header: this.i18n.t('spareParts.requestNumber'),
@@ -225,7 +233,8 @@ export class DisbursementRequestsComponent implements OnInit {
         key: 'issued_at',
         header: this.i18n.t('spareParts.disbursement.issuedAt'),
         sortable: true,
-        render: (r) => (r.issued_at ? this.datePipe.transform(r.issued_at, 'dd/MM/yyyy') || '—' : '—'),
+        render: (r) =>
+          r.issued_at ? this.datePipe.transform(r.issued_at, 'dd/MM/yyyy') || '—' : '—',
       },
       {
         key: 'parts',
@@ -453,9 +462,7 @@ export class DisbursementRequestsComponent implements OnInit {
       },
       error: (err) => {
         this.loadError =
-          err instanceof Error
-            ? err.message
-            : this.i18n.t('spareParts.disbursement.deleteError');
+          err instanceof Error ? err.message : this.i18n.t('spareParts.disbursement.deleteError');
         this.cdr.markForCheck();
       },
     });

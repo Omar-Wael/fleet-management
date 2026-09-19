@@ -467,7 +467,11 @@ export interface OilAndFilterChange {
   technician_id: string | null;
   work_order_id: string | null;
   notes: string | null;
-  created_at: string;
+  created_at: string; /**
+   * Planned oil-change interval in km (e.g. 2000 or 5000).
+   * Requires DB column: ALTER TABLE oil_and_filter_changes ADD COLUMN IF NOT EXISTS interval_km numeric;
+   */
+  interval_km?: number | null;
 }
 
 export interface Invoice {

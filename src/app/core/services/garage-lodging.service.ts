@@ -145,4 +145,8 @@ export class GarageLodgingService {
         .limit(1),
     ).pipe(switchMap((rows) => of(rows[0] ?? null)));
   }
+
+  delete(id: string): Observable<void> {
+    return fromSupabase<void>(this.client.from('garage_lodgings').delete().eq('id', id));
+  }
 }

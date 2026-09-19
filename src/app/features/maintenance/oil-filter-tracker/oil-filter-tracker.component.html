@@ -1,6 +1,15 @@
 <div class="tracker-page">
   <header class="page-header">
-    <h2>{{ 'maintenance.tabOilFilterTracker' | translate }}</h2>
+    <div>
+      <h2>{{ 'maintenance.tabOilFilterTracker' | translate }}</h2>
+      <p class="page-subtitle">{{ total }} {{ 'maintenance.changeRecordsShown' | translate }}</p>
+    </div>
+
+    <div class="page-actions">
+      <button type="button" class="btn btn--primary" (click)="openRecordForm()">
+        {{ 'maintenance.recordChangeButton' | translate }}
+      </button>
+    </div>
   </header>
 
   @if (lookupsLoading) {
@@ -8,34 +17,71 @@
   } @else if (lookupsError) {
     <div class="state-message state-message--error">{{ lookupsError }}</div>
   } @else {
-    <div class="vehicle-picker">
-      <label class="field">
-        <span>{{ 'maintenance.vehicle' | translate }}</span>
-        <select [(ngModel)]="selectedVehicleId" [ngModelOptions]="{ standalone: true }" (change)="onVehicleChange()">
-          <option value="" disabled>{{ 'maintenance.selectVehiclePlaceholder' | translate }}</option>
-          @for (v of vehicles; track v.id) {
-            <option [value]="v.id">{{ v.plate_number }}</option>
-          }
-        </select>
-      </label>
+    @if (loadError) {
+      <div class="state-message state-message--error">{{ loadError }}</div>
+    }
 
-      @if (selectedVehicleId) {
-        <button type="button" class="btn btn--primary" (click)="openRecordForm()">
-          {{ 'maintenance.recordChangeButton' | translate }}
+    <app-data-table
+      [columns]="columns"
+      [rows]="rows"
+      [total]="total"
+      [loading]="loading"
+      [filters]="filters"
+      [searchPlaceholder]="'maintenance.oilFilterSearchPlaceholder' | translate"
+      [emptyMessage]="'maintenance.noOilFilterChanges' | translate"
+      actionsColumnKey="actions"
+      (queryChange)="onQueryChange($event)"
+    ></app-data-table>
+  }
+
+  @if (formOpen) {
+    <div class="overlay" (click)="cancelRecordForm()"></div>
+    <aside class="slide-over" role="dialog" aria-modal="true">
+      <header class="slide-over-header">
+        <h2>
+          {{
+            (isEditMode ? 'maintenance.editChangeTitle' : 'maintenance.recordChangeButton')
+              | translate
+          }}
+        </h2>
+        <button
+          type="button"
+          class="icon-btn"
+          (click)="cancelRecordForm()"
+          [attr.aria-label]="'common.close' | translate"
+        >
+          ✕
         </button>
-      }
-    </div>
+      </header>
 
-    @if (formOpen) {
-      <form class="record-form" [formGroup]="form" (ngSubmit)="submit()">
+      <form class="slide-over-body" [formGroup]="form" (ngSubmit)="submit()">
         <div class="field-grid">
+          <label class="field field--wide">
+            <span>{{ 'maintenance.vehicle' | translate }} *</span>
+            <app-searchable-select
+              [(ngModel)]="formVehicleId"
+              [ngModelOptions]="{ standalone: true }"
+              [options]="formVehicleOptions"
+              [placeholder]="'maintenance.selectVehiclePlaceholder' | translate"
+            ></app-searchable-select>
+          </label>
+
           <label class="field">
             <span>{{ 'maintenance.changeTypeLabel' | translate }} *</span>
-            <select formControlName="change_type">
-              <option value="oil">{{ 'maintenance.changeTypeOil' | translate }}</option>
-              <option value="filter">{{ 'maintenance.changeTypeFilter' | translate }}</option>
-              <option value="oil_and_filter">{{ 'maintenance.changeTypeOilAndFilter' | translate }}</option>
-            </select>
+            <app-searchable-select
+              formControlName="change_type"
+              [options]="changeTypeOptions"
+              [clearable]="false"
+            ></app-searchable-select>
+          </label>
+
+          <label class="field">
+            <span>{{ 'maintenance.oilInterval' | translate }} *</span>
+            <app-searchable-select
+              formControlName="interval_km"
+              [options]="intervalOptions"
+              [clearable]="false"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
@@ -50,11 +96,11 @@
 
           <label class="field">
             <span>{{ 'maintenance.odometerUnitLabel' | translate }} *</span>
-            <select formControlName="odometer_unit">
-              <option value="km">{{ 'maintenance.unitKm' | translate }}</option>
-              <option value="hours">{{ 'maintenance.unitHours' | translate }}</option>
-              <option value="other">{{ 'maintenance.unitOther' | translate }}</option>
-            </select>
+            <app-searchable-select
+              formControlName="odometer_unit"
+              [options]="odometerUnitOptions"
+              [clearable]="false"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
@@ -69,12 +115,11 @@
 
           <label class="field">
             <span>{{ 'maintenance.technician' | translate }}</span>
-            <select formControlName="technician_id">
-              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
-              @for (t of technicians; track t.id) {
-                <option [ngValue]="t.id">{{ t.full_name }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="technician_id"
+              [options]="technicianOptions"
+              [placeholder]="'common.none' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field field--wide">
@@ -87,56 +132,20 @@
           <div class="state-message state-message--error">{{ saveError }}</div>
         }
 
-        <div class="form-actions">
-          <button type="button" class="btn btn--ghost" (click)="cancelRecordForm()" [disabled]="saving">
+        <footer class="slide-over-footer">
+          <button
+            type="button"
+            class="btn btn--ghost"
+            (click)="cancelRecordForm()"
+            [disabled]="saving"
+          >
             {{ 'common.cancel' | translate }}
           </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
             {{ (saving ? 'common.saving' : 'maintenance.saveChangeButton') | translate }}
           </button>
-        </div>
+        </footer>
       </form>
-    }
-
-    @if (selectedVehicleId) {
-      @if (changesLoading) {
-        <div class="state-message">{{ 'maintenance.loadingChangeHistory' | translate }}</div>
-      } @else if (changesError) {
-        <div class="state-message state-message--error">{{ changesError }}</div>
-      } @else {
-        <div class="grid-wrapper">
-          <table class="grid-table">
-            <thead>
-              <tr>
-                <th>{{ 'common.date' | translate }}</th>
-                <th>{{ 'maintenance.colType' | translate }}</th>
-                <th>{{ 'maintenance.colOdometer' | translate }}</th>
-                <th>{{ 'maintenance.nextDueReading' | translate }}</th>
-                <th>{{ 'maintenance.nextDueDate' | translate }}</th>
-                <th>{{ 'maintenance.technician' | translate }}</th>
-                <th>{{ 'common.notes' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (c of changes; track c.id) {
-                <tr>
-                  <td>{{ c.change_date | date : 'dd/MM/yyyy' }}</td>
-                  <td>{{ c.change_type }}</td>
-                  <td class="mono">{{ c.odometer_reading | number }} {{ c.odometer_unit }}</td>
-                  <td class="mono">{{ c.next_due_reading ?? '—' }}</td>
-                  <td>{{ c.next_due_date ? (c.next_due_date | date : 'dd/MM/yyyy') : '—' }}</td>
-                  <td>{{ technicianName(c.technician_id) }}</td>
-                  <td class="notes-cell" [title]="c.notes || ''">{{ c.notes || '—' }}</td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="7" class="empty-row">{{ 'maintenance.noOilFilterChanges' | translate }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    }
+    </aside>
   }
 </div>

@@ -8,7 +8,7 @@ import {
   SimpleChanges, ChangeDetectionStrategy,
   ChangeDetectorRef
 } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 
 import { MaintenanceService } from '../../../core/services/maintenance.service';
@@ -22,16 +22,18 @@ import {
 } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
 
 const CATEGORY_OPTIONS: MaintenanceCategory[] = ['corrective', 'preventive', 'predictive'];
 
 @Component({
   selector: 'app-work-order-form',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule, FormsModule, TranslatePipe, SharedSearchableSelectComponent],
   templateUrl: './work-order-form.component.html',
   styleUrls: ['./work-order-form.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WorkOrderFormComponent implements OnInit, OnChanges {
   @Input() open = false;
@@ -42,10 +44,12 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
   form: FormGroup;
   readonly categoryOptions = CATEGORY_OPTIONS;
   selectedCategories = new Set<MaintenanceCategory>();
-  selectedTechnicianIds = new Set<string>();
+  selectedTechnicianIds: string[] = [];
 
   vehicles: VehicleWithLookups[] = [];
   technicians: Technician[] = [];
+  vehicleOptions: SearchableSelectOption[] = [];
+  technicianOptions: SearchableSelectOption[] = [];
 
   lookupsLoading = true;
   lookupsError: string | null = null;
@@ -85,7 +89,7 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
     this.saveError = null;
     this.form.reset();
     this.selectedCategories = new Set();
-    this.selectedTechnicianIds = new Set();
+    this.selectedTechnicianIds = [];
   }
 
   private loadLookups(): void {
@@ -100,11 +104,21 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
       next: ({ vehicles, technicians }) => {
         this.vehicles = vehicles;
         this.technicians = technicians;
+        this.vehicleOptions = vehicles.map((v) => ({
+          value: v.id,
+          label: v.plate_number,
+          sublabel: v.make || undefined,
+        }));
+        this.technicianOptions = technicians.map((t) => ({
+          value: t.id,
+          label: t.full_name,
+        }));
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadFormOptions');
+        this.lookupsError =
+          err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadFormOptions');
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
@@ -114,11 +128,6 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
   toggleCategory(category: MaintenanceCategory): void {
     if (this.selectedCategories.has(category)) this.selectedCategories.delete(category);
     else this.selectedCategories.add(category);
-  }
-
-  toggleTechnician(id: string): void {
-    if (this.selectedTechnicianIds.has(id)) this.selectedTechnicianIds.delete(id);
-    else this.selectedTechnicianIds.add(id);
   }
 
   submit(): void {
@@ -152,13 +161,14 @@ export class WorkOrderFormComponent implements OnInit, OnChanges {
         error: (err) => {
           this.saving = false;
           this.cdr.markForCheck();
-          this.saveError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedCreateWorkOrder');
+          this.saveError =
+            err instanceof Error ? err.message : this.i18n.t('maintenance.failedCreateWorkOrder');
         },
       });
   }
 
   private assignTechnicians(workOrder: WorkOrder): void {
-    const technicianIds = Array.from(this.selectedTechnicianIds);
+    const technicianIds = this.selectedTechnicianIds ?? [];
     const request$ = technicianIds.length
       ? this.maintenanceService.assignTechnicians(workOrder.id, technicianIds)
       : of(undefined);

@@ -848,6 +848,7 @@ export class SparePartsOrdersComponent implements OnInit, AfterViewInit, OnDestr
 
   private buildColumns(): void {
     this.vehicleColumns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'plate',
         header: this.i18n.t('analytics.plateNumber'),

@@ -84,6 +84,7 @@ export class EnginesListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'engine_serial_number',
         header: this.i18n.t('engines.serialNumber'),
