@@ -28,6 +28,19 @@ import {
   DataTableQuery,
 } from '../../../shared/components/data-table/data-table.models';
 import { applyQueryInMemory } from '../../../shared/components/data-table/apply-query-in-memory.util';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
+import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
+import { importFileWithMapping } from '../../../shared/utils/document-import.util';
+import {
+  OilFilterChangeImportRow,
+  OIL_FILTER_CHANGE_IMPORT_MAP,
+  OIL_FILTER_CHANGE_IMPORT_TEMPLATE_HEADERS,
+  resolveOilFilterChangeForeignKeys,
+} from '../../../shared/utils/import-column-maps';
 
 /** Grid row with previous-change context computed client-side. */
 export interface OilFilterDisplayRow extends OilAndFilterChangeGridRow {
@@ -89,6 +102,10 @@ export class OilFilterTrackerComponent implements OnInit {
   saving = false;
   saveError: string | null = null;
   deletingId: string | null = null;
+
+  importing = false;
+  importError: string | null = null;
+  importSummary: { savedCount: number; unresolvedCount: number } | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -504,5 +521,156 @@ export class OilFilterTrackerComponent implements OnInit {
       this.vehicles.find((v) => v.id === row.vehicle_id)?.plate_number ||
       '—'
     );
+  }
+
+  onImportButtonClick(fileInput: HTMLInputElement): void {
+    fileInput.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file) return;
+
+    this.importing = true;
+    this.importError = null;
+    this.importSummary = null;
+    this.cdr.markForCheck();
+
+    const vehicleIdByPlate = new Map(
+      this.vehicles.map((v) => [v.plate_number.trim().toLowerCase(), v.id]),
+    );
+    const technicianIdByName = new Map(
+      this.technicians.map((t) => [t.full_name.trim().toLowerCase(), t.id]),
+    );
+
+    importFileWithMapping<OilFilterChangeImportRow>(file, OIL_FILTER_CHANGE_IMPORT_MAP)
+      .then((result) => {
+        const { resolved, unresolved } = resolveOilFilterChangeForeignKeys(
+          result.valid,
+          vehicleIdByPlate,
+          technicianIdByName,
+        );
+        const totalUnresolved = unresolved.length + result.errors.length;
+
+        if (resolved.length === 0) {
+          this.importing = false;
+          this.importError = this.i18n.t('maintenance.importNoOilFilterRows');
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.maintenanceService.bulkInsertOilFilterChanges(resolved).subscribe({
+          next: (saved) => {
+            this.importing = false;
+            this.importSummary = {
+              savedCount: saved.length,
+              unresolvedCount: totalUnresolved,
+            };
+            this.cdr.markForCheck();
+            this.loadAllChanges();
+          },
+          error: (err) => {
+            this.importing = false;
+            this.importError =
+              err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+            this.cdr.markForCheck();
+          },
+        });
+      })
+      .catch((err) => {
+        this.importing = false;
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      });
+  }
+
+  downloadTemplate(): void {
+    downloadImportTemplate(
+      OIL_FILTER_CHANGE_IMPORT_TEMPLATE_HEADERS,
+      'oil-filter-changes-import-template',
+      {
+        'Plate Number': this.vehicles[0]?.plate_number || 'e.g. ABC-1234',
+        'Change Type': 'oil_and_filter',
+        'Change Date': new Date().toISOString().slice(0, 10),
+        'Odometer Reading': 125000,
+        'Odometer Unit': 'km',
+        'Interval Km': 5000,
+        'Next Due Reading': 130000,
+        'Next Due Date': '',
+        Technician: this.technicians[0]?.full_name || '',
+        Notes: '',
+      },
+    );
+  }
+
+  private matchingRowsForExport(): OilFilterDisplayRow[] {
+    const exportQuery: DataTableQuery = {
+      ...this.currentQuery,
+      page: 1,
+      pageSize: Math.max(this.allRows.length, 1),
+    };
+    return applyQueryInMemory(this.allRows, exportQuery, (row) =>
+      [
+        this.plateFor(row),
+        row.change_type,
+        row.notes,
+        row.interval_km,
+        this.technicianName(row.technician_id),
+        row.odometer_reading,
+      ]
+        .filter((x) => x != null && x !== '')
+        .join(' '),
+    ).rows;
+  }
+
+  exportExcel(): void {
+    exportToExcel(this.matchingRowsForExport(), this.excelColumns(), 'oil-filter-changes-export');
+  }
+
+  exportPdf(): void {
+    downloadGridReportPdf(
+      this.matchingRowsForExport(),
+      this.pdfColumns(),
+      {
+        title: 'Oil & Filter Changes Report',
+        subtitle: `Generated ${new Date().toLocaleDateString()}`,
+        orientation: 'landscape',
+      },
+      'oil-filter-changes-report',
+    );
+  }
+
+  private excelColumns(): ExcelExportColumn<OilFilterDisplayRow>[] {
+    return [
+      { header: 'Vehicle', accessor: (r) => this.plateFor(r) },
+      { header: 'Previous Change Date', accessor: (r) => r.previous_change_date },
+      { header: 'Change Date', accessor: (r) => r.change_date },
+      { header: 'Previous Meter', accessor: (r) => r.previous_odometer },
+      { header: 'Current Meter', accessor: (r) => r.odometer_reading },
+      { header: 'Difference', accessor: (r) => r.meter_difference },
+      { header: 'Interval Km', accessor: (r) => r.interval_km },
+      { header: 'Change Type', accessor: (r) => r.change_type },
+      { header: 'Odometer Unit', accessor: (r) => r.odometer_unit },
+      { header: 'Next Due Reading', accessor: (r) => r.next_due_reading },
+      { header: 'Next Due Date', accessor: (r) => r.next_due_date },
+      { header: 'Technician', accessor: (r) => this.technicianName(r.technician_id) },
+      { header: 'Notes', accessor: (r) => r.notes },
+    ];
+  }
+
+  private pdfColumns(): PdfReportColumn<OilFilterDisplayRow>[] {
+    return [
+      { header: 'Vehicle', accessor: (r) => this.plateFor(r) },
+      { header: 'Change Date', accessor: (r) => r.change_date },
+      { header: 'Prev Meter', accessor: (r) => r.previous_odometer },
+      { header: 'Meter', accessor: (r) => r.odometer_reading },
+      { header: 'Diff', accessor: (r) => r.meter_difference },
+      { header: 'Interval', accessor: (r) => r.interval_km },
+      { header: 'Type', accessor: (r) => r.change_type },
+      { header: 'Notes', accessor: (r) => r.notes },
+    ];
   }
 }

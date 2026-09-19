@@ -184,4 +184,12 @@ export class MaintenanceService {
   deleteChange(id: string): Observable<void> {
     return fromSupabase<void>(this.client.from('oil_and_filter_changes').delete().eq('id', id));
   }
+
+  bulkInsertOilFilterChanges(
+    entries: Partial<OilAndFilterChange>[],
+  ): Observable<OilAndFilterChange[]> {
+    return fromSupabase<OilAndFilterChange[]>(
+      this.client.from('oil_and_filter_changes').insert(entries).select(),
+    );
+  }
 }

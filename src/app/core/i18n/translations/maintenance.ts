@@ -91,6 +91,15 @@ export const MAINTENANCE_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'Delete this oil/filter change for',
     ar: 'حذف سجل تغيير الزيت/الفلتر لـ',
   },
+  'maintenance.importNoOilFilterRows': {
+    en: 'No rows could be imported. Check that plate numbers match existing vehicles and odometer/date are valid.',
+    ar: 'تعذر استيراد أي صف. تأكد من مطابقة أرقام اللوحات لسيارات موجودة وصحة العداد والتاريخ.',
+  },
+  'maintenance.importedOilFilterCount': { en: 'Imported', ar: 'تم استيراد' },
+  'maintenance.oilFilterRecordUnit': {
+    en: 'oil/filter change record(s).',
+    ar: 'سجل/سجلات تغيير زيت/فلتر.',
+  },
 
   // Work order detail drawer
   'maintenance.workOrderFallbackTitle': { en: 'Work Order', ar: 'أمر الشغل' },
