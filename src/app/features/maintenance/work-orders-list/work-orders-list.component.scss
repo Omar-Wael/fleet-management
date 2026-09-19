@@ -2,6 +2,7 @@
   display: block;
   font-family: var(--fleet-font-body, 'IBM Plex Sans', sans-serif);
   color: var(--fleet-ink, #1f2430);
+  padding: 0.5rem;
 }
 
 .work-orders-page {
@@ -123,5 +124,3 @@
   padding: 0;
   text-decoration: underline;
 }
-
-

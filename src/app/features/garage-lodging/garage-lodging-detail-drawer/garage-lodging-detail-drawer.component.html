@@ -1,0 +1,186 @@
+@if (open) {
+  <div class="overlay" (click)="close()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true">
+    <header class="drawer-header">
+      <h2>
+        {{ 'garageLodging.detailTitle' | translate }}
+        @if (lodging?.vehicles?.plate_number) {
+          <span class="mono plate">{{ lodging!.vehicles!.plate_number }}</span>
+        }
+      </h2>
+      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
+    </header>
+
+    @if (lodging) {
+      <div class="drawer-body">
+        <!-- Current record overview -->
+        <section class="profile-section">
+          <h3>{{ 'garageLodging.sectionRecord' | translate }}</h3>
+          <dl>
+            <dt>{{ 'garageLodging.vehicle' | translate }}</dt>
+            <dd class="mono">{{ lodging.vehicles?.plate_number || '—' }}</dd>
+
+            <dt>{{ 'vehicles.vehicleType' | translate }}</dt>
+            <dd>{{ lodging.vehicles?.vehicle_types?.name_ar || lodging.vehicles?.vehicle_types?.name_en || '—' }}</dd>
+
+            <dt>{{ 'vehicles.make' | translate }}</dt>
+            <dd>{{ lodging.vehicles?.make || '—' }}</dd>
+
+            <dt>{{ 'vehicles.operatingDept' | translate }}</dt>
+            <dd>
+              {{ lodging.vehicles?.operating_departments?.name_ar || lodging.vehicles?.operating_departments?.name_en || '—' }}
+            </dd>
+
+            <dt>{{ 'garageLodging.garage' | translate }}</dt>
+            <dd>{{ lodging.garage_locations?.garage_name || '—' }}</dd>
+
+            <dt>{{ 'garageLodging.zone' | translate }}</dt>
+            <dd>{{ lodging.garage_locations?.zone_label || '—' }}</dd>
+
+            <dt>{{ 'garageLodging.reason' | translate }}</dt>
+            <dd>{{ lodging.reason }}</dd>
+
+            <dt>{{ 'garageLodging.entryDate' | translate }}</dt>
+            <dd>{{ lodging.entry_date | date : 'dd/MM/yyyy' }}</dd>
+
+            <dt>{{ 'garageLodging.exitDate' | translate }}</dt>
+            <dd>
+              @if (lodging.exit_date) {
+                {{ lodging.exit_date | date : 'dd/MM/yyyy' }}
+              } @else {
+                <span class="badge badge--warn">{{ 'garageLodging.statusInGarage' | translate }}</span>
+              }
+            </dd>
+
+            <dt>{{ 'garageLodging.duration' | translate }}</dt>
+            <dd class="mono">{{ lodging.duration_days ?? '—' }}</dd>
+
+            <dt>{{ 'common.status' | translate }}</dt>
+            <dd>
+              @if (lodging.exit_date) {
+                <span class="badge badge--ok">{{ 'garageLodging.statusClosed' | translate }}</span>
+              } @else {
+                <span class="badge badge--warn">{{ 'garageLodging.statusInGarage' | translate }}</span>
+              }
+            </dd>
+          </dl>
+
+          @if (lodging.notes) {
+            <p class="notes-text">{{ lodging.notes }}</p>
+          }
+        </section>
+
+        <!-- This-year summary (from view) -->
+        <section class="profile-section">
+          <h3>{{ 'garageLodging.sectionThisYear' | translate }}</h3>
+          @if (yearStat) {
+            <div class="stat-cards">
+              <div class="stat-card">
+                <span class="stat-value mono">{{ yearStat.visits_this_year }}</span>
+                <span class="stat-label">{{ 'garageLodging.visitsThisYear' | translate }}</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-value mono">{{ yearStat.total_duration_days_this_year ?? 0 }}</span>
+                <span class="stat-label">{{ 'garageLodging.totalDaysLodged' | translate }}</span>
+              </div>
+            </div>
+          } @else {
+            <p class="muted">{{ 'garageLodging.noVisitsThisYear' | translate }}</p>
+          }
+        </section>
+
+        <!-- Visits per year -->
+        <section class="profile-section">
+          <h3>{{ 'garageLodging.sectionByYear' | translate }}</h3>
+          @if (historyLoading) {
+            <p class="muted">{{ 'garageLodging.loadingAnalysis' | translate }}</p>
+          } @else if (historyError) {
+            <p class="state-message state-message--error">{{ historyError }}</p>
+          } @else if (yearlyStats.length === 0) {
+            <p class="muted">{{ 'garageLodging.noHistory' | translate }}</p>
+          } @else {
+            <table class="analysis-table">
+              <thead>
+                <tr>
+                  <th>{{ 'garageLodging.year' | translate }}</th>
+                  <th class="num">{{ 'garageLodging.visits' | translate }}</th>
+                  <th class="num">{{ 'garageLodging.totalDays' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (y of yearlyStats; track y.year) {
+                  <tr>
+                    <td class="mono">{{ y.year }}</td>
+                    <td class="num mono">{{ y.visits }}</td>
+                    <td class="num mono">{{ y.totalDays }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+
+        <!-- Visits per month -->
+        <section class="profile-section">
+          <h3>{{ 'garageLodging.sectionByMonth' | translate }}</h3>
+          @if (historyLoading) {
+            <p class="muted">{{ 'garageLodging.loadingAnalysis' | translate }}</p>
+          } @else if (monthlyStats.length === 0) {
+            <p class="muted">{{ 'garageLodging.noHistory' | translate }}</p>
+          } @else {
+            <table class="analysis-table">
+              <thead>
+                <tr>
+                  <th>{{ 'garageLodging.month' | translate }}</th>
+                  <th class="num">{{ 'garageLodging.visits' | translate }}</th>
+                  <th class="num">{{ 'garageLodging.totalDays' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of monthlyStats; track m.yearMonth) {
+                  <tr>
+                    <td>{{ m.label }}</td>
+                    <td class="num mono">{{ m.visits }}</td>
+                    <td class="num mono">{{ m.totalDays }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+
+        <!-- Full history for this vehicle -->
+        <section class="profile-section">
+          <h3>{{ 'garageLodging.sectionHistory' | translate }}</h3>
+          @if (historyLoading) {
+            <p class="muted">{{ 'garageLodging.loadingAnalysis' | translate }}</p>
+          } @else if (vehicleHistory.length === 0) {
+            <p class="muted">{{ 'garageLodging.noHistory' | translate }}</p>
+          } @else {
+            <div class="history-list">
+              @for (h of vehicleHistory; track h.id) {
+                <div class="history-item" [class.history-item--current]="h.id === lodging.id">
+                  <div class="history-main">
+                    <span class="mono">{{ h.entry_date | date : 'dd/MM/yyyy' }}</span>
+                    <span class="arrow">→</span>
+                    @if (h.exit_date) {
+                      <span class="mono">{{ h.exit_date | date : 'dd/MM/yyyy' }}</span>
+                    } @else {
+                      <span class="badge badge--warn">{{ 'garageLodging.statusInGarage' | translate }}</span>
+                    }
+                    <span class="days mono">({{ h.duration_days ?? '—' }} {{ 'garageLodging.days' | translate }})</span>
+                  </div>
+                  <div class="history-meta">
+                    <span>{{ h.garage_locations?.garage_name || '—' }}</span>
+                    <span class="reason">{{ h.reason }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </section>
+      </div>
+    }
+  </aside>
+}

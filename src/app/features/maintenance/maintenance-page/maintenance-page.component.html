@@ -1,26 +1,12 @@
 <div class="tab-nav">
-  <button
-    type="button"
-    class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'work-orders'"
-    (click)="setTab('work-orders')"
-  >
+  <a routerLink="work-orders" routerLinkActive="tab-btn--active" class="tab-btn">
     {{ 'maintenance.tabWorkOrders' | translate }}
-  </button>
-  <button
-    type="button"
-    class="tab-btn"
-    [class.tab-btn--active]="activeTab === 'oil-filter'"
-    (click)="setTab('oil-filter')"
-  >
+  </a>
+  <a routerLink="oil-filter-tracker" routerLinkActive="tab-btn--active" class="tab-btn">
     {{ 'maintenance.tabOilFilterTracker' | translate }}
-  </button>
+  </a>
 </div>
 
 <div class="tab-content">
-  @if (activeTab === 'work-orders') {
-    <app-work-orders-list></app-work-orders-list>
-  } @else {
-    <app-oil-filter-tracker></app-oil-filter-tracker>
-  }
+  <router-outlet></router-outlet>
 </div>

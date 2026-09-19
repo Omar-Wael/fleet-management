@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { CheckFormComponent } from '../check-form/check-form.component';
@@ -14,15 +14,25 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 @Component({
   selector: 'app-checks-list',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, CheckFormComponent, CheckDetailDrawerComponent],
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    SharedDataTableComponent,
+    CheckFormComponent,
+    CheckDetailDrawerComponent,
+  ],
   templateUrl: './checks-list.component.html',
   styleUrls: ['./checks-list.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecksListComponent implements OnInit {
   rows: CheckGridRow[] = [];
@@ -60,8 +70,18 @@ export class ChecksListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
-      { key: 'check_number', header: this.i18n.t('checks.checkNumber'), mono: true, render: (c) => c.check_number || '—' },
-      { key: 'recipient_name', header: this.i18n.t('checks.recipient'), render: (c) => c.recipient_name || '—' },
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
+      {
+        key: 'check_number',
+        header: this.i18n.t('checks.checkNumber'),
+        mono: true,
+        render: (c) => c.check_number || '—',
+      },
+      {
+        key: 'recipient_name',
+        header: this.i18n.t('checks.recipient'),
+        render: (c) => c.recipient_name || '—',
+      },
       {
         key: 'amount',
         header: this.i18n.t('checks.amount'),
@@ -69,7 +89,11 @@ export class ChecksListComponent implements OnInit {
         mono: true,
         render: (c) => (c.amount == null ? '—' : c.amount.toFixed(2)),
       },
-      { key: 'check_stage', header: this.i18n.t('checks.stage'), render: (c) => c.check_stage || '—' },
+      {
+        key: 'check_stage',
+        header: this.i18n.t('checks.stage'),
+        render: (c) => c.check_stage || '—',
+      },
       {
         key: 'vehicle',
         header: this.i18n.t('checks.vehicle'),
@@ -89,8 +113,15 @@ export class ChecksListComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (c) => [{ label: this.i18n.t('common.view'), icon: '👁️️',
-            variant: 'info', display: 'icon', onClick: (c) => this.openDetail(c) }],
+        actions: (c) => [
+          {
+            label: this.i18n.t('common.view'),
+            icon: '👁️️',
+            variant: 'info',
+            display: 'icon',
+            onClick: (c) => this.openDetail(c),
+          },
+        ],
       },
     ];
   }
@@ -178,7 +209,8 @@ export class ChecksListComponent implements OnInit {
     this.financialTransactionsService.listChecksAllMatching(this.currentQuery).subscribe({
       next: (rows) => exportToExcel(rows, this.excelColumns(), 'checks-export'),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -197,7 +229,8 @@ export class ChecksListComponent implements OnInit {
           'checks-report',
         ),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

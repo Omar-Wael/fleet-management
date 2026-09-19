@@ -56,6 +56,7 @@ export class TechnicianKpisComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'full_name',
         header: this.i18n.t('analytics.technician'),

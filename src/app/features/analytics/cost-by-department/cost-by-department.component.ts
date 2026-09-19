@@ -73,6 +73,7 @@ export class CostByDepartmentComponent implements OnInit, AfterViewInit, OnDestr
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'department_name_en',
         header: this.i18n.t('analytics.department'),

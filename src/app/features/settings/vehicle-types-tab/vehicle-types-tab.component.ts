@@ -88,6 +88,7 @@ export class VehicleTypesTabComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'name_ar',
         header: this.i18n.t('settings.vehicleTypes.nameArabic'),

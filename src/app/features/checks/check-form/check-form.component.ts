@@ -28,16 +28,18 @@ import { VehiclesService } from '../../../core/services/vehicles.service';
 import { FinancialTransaction, VehicleWithLookups } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
 
 type LinkType = 'none' | 'work_order' | 'overhaul' | 'disbursement_request';
 
 @Component({
   selector: 'app-check-form',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule, FormsModule, TranslatePipe, SharedSearchableSelectComponent],
   templateUrl: './check-form.component.html',
   styleUrls: ['./check-form.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckFormComponent implements OnInit, OnChanges {
   @Input() open = false;
@@ -53,7 +55,15 @@ export class CheckFormComponent implements OnInit, OnChanges {
   workOrders: WorkOrderGridRow[] = [];
   overhauls: OverhaulGridRow[] = [];
   disbursements: DisbursementGridRow[] = [];
-  selectedExtraVehicleIds = new Set<string>();
+
+  vehicleOptions: SearchableSelectOption[] = [];
+  workOrderOptions: SearchableSelectOption[] = [];
+  overhaulOptions: SearchableSelectOption[] = [];
+  disbursementOptions: SearchableSelectOption[] = [];
+  linkTypeOptions: SearchableSelectOption[] = [];
+
+  /** Multi-select binding for extra vehicles */
+  selectedExtraVehicleIds: string[] = [];
 
   lookupsLoading = true;
   lookupsError: string | null = null;
@@ -91,7 +101,7 @@ export class CheckFormComponent implements OnInit, OnChanges {
       this.form.reset();
       this.linkType = 'none';
       this.linkedId = '';
-      this.selectedExtraVehicleIds = new Set();
+      this.selectedExtraVehicleIds = [];
     }
   }
 
@@ -99,6 +109,13 @@ export class CheckFormComponent implements OnInit, OnChanges {
     this.lookupsLoading = true;
     this.cdr.markForCheck();
     this.lookupsError = null;
+
+    this.linkTypeOptions = [
+      { value: 'none', label: this.i18n.t('common.none') },
+      { value: 'work_order', label: this.i18n.t('checks.workOrder') },
+      { value: 'overhaul', label: this.i18n.t('checks.overhaul') },
+      { value: 'disbursement_request', label: this.i18n.t('checks.disbursementRequest') },
+    ];
 
     forkJoin({
       vehicles: this.vehiclesService.list(),
@@ -111,11 +128,31 @@ export class CheckFormComponent implements OnInit, OnChanges {
         this.workOrders = workOrders;
         this.overhauls = overhauls;
         this.disbursements = disbursements;
+
+        this.vehicleOptions = vehicles.map((v) => ({
+          value: v.id,
+          label: v.plate_number,
+          sublabel: v.make || undefined,
+        }));
+        this.workOrderOptions = workOrders.map((w) => ({
+          value: w.id,
+          label: `${w.vehicles?.plate_number ?? '—'} — ${w.description ?? ''}`,
+        }));
+        this.overhaulOptions = overhauls.map((o) => ({
+          value: o.id,
+          label: `${o.vehicles?.plate_number ?? '—'} — ${o.scope_description ?? ''}`,
+        }));
+        this.disbursementOptions = disbursements.map((d) => ({
+          value: d.id,
+          label: `${d.vehicles?.plate_number ?? '—'} — ${d.status ?? ''}`,
+        }));
+
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('checks.failedLoadFormOptions');
+        this.lookupsError =
+          err instanceof Error ? err.message : this.i18n.t('checks.failedLoadFormOptions');
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
@@ -124,11 +161,6 @@ export class CheckFormComponent implements OnInit, OnChanges {
 
   onLinkTypeChange(): void {
     this.linkedId = '';
-  }
-
-  toggleExtraVehicle(id: string): void {
-    if (this.selectedExtraVehicleIds.has(id)) this.selectedExtraVehicleIds.delete(id);
-    else this.selectedExtraVehicleIds.add(id);
   }
 
   submit(): void {
@@ -151,7 +183,7 @@ export class CheckFormComponent implements OnInit, OnChanges {
     };
 
     this.financialTransactionsService
-      .create(payload, Array.from(this.selectedExtraVehicleIds))
+      .create(payload, this.selectedExtraVehicleIds ?? [])
       .subscribe({
         next: (transaction) => {
           this.saving = false;

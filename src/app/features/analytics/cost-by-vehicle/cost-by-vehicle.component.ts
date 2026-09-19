@@ -93,6 +93,7 @@ export class CostByVehicleComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'plate_number',
         header: this.i18n.t('analytics.plateNumber'),

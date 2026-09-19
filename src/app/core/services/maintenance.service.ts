@@ -13,6 +13,11 @@ export interface WorkOrderGridRow extends WorkOrder {
   financial_transactions?: { id: string; channel: string; amount: number }[];
 }
 
+/** Oil & filter change row with optional joined vehicle for the all-records grid. */
+export interface OilAndFilterChangeGridRow extends OilAndFilterChange {
+  vehicles?: { plate_number: string; make?: string | null };
+}
+
 const WORK_ORDER_GRID_SELECT = `
   *,
   vehicles (plate_number),
@@ -88,13 +93,13 @@ export class MaintenanceService {
     maintenance_type?: string;
   }): Observable<WorkOrder> {
     return fromSupabase<WorkOrder>(
-      this.client.from('work_orders').insert(workOrder).select().single()
+      this.client.from('work_orders').insert(workOrder).select().single(),
     );
   }
 
   update(workOrderId: string, changes: Partial<WorkOrder>): Observable<WorkOrder> {
     return fromSupabase<WorkOrder>(
-      this.client.from('work_orders').update(changes).eq('id', workOrderId).select().single()
+      this.client.from('work_orders').update(changes).eq('id', workOrderId).select().single(),
     );
   }
 
@@ -104,7 +109,11 @@ export class MaintenanceService {
     return this.update(workOrderId, changes);
   }
 
-  assignTechnicians(workOrderId: string, technicianIds: string[], roleOnJob?: string): Observable<void> {
+  assignTechnicians(
+    workOrderId: string,
+    technicianIds: string[],
+    roleOnJob?: string,
+  ): Observable<void> {
     const rows = technicianIds.map((technician_id) => ({
       work_order_id: workOrderId,
       technician_id,
@@ -124,7 +133,7 @@ export class MaintenanceService {
       this.client
         .from('work_order_technicians')
         .select(`work_orders (${WORK_ORDER_GRID_SELECT})`)
-        .eq('technician_id', technicianId)
+        .eq('technician_id', technicianId),
     ).pipe(
       // Sorted client-side by opened_at: the junction table's own id/FK
       // order doesn't reflect recency, and this list is small per
@@ -142,14 +151,17 @@ export class MaintenanceService {
   // Oil & Filter change tracker
   // -------------------------------------------------------------
 
-  listOilFilterChanges(vehicleId: string): Observable<OilAndFilterChange[]> {
-    return fromSupabase<OilAndFilterChange[]>(
-      this.client
-        .from('oil_and_filter_changes')
-        .select('*')
-        .eq('vehicle_id', vehicleId)
-        .order('change_date', { ascending: false })
-    );
+  /**
+   * Oil & filter history. Pass a vehicleId to filter to one vehicle;
+   * omit it (or pass empty) to load every record, with plate joined for the grid.
+   */
+  listOilFilterChanges(vehicleId?: string | null): Observable<OilAndFilterChangeGridRow[]> {
+    let q = this.client
+      .from('oil_and_filter_changes')
+      .select('*, vehicles (plate_number, make)')
+      .order('change_date', { ascending: false });
+    if (vehicleId) q = q.eq('vehicle_id', vehicleId);
+    return fromSupabase<OilAndFilterChangeGridRow[]>(q);
   }
 
   /**
@@ -159,7 +171,17 @@ export class MaintenanceService {
    */
   recordChange(entry: Partial<OilAndFilterChange>): Observable<OilAndFilterChange> {
     return fromSupabase<OilAndFilterChange>(
-      this.client.from('oil_and_filter_changes').insert(entry).select().single()
+      this.client.from('oil_and_filter_changes').insert(entry).select().single(),
     );
+  }
+
+  updateChange(id: string, patch: Partial<OilAndFilterChange>): Observable<OilAndFilterChange> {
+    return fromSupabase<OilAndFilterChange>(
+      this.client.from('oil_and_filter_changes').update(patch).eq('id', id).select().single(),
+    );
+  }
+
+  deleteChange(id: string): Observable<void> {
+    return fromSupabase<void>(this.client.from('oil_and_filter_changes').delete().eq('id', id));
   }
 }

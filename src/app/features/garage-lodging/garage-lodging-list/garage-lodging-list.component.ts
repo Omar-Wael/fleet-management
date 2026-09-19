@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@
 import { FormsModule } from '@angular/forms';
 
 import { GarageLodgingFormComponent } from '../garage-lodging-form/garage-lodging-form.component';
+import { GarageLodgingDetailDrawerComponent } from '../garage-lodging-detail-drawer/garage-lodging-detail-drawer.component';
 
 import {
   GarageLodgingService,
@@ -41,13 +42,18 @@ import {
 @Component({
   selector: 'app-garage-lodging-list',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, GarageLodgingFormComponent],
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    SharedDataTableComponent,
+    GarageLodgingFormComponent,
+    GarageLodgingDetailDrawerComponent,
+  ],
   templateUrl: './garage-lodging-list.component.html',
   styleUrls: ['./garage-lodging-list.component.scss'],
   providers: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-
 export class GarageLodgingListComponent implements OnInit {
   rows: GarageLodgingGridRow[] = [];
   total = 0;
@@ -72,6 +78,9 @@ export class GarageLodgingListComponent implements OnInit {
   formOpen = false;
   editingLodging: GarageLodgingGridRow | null = null;
 
+  detailOpen = false;
+  viewingLodging: GarageLodgingGridRow | null = null;
+
   checkingOutId: string | null = null;
   checkOutError: string | null = null;
 
@@ -80,6 +89,9 @@ export class GarageLodgingListComponent implements OnInit {
   importError: string | null = null;
   importSummary: { savedCount: number; unresolvedCount: number } | null = null;
   private garageLocations: GarageLocation[] = [];
+
+  deletingId: string | null = null;
+  deleteError: string | null = null;
 
   constructor(
     private garageLodgingService: GarageLodgingService,
@@ -118,6 +130,7 @@ export class GarageLodgingListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'vehicle',
         header: this.i18n.t('garageLodging.vehicle'),
@@ -200,8 +213,18 @@ export class GarageLodgingListComponent implements OnInit {
         align: 'end',
         actions: (l) => [
           {
+            label: this.i18n.t('garageLodging.view'),
+            onClick: (row) => this.openDetail(row),
+            icon: '👁️',
+            variant: 'default',
+            display: 'icon',
+          },
+          {
             label: this.i18n.t('garageLodging.edit'),
             onClick: (row) => this.openEditForm(row),
+            icon: '✏️',
+            variant: 'default',
+            display: 'icon',
           },
           {
             label: this.i18n.t(
@@ -210,6 +233,17 @@ export class GarageLodgingListComponent implements OnInit {
             onClick: (row) => this.checkOut(row),
             hidden: (row) => !!row.exit_date,
             disabled: (row) => this.checkingOutId === row.id,
+            icon: '🚪',
+            variant: 'info',
+            display: 'icon',
+          },
+          {
+            label: this.i18n.t('garageLodging.delete'),
+            onClick: (row) => this.confirmDelete(row),
+            disabled: (row) => this.deletingId === row.id,
+            icon: '🗑️',
+            variant: 'danger',
+            display: 'icon',
           },
         ],
       },
@@ -300,6 +334,16 @@ export class GarageLodgingListComponent implements OnInit {
     this.formOpen = true;
   }
 
+  openDetail(lodging: GarageLodgingGridRow): void {
+    this.viewingLodging = lodging;
+    this.detailOpen = true;
+  }
+
+  onDetailClosed(): void {
+    this.detailOpen = false;
+    this.viewingLodging = null;
+  }
+
   onFormClosed(): void {
     this.formOpen = false;
     this.editingLodging = null;
@@ -328,6 +372,22 @@ export class GarageLodgingListComponent implements OnInit {
       error: (err) => {
         this.checkingOutId = null;
         this.checkOutError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+      },
+    });
+  }
+
+  confirmDelete(row: GarageLodgingGridRow): void {
+    this.deletingId = row.id;
+    this.deleteError = null;
+    this.garageLodgingService.delete(row.id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        this.reloadLodgingsOnly();
+      },
+      error: (err) => {
+        this.deletingId = null;
+        this.deleteError =
           err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });

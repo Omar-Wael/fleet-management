@@ -79,3 +79,9 @@
   (closed)="onFormClosed()"
   (saved)="onFormSaved()"
 ></app-garage-lodging-form>
+
+<app-garage-lodging-detail-drawer
+  [open]="detailOpen"
+  [lodging]="viewingLodging"
+  (closed)="onDetailClosed()"
+></app-garage-lodging-detail-drawer>

@@ -134,6 +134,7 @@ export class SparePartsCatalogComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'part_code',
         header: this.i18n.t('spareParts.catalog.colPartCode'),
@@ -167,9 +168,7 @@ export class SparePartsCatalogComponent implements OnInit {
         key: 'is_general',
         header: this.i18n.t('spareParts.partForm.isGeneralShort'),
         render: (p) =>
-          p.is_general === false
-            ? this.i18n.t('spareParts.no')
-            : this.i18n.t('spareParts.yes'),
+          p.is_general === false ? this.i18n.t('spareParts.no') : this.i18n.t('spareParts.yes'),
       },
       {
         key: 'unit',
@@ -269,9 +268,7 @@ export class SparePartsCatalogComponent implements OnInit {
   }
 
   confirmDeletePart(part: SparePart): void {
-    const label = part.part_code
-      ? `${part.name_ar} (${part.part_code})`
-      : part.name_ar;
+    const label = part.part_code ? `${part.name_ar} (${part.part_code})` : part.name_ar;
     const msg = this.i18n.t('spareParts.catalog.confirmDelete').replace('{name}', label);
     if (!window.confirm(msg)) return;
 
@@ -282,9 +279,7 @@ export class SparePartsCatalogComponent implements OnInit {
       },
       error: (err) => {
         this.loadError =
-          err instanceof Error
-            ? err.message
-            : this.i18n.t('spareParts.catalog.deleteError');
+          err instanceof Error ? err.message : this.i18n.t('spareParts.catalog.deleteError');
         this.cdr.markForCheck();
       },
     });

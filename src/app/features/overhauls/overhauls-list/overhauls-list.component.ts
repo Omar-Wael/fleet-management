@@ -153,6 +153,7 @@ export class OverhaulsListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'vehicle',
         header: this.i18n.t('overhauls.vehicle'),

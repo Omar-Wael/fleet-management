@@ -44,55 +44,52 @@
 
         <section class="link-section">
           <h3>{{ 'checks.linkToSection' | translate }}</h3>
-          <select [(ngModel)]="linkType" [ngModelOptions]="{ standalone: true }" (change)="onLinkTypeChange()">
-            <option value="none">{{ 'common.none' | translate }}</option>
-            <option value="work_order">{{ 'checks.workOrder' | translate }}</option>
-            <option value="overhaul">{{ 'checks.overhaul' | translate }}</option>
-            <option value="disbursement_request">{{ 'checks.disbursementRequest' | translate }}</option>
-          </select>
+          <app-searchable-select
+            [options]="linkTypeOptions"
+            [(ngModel)]="linkType"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onLinkTypeChange()"
+            [placeholder]="'common.none' | translate"
+            [clearable]="false"
+          ></app-searchable-select>
 
           @if (linkType === 'work_order') {
-            <select [(ngModel)]="linkedId" [ngModelOptions]="{ standalone: true }">
-              <option value="" disabled>{{ 'checks.selectWorkOrder' | translate }}</option>
-              @for (w of workOrders; track w.id) {
-                <option [value]="w.id">{{ w.vehicles?.plate_number }} — {{ w.description }}</option>
-              }
-            </select>
+            <app-searchable-select
+              [options]="workOrderOptions"
+              [(ngModel)]="linkedId"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'checks.selectWorkOrder' | translate"
+            ></app-searchable-select>
           }
 
           @if (linkType === 'overhaul') {
-            <select [(ngModel)]="linkedId" [ngModelOptions]="{ standalone: true }">
-              <option value="" disabled>{{ 'checks.selectOverhaul' | translate }}</option>
-              @for (o of overhauls; track o.id) {
-                <option [value]="o.id">{{ o.vehicles?.plate_number }} — {{ o.scope_description }}</option>
-              }
-            </select>
+            <app-searchable-select
+              [options]="overhaulOptions"
+              [(ngModel)]="linkedId"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'checks.selectOverhaul' | translate"
+            ></app-searchable-select>
           }
 
           @if (linkType === 'disbursement_request') {
-            <select [(ngModel)]="linkedId" [ngModelOptions]="{ standalone: true }">
-              <option value="" disabled>{{ 'checks.selectDisbursementRequest' | translate }}</option>
-              @for (d of disbursements; track d.id) {
-                <option [value]="d.id">{{ d.vehicles?.plate_number }} — {{ d.status }}</option>
-              }
-            </select>
+            <app-searchable-select
+              [options]="disbursementOptions"
+              [(ngModel)]="linkedId"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'checks.selectDisbursementRequest' | translate"
+            ></app-searchable-select>
           }
         </section>
 
         <section class="link-section">
           <h3>{{ 'checks.additionalVehiclesSection' | translate }}</h3>
-          <div class="chip-grid">
-            @for (v of vehicles; track v.id) {
-              <label class="chip" [class.chip--active]="selectedExtraVehicleIds.has(v.id)">
-                <input
-                  type="checkbox"
-                  [checked]="selectedExtraVehicleIds.has(v.id)"
-                  (change)="toggleExtraVehicle(v.id)"
-                />
-                {{ v.plate_number }}
-              </label>
-            }
-          </div>
+          <app-searchable-select
+            [options]="vehicleOptions"
+            [(ngModel)]="selectedExtraVehicleIds"
+            [ngModelOptions]="{ standalone: true }"
+            [multiple]="true"
+            [placeholder]="'checks.selectVehicles' | translate"
+          ></app-searchable-select>
         </section>
 
         @if (saveError) {

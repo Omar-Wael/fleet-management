@@ -5,6 +5,8 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'nav.vehicles': { en: 'Vehicles', ar: 'السيارات' },
   'nav.spareParts': { en: 'Spare Parts & Procurement', ar: 'قطع الغيار وطلبات الصرف' },
   'nav.maintenance': { en: 'Maintenance', ar: 'الصيانات' },
+  'nav.maintenanceWorkOrders': { en: 'Work Orders', ar: 'أوامر الشغل' },
+  'nav.maintenanceOilFilter': { en: 'Oil & Filter Tracker', ar: 'تتبع الزيت والفلاتر' },
   'nav.invoices': { en: 'Invoices', ar: 'الفواتير' },
   'nav.checks': { en: 'Checks', ar: 'الشيكات' },
   'nav.overhauls': { en: 'Overhauls', ar: 'العمرات' },
@@ -22,4 +24,10 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
   'nav.catMaintenance': { en: 'Maintenance', ar: 'الصيانة' },
   'nav.catPartsFinance': { en: 'Parts & Finance', ar: 'القطع والمالية' },
   'nav.catInsights': { en: 'Insights', ar: 'التقارير والتحليلات' },
+  'maintenance.allVehicles': { en: 'All vehicles', ar: 'كل السيارات' },
+  'maintenance.changeRecordsShown': { en: 'record(s) shown', ar: 'سجل/سجلات معروضة' },
+  'maintenance.noOilFilterChanges': {
+    en: 'No oil/filter changes recorded yet.',
+    ar: 'لا توجد تغييرات زيت/فلتر مسجلة بعد.',
+  },
 };

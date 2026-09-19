@@ -18,12 +18,11 @@
         <div class="field-grid">
           <label class="field">
             <span>{{ 'maintenance.vehicle' | translate }} *</span>
-            <select formControlName="vehicle_id">
-              <option [ngValue]="''" disabled>{{ 'maintenance.selectVehicleOption' | translate }}</option>
-              @for (v of vehicles; track v.id) {
-                <option [ngValue]="v.id">{{ v.plate_number }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="vehicle_id"
+              [options]="vehicleOptions"
+              [placeholder]="'maintenance.selectVehicleOption' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
@@ -61,14 +60,13 @@
 
         <section class="compat-section">
           <h3>{{ 'maintenance.assignTechnicians' | translate }}</h3>
-          <div class="chip-grid">
-            @for (t of technicians; track t.id) {
-              <label class="chip" [class.chip--active]="selectedTechnicianIds.has(t.id)">
-                <input type="checkbox" [checked]="selectedTechnicianIds.has(t.id)" (change)="toggleTechnician(t.id)" />
-                {{ t.full_name }}
-              </label>
-            }
-          </div>
+          <app-searchable-select
+            [options]="technicianOptions"
+            [(ngModel)]="selectedTechnicianIds"
+            [ngModelOptions]="{ standalone: true }"
+            [multiple]="true"
+            [placeholder]="'maintenance.selectTechnicians' | translate"
+          ></app-searchable-select>
         </section>
 
         @if (saveError) {

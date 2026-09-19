@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -18,7 +18,11 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 interface VendorRow extends ExternalWorkshop {
   performance?: VVendorPerformance;
@@ -37,7 +41,7 @@ const VENDOR_TYPE_OPTIONS: { value: VendorType; labelKey: string }[] = [
   templateUrl: './vendor-directory.component.html',
   styleUrls: ['./vendor-directory.component.scss'],
   providers: [DatePipe],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VendorDirectoryComponent implements OnInit {
   rows: VendorRow[] = [];
@@ -107,7 +111,13 @@ export class VendorDirectoryComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
-      { key: 'name', header: this.i18n.t('spareParts.vendors.colName'), sortable: true, render: (v) => v.name },
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
+      {
+        key: 'name',
+        header: this.i18n.t('spareParts.vendors.colName'),
+        sortable: true,
+        render: (v) => v.name,
+      },
       {
         key: 'vendor_type',
         header: this.i18n.t('spareParts.vendors.colType'),
@@ -118,7 +128,12 @@ export class VendorDirectoryComponent implements OnInit {
         header: this.i18n.t('spareParts.vendors.colContact'),
         render: (v) => v.contact_person || '—',
       },
-      { key: 'phone', header: this.i18n.t('common.phone'), mono: true, render: (v) => v.phone || '—' },
+      {
+        key: 'phone',
+        header: this.i18n.t('common.phone'),
+        mono: true,
+        render: (v) => v.phone || '—',
+      },
       {
         key: 'status',
         header: this.i18n.t('common.active'),
@@ -144,7 +159,8 @@ export class VendorDirectoryComponent implements OnInit {
         key: 'avg_unit_price',
         header: this.i18n.t('spareParts.vendors.colAvgUnitPrice'),
         mono: true,
-        render: (v) => (v.performance?.avg_unit_price == null ? '—' : v.performance.avg_unit_price.toFixed(2)),
+        render: (v) =>
+          v.performance?.avg_unit_price == null ? '—' : v.performance.avg_unit_price.toFixed(2),
       },
       {
         key: 'last_purchase',
@@ -165,7 +181,9 @@ export class VendorDirectoryComponent implements OnInit {
         header: this.i18n.t('spareParts.vendors.colAvgRepairCost'),
         mono: true,
         render: (v) =>
-          v.performance?.avg_external_repair_cost == null ? '—' : v.performance.avg_external_repair_cost.toFixed(2),
+          v.performance?.avg_external_repair_cost == null
+            ? '—'
+            : v.performance.avg_external_repair_cost.toFixed(2),
       },
     ];
   }
@@ -176,7 +194,10 @@ export class VendorDirectoryComponent implements OnInit {
         key: 'vendor_type',
         label: this.i18n.t('shared.dataTable.allFilter'),
         value: this.currentQuery.filters['vendor_type'] ?? '',
-        options: this.vendorTypeOptions.map((o) => ({ value: o.value, label: this.i18n.t(o.labelKey) })),
+        options: this.vendorTypeOptions.map((o) => ({
+          value: o.value,
+          label: this.i18n.t(o.labelKey),
+        })),
       },
     ];
   }
@@ -199,7 +220,8 @@ export class VendorDirectoryComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('spareParts.vendors.loadError');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('spareParts.vendors.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -238,7 +260,8 @@ export class VendorDirectoryComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err instanceof Error ? err.message : this.i18n.t('spareParts.vendors.saveError');
+        this.saveError =
+          err instanceof Error ? err.message : this.i18n.t('spareParts.vendors.saveError');
       },
     });
   }

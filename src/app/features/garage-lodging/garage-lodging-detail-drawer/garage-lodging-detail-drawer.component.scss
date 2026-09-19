@@ -1,0 +1,244 @@
+:host {
+  font-family: var(--fleet-font-body, 'IBM Plex Sans', sans-serif);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 30, 0.4);
+  z-index: 40;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(520px, 100%);
+  background: var(--fleet-surface, #fff);
+  box-shadow: -8px 0 24px rgba(15, 20, 30, 0.15);
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--fleet-line, #dfe3e8);
+
+  h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--fleet-ink, #1f2430);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .plate {
+    font-family: var(--fleet-font-mono, 'IBM Plex Mono', monospace);
+    font-size: 0.95rem;
+    color: var(--fleet-primary, #1e3a5f);
+  }
+}
+
+.icon-btn {
+  border: none;
+  background: none;
+  font-size: 1rem;
+  color: var(--fleet-ink-muted, #5b6472);
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.drawer-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-section {
+  h3 {
+    border-bottom: 1px solid var(--fleet-line, #dfe3e8);
+    margin: 0 0 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.8125rem;
+    color: var(--fleet-primary, #1e3a5f);
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    row-gap: 0.4rem;
+    column-gap: 1rem;
+    margin: 0;
+  }
+
+  dt {
+    font-size: 0.8125rem;
+    color: var(--fleet-ink-muted, #5b6472);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--fleet-ink, #1f2430);
+  }
+}
+
+.notes-text {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  color: var(--fleet-ink-muted, #5b6472);
+  white-space: pre-wrap;
+}
+
+.mono {
+  font-family: var(--fleet-font-mono, 'IBM Plex Mono', monospace);
+}
+
+.muted {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--fleet-ink-muted, #5b6472);
+}
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.stat-card {
+  background: var(--fleet-surface-muted, #f5f7fa);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--fleet-primary, #1e3a5f);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--fleet-ink-muted, #5b6472);
+}
+
+.analysis-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--fleet-line, #dfe3e8);
+    text-align: start;
+  }
+
+  th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--fleet-ink-muted, #5b6472);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .num {
+    text-align: end;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-item {
+  padding: 0.625rem 0.75rem;
+  border-radius: 6px;
+  background: var(--fleet-surface-muted, #f5f7fa);
+  border: 1px solid transparent;
+
+  &--current {
+    border-color: var(--fleet-primary, #1e3a5f);
+    background: color-mix(in srgb, var(--fleet-primary, #1e3a5f) 8%, white);
+  }
+}
+
+.history-main {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+}
+
+.history-meta {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--fleet-ink-muted, #5b6472);
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  .reason {
+    font-style: italic;
+  }
+}
+
+.arrow {
+  color: var(--fleet-ink-muted, #5b6472);
+}
+
+.days {
+  font-size: 0.75rem;
+  color: var(--fleet-ink-muted, #5b6472);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--ok {
+    background: #e6f4ea;
+    color: #137333;
+  }
+
+  &--warn {
+    background: #fef7e0;
+    color: #b06000;
+  }
+}
+
+.state-message {
+  margin: 0;
+  font-size: 0.875rem;
+
+  &--error {
+    color: #c5221f;
+  }
+}

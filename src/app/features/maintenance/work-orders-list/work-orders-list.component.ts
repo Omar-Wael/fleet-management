@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -20,7 +20,11 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../shared/components/data-table/data-table.models';
+import {
+  DataTableColumn,
+  DataTableFilter,
+  DataTableQuery,
+} from '../../../shared/components/data-table/data-table.models';
 
 @Component({
   selector: 'app-work-orders-list',
@@ -35,7 +39,7 @@ import { DataTableColumn, DataTableFilter, DataTableQuery } from '../../../share
   templateUrl: './work-orders-list.component.html',
   styleUrls: ['./work-orders-list.component.scss'],
   providers: [DatePipe],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WorkOrdersListComponent implements OnInit {
   rows: WorkOrderGridRow[] = [];
@@ -101,6 +105,7 @@ export class WorkOrdersListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'vehicle',
         header: this.i18n.t('maintenance.vehicle'),
@@ -156,8 +161,15 @@ export class WorkOrdersListComponent implements OnInit {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (w) => [{ label: this.i18n.t('common.view'), icon: '👁️️',
-            variant: 'info', display: 'icon', onClick: (w) => this.openDetail(w) }],
+        actions: (w) => [
+          {
+            label: this.i18n.t('common.view'),
+            icon: '👁️️',
+            variant: 'info',
+            display: 'icon',
+            onClick: (w) => this.openDetail(w),
+          },
+        ],
       },
     ];
   }
@@ -197,7 +209,8 @@ export class WorkOrdersListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadWorkOrders');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('maintenance.failedLoadWorkOrders');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -294,7 +307,8 @@ export class WorkOrdersListComponent implements OnInit {
       })
       .catch((err) => {
         this.importing = false;
-        this.importError = err instanceof Error ? err.message : this.i18n.t('maintenance.importParseFailed');
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('maintenance.importParseFailed');
       });
   }
 
@@ -307,7 +321,8 @@ export class WorkOrdersListComponent implements OnInit {
     this.maintenanceService.listAllMatching(this.currentQuery).subscribe({
       next: (rows) => exportToExcel(rows, this.excelColumns(), 'work-orders-export'),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }
@@ -326,7 +341,8 @@ export class WorkOrdersListComponent implements OnInit {
           'work-orders-report',
         ),
       error: (err) => {
-        this.loadError = err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
   }

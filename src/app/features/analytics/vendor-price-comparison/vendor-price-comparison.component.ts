@@ -83,6 +83,7 @@ export class VendorPriceComparisonComponent implements OnInit, AfterViewInit, On
 
   private buildColumns(): void {
     this.columns = [
+      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'name',
         header: this.i18n.t('analytics.vendor'),
