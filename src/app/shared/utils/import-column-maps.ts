@@ -11,6 +11,7 @@ import {
   Technician,
   Vehicle,
   WorkOrder,
+  OilAndFilterChange,
 } from '../../core/models/fleet.models';
 
 // =====================================================================
@@ -756,3 +757,159 @@ export function prepareDepartmentRowsForImport(
 }
 
 export const DEPARTMENT_IMPORT_TEMPLATE_HEADERS = ['Name (Arabic)', 'Name (English)'];
+
+// Oil & Filter Changes import
+export interface OilFilterChangeImportRow {
+  plate_number: string;
+  change_type: string | null;
+  change_date: string;
+  odometer_reading: number;
+  odometer_unit: string | null;
+  interval_km: number | null;
+  next_due_reading: number | null;
+  next_due_date: string | null;
+  technician_name: string | null;
+  notes: string | null;
+}
+
+export const OIL_FILTER_CHANGE_IMPORT_MAP: ColumnMapping<OilFilterChangeImportRow> = {
+  plate_number: { headers: ['Plate Number', 'رقم اللوحة', 'السيارة'], required: true },
+  change_type: {
+    headers: ['Change Type', 'Type', 'نوع التغيير', 'النوع'],
+  },
+  change_date: {
+    headers: ['Change Date', 'Date', 'تاريخ التغيير', 'التاريخ'],
+    type: 'date',
+    required: true,
+  },
+  odometer_reading: {
+    headers: ['Odometer', 'Odometer Reading', 'Current Meter', 'العداد', 'قراءة العداد'],
+    type: 'number',
+    required: true,
+  },
+  odometer_unit: {
+    headers: ['Odometer Unit', 'Unit', 'وحدة العداد'],
+  },
+  interval_km: {
+    headers: ['Interval', 'Interval Km', 'Oil Interval', 'فترة الزيت', 'الفترة'],
+    type: 'number',
+  },
+  next_due_reading: {
+    headers: ['Next Due Reading', 'القراءة المستحقة'],
+    type: 'number',
+  },
+  next_due_date: {
+    headers: ['Next Due Date', 'التاريخ المستحق'],
+    type: 'date',
+  },
+  technician_name: {
+    headers: ['Technician', 'الفني'],
+  },
+  notes: {
+    headers: ['Notes', 'ملاحظات'],
+  },
+};
+
+export const OIL_FILTER_CHANGE_IMPORT_TEMPLATE_HEADERS = [
+  'Plate Number',
+  'Change Type',
+  'Change Date',
+  'Odometer Reading',
+  'Odometer Unit',
+  'Interval Km',
+  'Next Due Reading',
+  'Next Due Date',
+  'Technician',
+  'Notes',
+];
+
+const CHANGE_TYPE_ALIASES: Record<string, 'oil' | 'filter' | 'oil_and_filter'> = {
+  oil: 'oil',
+  زيت: 'oil',
+  filter: 'filter',
+  فلتر: 'filter',
+  oil_and_filter: 'oil_and_filter',
+  'oil & filter': 'oil_and_filter',
+  'oil and filter': 'oil_and_filter',
+  'زيت وفلتر': 'oil_and_filter',
+  'زيت و فلتر': 'oil_and_filter',
+};
+
+const ODOMETER_UNIT_ALIASES: Record<string, 'km' | 'hours' | 'other'> = {
+  km: 'km',
+  كم: 'km',
+  hours: 'hours',
+  hour: 'hours',
+  ساعات: 'hours',
+  ساعة: 'hours',
+  other: 'other',
+  أخرى: 'other',
+  اخرى: 'other',
+};
+
+function normalizeChangeType(raw: string | null | undefined): 'oil' | 'filter' | 'oil_and_filter' {
+  if (!raw?.trim()) return 'oil_and_filter';
+  const key = raw.trim().toLowerCase();
+  return CHANGE_TYPE_ALIASES[key] || CHANGE_TYPE_ALIASES[raw.trim()] || 'oil_and_filter';
+}
+
+function normalizeOdometerUnit(raw: string | null | undefined): 'km' | 'hours' | 'other' {
+  if (!raw?.trim()) return 'km';
+  const key = raw.trim().toLowerCase();
+  return ODOMETER_UNIT_ALIASES[key] || ODOMETER_UNIT_ALIASES[raw.trim()] || 'km';
+}
+
+function normalizeIntervalKm(raw: number | null | undefined): number | null {
+  if (raw == null || Number.isNaN(Number(raw))) return null;
+  const n = Number(raw);
+  if (n === 2000 || n === 5000) return n;
+  return Math.abs(n - 2000) <= Math.abs(n - 5000) ? 2000 : 5000;
+}
+
+export function resolveOilFilterChangeForeignKeys(
+  rows: OilFilterChangeImportRow[],
+  vehicleIdByPlate: Map<string, string>,
+  technicianIdByName?: Map<string, string>,
+): {
+  resolved: Partial<OilAndFilterChange>[];
+  unresolved: { row: OilFilterChangeImportRow; reason: string }[];
+} {
+  const resolved: Partial<OilAndFilterChange>[] = [];
+  const unresolved: { row: OilFilterChangeImportRow; reason: string }[] = [];
+
+  for (const row of rows) {
+    const vehicleId = vehicleIdByPlate.get(row.plate_number?.trim().toLowerCase());
+    if (!vehicleId) {
+      unresolved.push({ row, reason: `Unknown plate number: "${row.plate_number}"` });
+      continue;
+    }
+    if (row.odometer_reading == null || Number.isNaN(Number(row.odometer_reading))) {
+      unresolved.push({ row, reason: 'Missing or invalid odometer reading' });
+      continue;
+    }
+    if (!row.change_date) {
+      unresolved.push({ row, reason: 'Missing change date' });
+      continue;
+    }
+
+    let technicianId: string | null = null;
+    if (row.technician_name?.trim() && technicianIdByName) {
+      technicianId = technicianIdByName.get(row.technician_name.trim().toLowerCase()) ?? null;
+    }
+
+    resolved.push({
+      vehicle_id: vehicleId,
+      change_type: normalizeChangeType(row.change_type),
+      change_date: row.change_date,
+      odometer_reading: Number(row.odometer_reading),
+      odometer_unit: normalizeOdometerUnit(row.odometer_unit),
+      interval_km: normalizeIntervalKm(row.interval_km),
+      next_due_reading: row.next_due_reading != null ? Number(row.next_due_reading) : null,
+      next_due_date: row.next_due_date || null,
+      technician_id: technicianId,
+      notes: row.notes?.trim() || null,
+    });
+  }
+
+  return { resolved, unresolved };
+}
