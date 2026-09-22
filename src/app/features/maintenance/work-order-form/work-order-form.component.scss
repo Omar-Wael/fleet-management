@@ -206,3 +206,25 @@
     width: 100vw;
   }
 }
+
+.readonly-input {
+  background: var(--fleet-surface-muted, #f3f5f7) !important;
+  color: var(--fleet-ink, #1f2430);
+  cursor: default;
+}
+
+.checkbox-field {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+
+  input[type='checkbox'] {
+    width: auto;
+    margin: 0;
+  }
+
+  span {
+    font-weight: 500;
+  }
+}

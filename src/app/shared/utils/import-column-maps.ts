@@ -138,20 +138,33 @@ export const VEHICLE_IMPORT_TEMPLATE_HEADERS = [
 export interface WorkOrderImportRow {
   plate_number: string;
   description: string;
-  repair_types: string; // comma-separated in the spreadsheet, split below
-  maintenance_categories: string; // comma-separated
+  repair_types: string;
+  maintenance_categories: string;
+  maintenance_type: string | null;
   odometer_km_at_service: number | null;
   opened_at: string | null;
+  closed_at: string | null;
 }
 
 export const WORK_ORDER_IMPORT_MAP: ColumnMapping<WorkOrderImportRow> = {
   plate_number: { headers: ['Plate No.', 'Plate Number', 'رقم اللوحة'], required: true },
+  maintenance_type: { headers: ['Maintenance Type', 'Type', 'نوع الصيانة'] },
   description: { headers: ['Repair Description', 'Description', 'وصف الإصلاح'], required: true },
   repair_types: { headers: ['Repair Type', 'نوع الإصلاح'] },
   maintenance_categories: { headers: ['Maintenance Category', 'فئة الصيانة'] },
   odometer_km_at_service: { headers: ['Odometer', 'قراءة العداد'], type: 'number' },
-  opened_at: { headers: ['Date', 'Opened At', 'التاريخ'], type: 'date' },
+  opened_at: { headers: ['Date', 'Opened At', 'Entry Date', 'تاريخ الدخول', 'التاريخ'], type: 'date' },
+  closed_at: { headers: ['Closed At', 'Exit Date', 'تاريخ الخروج'], type: 'date' },
 };
+
+export const WORK_ORDER_IMPORT_TEMPLATE_HEADERS = [
+  'Plate No.',
+  'Maintenance Type',
+  'Repair Description',
+  'Opened At',
+  'Closed At',
+  'Odometer',
+];
 
 /** Resolves plate_number -> vehicle_id and splits the comma-separated tag columns, ready for maintenanceService.create(). */
 export function resolveWorkOrderForeignKeys(
@@ -174,6 +187,7 @@ export function resolveWorkOrderForeignKeys(
     resolved.push({
       vehicle_id: vehicleId,
       description: row.description,
+      maintenance_type: row.maintenance_type || undefined,
       repair_types: row.repair_types ? row.repair_types.split(',').map((s) => s.trim()) : [],
       maintenance_categories: row.maintenance_categories
         ? (row.maintenance_categories
@@ -182,6 +196,7 @@ export function resolveWorkOrderForeignKeys(
         : [],
       odometer_km_at_service: row.odometer_km_at_service ?? undefined,
       opened_at: row.opened_at ?? undefined,
+      closed_at: row.closed_at ?? undefined,
     });
   }
 

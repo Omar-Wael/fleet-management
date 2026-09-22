@@ -53,8 +53,8 @@ export interface OilFilterDisplayRow extends OilAndFilterChangeGridRow {
   selector: 'app-oil-filter-tracker',
   standalone: true,
   imports: [
-    DatePipe,
-    DecimalPipe,
+    // DatePipe,
+    // DecimalPipe,
     ReactiveFormsModule,
     FormsModule,
     TranslatePipe,

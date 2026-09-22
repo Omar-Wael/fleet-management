@@ -3,7 +3,12 @@
 
   <aside class="slide-over" role="dialog" aria-modal="true">
     <header class="slide-over-header">
-      <h2>{{ 'maintenance.newWorkOrderTitle' | translate }}</h2>
+      <h2>
+        {{
+          (isEditMode ? 'maintenance.editWorkOrderTitle' : 'maintenance.newWorkOrderTitle')
+            | translate
+        }}
+      </h2>
       <button type="button" class="icon-btn" (click)="close()" aria-label="Close">✕</button>
     </header>
 
@@ -26,8 +31,41 @@
           </label>
 
           <label class="field">
+            <span>{{ 'maintenance.colVehicleType' | translate }}</span>
+            <input type="text" class="readonly-input" [value]="selectedVehicleTypeLabel" readonly />
+          </label>
+
+          <label class="field">
+            <span>{{ 'maintenance.colDepartment' | translate }}</span>
+            <input type="text" class="readonly-input" [value]="selectedDepartmentLabel" readonly />
+          </label>
+
+          <label class="field">
             <span>{{ 'maintenance.maintenanceType' | translate }}</span>
-            <input type="text" formControlName="maintenance_type" [placeholder]="'maintenance.maintenanceTypePlaceholder' | translate" />
+            <select formControlName="maintenance_type">
+              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
+              @for (t of maintenanceTypeOptions; track t) {
+                <option [ngValue]="t">{{ maintenanceTypeLabel(t) }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>{{ 'common.status' | translate }}</span>
+            <select formControlName="status">
+              <option value="open">{{ 'maintenance.statusInProgress' | translate }}</option>
+              <option value="closed">{{ 'maintenance.statusCompleted' | translate }}</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>{{ 'maintenance.opened' | translate }}</span>
+            <input type="date" formControlName="opened_at" />
+          </label>
+
+          <label class="field">
+            <span>{{ 'maintenance.closedAt' | translate }}</span>
+            <input type="date" formControlName="closed_at" />
           </label>
 
           <label class="field field--wide">
@@ -37,21 +75,66 @@
 
           <label class="field field--wide">
             <span>{{ 'maintenance.repairTypesCommaSeparated' | translate }}</span>
-            <input type="text" formControlName="repair_types" [placeholder]="'maintenance.repairTypesPlaceholder' | translate" />
+            <input
+              type="text"
+              formControlName="repair_types"
+              [placeholder]="'maintenance.repairTypesPlaceholder' | translate"
+            />
           </label>
 
           <label class="field">
             <span>{{ 'maintenance.odometerAtService' | translate }}</span>
             <input type="number" formControlName="odometer_km_at_service" />
           </label>
+
+          <label class="field checkbox-field">
+            <input type="checkbox" formControlName="is_external" />
+            <span>{{ 'maintenance.externalWorkshopFlag' | translate }}</span>
+          </label>
         </div>
+
+        <section class="compat-section">
+          <h3>{{ 'maintenance.relatedDocument' | translate }}</h3>
+          <div class="field-grid">
+            <label class="field">
+              <span>{{ 'maintenance.relatedDocType' | translate }}</span>
+              <select
+                [ngModel]="relatedDocType"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onRelatedDocTypeChange($event)"
+              >
+                <option value="">{{ 'common.none' | translate }}</option>
+                <option value="disbursement">{{ 'maintenance.docDisbursement' | translate }}</option>
+                <option value="check">{{ 'maintenance.docCheck' | translate }}</option>
+                <option value="petty_cash">{{ 'maintenance.docPettyCash' | translate }}</option>
+              </select>
+            </label>
+
+            @if (relatedDocType) {
+              <label class="field">
+                <span>{{ 'maintenance.relatedDocSelect' | translate }}</span>
+                <app-searchable-select
+                  [options]="relatedDocOptions"
+                  [(ngModel)]="relatedDocId"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="'maintenance.relatedDocSelectPlaceholder' | translate"
+                  [clearable]="true"
+                ></app-searchable-select>
+              </label>
+            }
+          </div>
+        </section>
 
         <section class="compat-section">
           <h3>{{ 'maintenance.maintenanceCategories' | translate }}</h3>
           <div class="chip-grid">
             @for (c of categoryOptions; track c) {
               <label class="chip" [class.chip--active]="selectedCategories.has(c)">
-                <input type="checkbox" [checked]="selectedCategories.has(c)" (change)="toggleCategory(c)" />
+                <input
+                  type="checkbox"
+                  [checked]="selectedCategories.has(c)"
+                  (change)="toggleCategory(c)"
+                />
                 {{ c }}
               </label>
             }
@@ -78,7 +161,14 @@
             {{ 'common.cancel' | translate }}
           </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ (saving ? 'common.saving' : 'maintenance.createWorkOrderButton') | translate }}
+            {{
+              (saving
+                ? 'common.saving'
+                : isEditMode
+                  ? 'common.saveChanges'
+                  : 'maintenance.createWorkOrderButton'
+              ) | translate
+            }}
           </button>
         </footer>
       </form>

@@ -77,12 +77,17 @@ export interface DataTableEditableConfig<T = any> {
   emptyLabel?: string;
 }
 
-/** A dropdown filter rendered in the table's filter bar. Value `''` means "all" / no filter applied. */
+/**
+ * A filter rendered in the table's filter bar.
+ * - `type: 'select'` (default) — searchable dropdown; Value `''` means "all".
+ * - `type: 'date'` — native date input; value is `YYYY-MM-DD` or `''` when cleared.
+ */
 export interface DataTableFilter {
   key: string;
   label: string;
   value: string;
-  options: { value: string; label: string }[];
+  type?: 'select' | 'date';
+  options?: { value: string; label: string }[];
   multiple?: boolean;
 }
 

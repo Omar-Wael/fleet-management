@@ -4,32 +4,19 @@
       <h2>{{ 'maintenance.tabWorkOrders' | translate }}</h2>
       <p class="page-subtitle">{{ total }} {{ 'maintenance.shown' | translate }}</p>
     </div>
-
     <div class="page-actions">
-      <input
-        #importFileInput
-        type="file"
-        accept=".xlsx,.xls,.csv,.pdf,.docx"
-        hidden
-        (change)="onFileSelected($event)"
-      />
+      <input #importFileInput type="file" accept=".xlsx,.xls,.csv,.pdf,.docx" hidden (change)="onFileSelected($event)" />
+      <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">{{ 'common.downloadTemplate' | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)">
         {{ (importing ? 'common.importing' : 'common.import') | translate }}
       </button>
       <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
       <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
-      <button type="button" class="btn btn--primary" (click)="openCreateForm()">
-        {{ 'maintenance.newWorkOrderButton' | translate }}
-      </button>
+      <button type="button" class="btn btn--primary" (click)="openCreateForm()">{{ 'maintenance.newWorkOrderButton' | translate }}</button>
     </div>
   </header>
-
-  @if (importing) {
-    <div class="state-message">{{ 'common.importing' | translate }}</div>
-  }
-  @if (importError) {
-    <div class="state-message state-message--error">{{ importError }}</div>
-  }
+  @if (importing) { <div class="state-message">{{ 'common.importing' | translate }}</div> }
+  @if (importError) { <div class="state-message state-message--error">{{ importError }}</div> }
   @if (importSummary) {
     <div class="state-message state-message--ok">
       {{ 'maintenance.importedCount' | translate }} {{ importSummary.savedCount }}
@@ -39,33 +26,13 @@
       }
     </div>
   }
-
-  @if (loadError) {
-    <div class="state-message state-message--error">{{ loadError }}</div>
-  }
-
+  @if (loadError) { <div class="state-message state-message--error">{{ loadError }}</div> }
   <app-data-table
-    [columns]="columns"
-    [rows]="rows"
-    [total]="total"
-    [loading]="loading"
-    [filters]="filters"
+    [columns]="columns" [rows]="rows" [total]="total" [loading]="loading" [filters]="filters"
     [searchPlaceholder]="'maintenance.searchPlaceholder' | translate"
     [emptyMessage]="'maintenance.noWorkOrdersMatch' | translate"
-    actionsColumnKey="actions"
-    (queryChange)="onQueryChange($event)"
+    actionsColumnKey="actions" (queryChange)="onQueryChange($event)"
   ></app-data-table>
 </div>
-
-<app-work-order-form
-  [open]="formOpen"
-  (closed)="onFormClosed()"
-  (saved)="onFormSaved()"
-></app-work-order-form>
-
-<app-work-order-detail-drawer
-  [open]="drawerOpen"
-  [workOrder]="selectedWorkOrder"
-  (closed)="onDrawerClosed()"
-  (updated)="onDrawerUpdated()"
-></app-work-order-detail-drawer>
+<app-work-order-form [open]="formOpen" [workOrder]="editingWorkOrder" (closed)="onFormClosed()" (saved)="onFormSaved()"></app-work-order-form>
+<app-work-order-detail-drawer [open]="drawerOpen" [workOrder]="selectedWorkOrder" (closed)="onDrawerClosed()" (updated)="onDrawerUpdated()"></app-work-order-detail-drawer>

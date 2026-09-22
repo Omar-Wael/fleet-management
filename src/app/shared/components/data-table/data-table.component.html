@@ -13,15 +13,37 @@
     @if (filters.length) {
       <div class="dt-filters">
         @for (f of filters; track f.key) {
-          <app-searchable-select
-            class="dt-filter-select"
-            [options]="f.options"
-            [ngModel]="f.value"
-            (ngModelChange)="onFilterChange(f.key, $event)"
-            [placeholder]="f.label"
-            [clearable]="true"
-            [multiple]="f.multiple || false"
-          ></app-searchable-select>
+          @if (f.type === 'date') {
+            <label class="dt-filter-date">
+              <span class="dt-filter-date-label">{{ f.label }}</span>
+              <input
+                type="date"
+                class="dt-filter-date-input"
+                [ngModel]="f.value"
+                (ngModelChange)="onFilterChange(f.key, $event)"
+                [attr.aria-label]="f.label"
+              />
+              @if (f.value) {
+                <button
+                  type="button"
+                  class="dt-filter-date-clear"
+                  (click)="onFilterChange(f.key, '')"
+                  [attr.title]="'common.clear' | translate"
+                  [attr.aria-label]="'common.clear' | translate"
+                >×</button>
+              }
+            </label>
+          } @else {
+            <app-searchable-select
+              class="dt-filter-select"
+              [options]="f.options || []"
+              [ngModel]="f.value"
+              (ngModelChange)="onFilterChange(f.key, $event)"
+              [placeholder]="f.label"
+              [clearable]="true"
+              [multiple]="f.multiple || false"
+            ></app-searchable-select>
+          }
         }
       </div>
     }
