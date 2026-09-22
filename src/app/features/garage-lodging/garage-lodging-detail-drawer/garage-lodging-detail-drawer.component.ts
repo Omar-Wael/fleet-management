@@ -34,7 +34,7 @@ export interface YearlyVisitStat {
 @Component({
   selector: 'app-garage-lodging-detail-drawer',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TranslatePipe],
+  imports: [DatePipe, TranslatePipe],
   templateUrl: './garage-lodging-detail-drawer.component.html',
   styleUrls: ['./garage-lodging-detail-drawer.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

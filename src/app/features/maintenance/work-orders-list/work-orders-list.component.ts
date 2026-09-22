@@ -8,13 +8,16 @@ import { WorkOrderDetailDrawerComponent } from '../work-order-detail-drawer/work
 
 import { MaintenanceService, WorkOrderGridRow } from '../../../core/services/maintenance.service';
 import { VehiclesService } from '../../../core/services/vehicles.service';
+import { TechniciansService } from '../../../core/services/technicians.service';
+import { LookupsService } from '../../../core/services/lookups.service';
 import {
   WorkOrderImportRow,
   WORK_ORDER_IMPORT_MAP,
+  WORK_ORDER_IMPORT_TEMPLATE_HEADERS,
   resolveWorkOrderForeignKeys,
 } from '../../../shared/utils/import-column-maps';
 import { importFileWithMapping } from '../../../shared/utils/document-import.util';
-import { exportToExcel, ExcelExportColumn } from '../../../shared/utils/excel-import-export.util';
+import { exportToExcel, ExcelExportColumn, downloadImportTemplate } from '../../../shared/utils/excel-import-export.util';
 import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -59,6 +62,7 @@ export class WorkOrdersListComponent implements OnInit {
   };
 
   formOpen = false;
+  editingWorkOrder: WorkOrderGridRow | null = null;
 
   drawerOpen = false;
   selectedWorkOrder: WorkOrderGridRow | null = null;
@@ -72,6 +76,8 @@ export class WorkOrdersListComponent implements OnInit {
   constructor(
     private maintenanceService: MaintenanceService,
     private vehiclesService: VehiclesService,
+    private techniciansService: TechniciansService,
+    private lookupsService: LookupsService,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
@@ -83,20 +89,27 @@ export class WorkOrdersListComponent implements OnInit {
     this.loadWorkOrders(this.currentQuery);
 
     // Full unpaginated vehicle list — needed for the vehicle filter dropdown and for resolving plate → id during import. This grid is small/personal-scale so loading it in full here is fine.
-    this.vehiclesService.list().subscribe({
-      next: (vehicles) => {
+    forkJoin({
+      vehicles: this.vehiclesService.list(),
+      technicians: this.techniciansService.list(),
+      departments: this.lookupsService.listOperatingDepartments(),
+    }).subscribe({
+      next: ({ vehicles, technicians, departments }) => {
         this.vehicleIdByPlate = new Map(
           vehicles.map((v) => [v.plate_number.trim().toLowerCase(), v.id]),
         );
-        this.filters = [
-          {
-            key: 'vehicle_id',
-            label: this.i18n.t('shared.dataTable.allFilter'),
-            value: this.currentQuery.filters['vehicle_id'] ?? '',
-            options: vehicles.map((v) => ({ value: v.id, label: v.plate_number })),
-          },
-          ...this.filters.slice(1),
-        ];
+        const byKey = (key: string) => this.filters.find((f) => f.key === key);
+        const vf = byKey('vehicle_id');
+        if (vf) vf.options = vehicles.map((v) => ({ value: v.id, label: v.plate_number }));
+        const tf = byKey('technician_id');
+        if (tf) tf.options = technicians.map((t) => ({ value: t.id, label: t.full_name }));
+        const df = byKey('operating_department_id');
+        if (df) {
+          df.options = departments.map((d) => ({
+            value: d.id,
+            label: this.i18n.lang() === 'ar' ? d.name_ar : (d.name_en || d.name_ar),
+          }));
+        }
         this.cdr.markForCheck();
       },
       error: () => {},
@@ -105,23 +118,36 @@ export class WorkOrdersListComponent implements OnInit {
 
   private buildColumns(): void {
     this.columns = [
-      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
+      { key: 'index', header: this.i18n.t('maintenance.colSerial'), width: '56px', render: (_v, rowNumber) => String(rowNumber) },
+      { key: 'vehicle', header: this.i18n.t('maintenance.vehicle'), mono: true, render: (w) => w.vehicles?.plate_number || '—' },
       {
-        key: 'vehicle',
-        header: this.i18n.t('maintenance.vehicle'),
-        mono: true,
-        render: (w) => w.vehicles?.plate_number || '—',
+        key: 'vehicle_type',
+        header: this.i18n.t('maintenance.colVehicleType'),
+        render: (w) => {
+          const vt = w.vehicles?.vehicle_types;
+          if (!vt) return '—';
+          return this.i18n.lang() === 'ar' ? (vt.name_ar || vt.name_en || '—') : (vt.name_en || vt.name_ar || '—');
+        },
+      },
+      {
+        key: 'department',
+        header: this.i18n.t('maintenance.colDepartment'),
+        render: (w) => {
+          const d = w.vehicles?.operating_departments;
+          if (!d) return '—';
+          return this.i18n.lang() === 'ar' ? (d.name_ar || d.name_en || '—') : (d.name_en || d.name_ar || '—');
+        },
       },
       {
         key: 'maintenance_type',
         header: this.i18n.t('maintenance.colType'),
-        render: (w) => w.maintenance_type || '—',
-      },
-      {
-        key: 'description',
-        header: this.i18n.t('maintenance.description'),
-        truncate: true,
-        render: (w) => w.description,
+        render: (w) => {
+          const t = w.maintenance_type;
+          if (!t) return '—';
+          const k = 'maintenance.type.' + t;
+          const tr = this.i18n.t(k);
+          return tr === k ? t : tr;
+        },
       },
       {
         key: 'opened_at',
@@ -130,26 +156,16 @@ export class WorkOrdersListComponent implements OnInit {
         render: (w) => this.datePipe.transform(w.opened_at, 'dd/MM/yyyy') || '—',
       },
       {
-        key: 'status',
-        header: this.i18n.t('common.status'),
-        render: () => '',
-        badge: (w) =>
-          w.closed_at
-            ? { text: this.i18n.t('maintenance.closed'), variant: 'ok' }
-            : { text: this.i18n.t('maintenance.statusOpen'), variant: 'warn' },
-      },
-      {
-        key: 'odometer_km_at_service',
-        header: this.i18n.t('maintenance.colOdometer'),
-        mono: true,
-        render: (w) => (w.odometer_km_at_service ?? '—') + '',
-      },
-      {
-        key: 'total_cost',
-        header: this.i18n.t('maintenance.totalCost'),
+        key: 'closed_at',
+        header: this.i18n.t('maintenance.closedAt'),
         sortable: true,
-        mono: true,
-        render: (w) => (w.total_cost == null ? '—' : w.total_cost.toFixed(2)),
+        render: (w) => this.datePipe.transform(w.closed_at, 'dd/MM/yyyy') || '—',
+      },
+      {
+        key: 'description',
+        header: this.i18n.t('maintenance.repairStatement'),
+        truncate: true,
+        render: (w) => w.description,
       },
       {
         key: 'technicians',
@@ -158,17 +174,29 @@ export class WorkOrdersListComponent implements OnInit {
         render: (w) => this.technicianNames(w),
       },
       {
+        key: 'related_doc',
+        header: this.i18n.t('maintenance.relatedDocument'),
+        truncate: true,
+        render: (w) => this.relatedDocumentSummary(w),
+      },
+      {
+        key: 'status',
+        header: this.i18n.t('common.status'),
+        render: () => '',
+        badge: (w) => {
+          if (w.closed_at) return { text: this.i18n.t('maintenance.statusCompleted'), variant: 'ok' };
+          if (!(w.work_order_technicians?.length)) return { text: this.i18n.t('maintenance.statusPending'), variant: 'neutral' };
+          return { text: this.i18n.t('maintenance.statusInProgress'), variant: 'warn' };
+        },
+      },
+      {
         key: 'actions',
         header: this.i18n.t('common.actions'),
         align: 'end',
-        actions: (w) => [
-          {
-            label: this.i18n.t('common.view'),
-            icon: '👁️️',
-            variant: 'info',
-            display: 'icon',
-            onClick: (w) => this.openDetail(w),
-          },
+        actions: () => [
+          { label: this.i18n.t('common.view'), icon: '👁️', variant: 'info', display: 'icon', onClick: (row) => this.openDetail(row) },
+          { label: this.i18n.t('common.edit'), icon: '✏️', variant: 'default', display: 'icon', onClick: (row) => this.openEditForm(row) },
+          { label: this.i18n.t('common.delete'), icon: '🗑️', variant: 'danger', display: 'icon', onClick: (row) => this.confirmDelete(row) },
         ],
       },
     ];
@@ -176,18 +204,32 @@ export class WorkOrdersListComponent implements OnInit {
 
   private buildFilters(): void {
     this.filters = [
+      { key: 'vehicle_id', label: this.i18n.t('maintenance.filterVehicle'), value: this.currentQuery.filters['vehicle_id'] ?? '', options: [] },
       {
-        key: 'vehicle_id',
-        label: this.i18n.t('shared.dataTable.allFilter'),
-        value: this.currentQuery.filters['vehicle_id'] ?? '',
-        options: [],
+        key: 'status',
+        label: this.i18n.t('maintenance.filterStatus'),
+        value: this.currentQuery.filters['status'] ?? '',
+        options: [
+          { value: 'open', label: this.i18n.t('maintenance.statusInProgress') },
+          { value: 'closed', label: this.i18n.t('maintenance.statusCompleted') },
+        ],
       },
+      { key: 'operating_department_id', label: this.i18n.t('maintenance.filterDepartment'), value: this.currentQuery.filters['operating_department_id'] ?? '', options: [] },
+      { key: 'technician_id', label: this.i18n.t('maintenance.filterTechnician'), value: this.currentQuery.filters['technician_id'] ?? '', options: [] },
       {
-        key: 'openOnly',
-        label: this.i18n.t('shared.dataTable.allFilter'),
-        value: this.currentQuery.filters['openOnly'] ?? '',
-        options: [{ value: 'true', label: this.i18n.t('maintenance.openOnly') }],
+        key: 'maintenance_type',
+        label: this.i18n.t('maintenance.filterMaintenanceType'),
+        value: this.currentQuery.filters['maintenance_type'] ?? '',
+        options: ['routine', 'major_overhaul', 'emergency', 'external'].map((t) => {
+          const k = 'maintenance.type.' + t;
+          const tr = this.i18n.t(k);
+          return { value: t, label: tr === k ? t : tr };
+        }),
       },
+      { key: 'opened_from', label: this.i18n.t('maintenance.filterOpenedFrom'), value: this.currentQuery.filters['opened_from'] ?? '', type: 'date' },
+      { key: 'opened_to', label: this.i18n.t('maintenance.filterOpenedTo'), value: this.currentQuery.filters['opened_to'] ?? '', type: 'date' },
+      { key: 'closed_from', label: this.i18n.t('maintenance.filterClosedFrom'), value: this.currentQuery.filters['closed_from'] ?? '', type: 'date' },
+      { key: 'closed_to', label: this.i18n.t('maintenance.filterClosedTo'), value: this.currentQuery.filters['closed_to'] ?? '', type: 'date' },
     ];
   }
 
@@ -227,6 +269,7 @@ export class WorkOrdersListComponent implements OnInit {
   }
 
   openCreateForm(): void {
+    this.editingWorkOrder = null;
     this.formOpen = true;
   }
 
@@ -250,6 +293,57 @@ export class WorkOrdersListComponent implements OnInit {
 
   onDrawerUpdated(): void {
     this.reloadWorkOrdersOnly();
+  }
+
+  relatedDocumentSummary(w: WorkOrderGridRow): string {
+    const parts: string[] = [];
+    for (const ft of w.financial_transactions ?? []) {
+      if (ft.channel === 'check') {
+        parts.push(
+          this.i18n.t('maintenance.docCheck') + (ft.check_number ? ' #' + ft.check_number : ''),
+        );
+      } else if (ft.channel === 'petty_cash') {
+        parts.push(this.i18n.t('maintenance.docPettyCash'));
+      } else {
+        parts.push(ft.channel);
+      }
+    }
+    for (const sdr of w.stock_disbursement_requests ?? []) {
+      parts.push(
+        this.i18n.t('maintenance.docDisbursement') +
+          (sdr.request_number ? ' #' + sdr.request_number : ''),
+      );
+    }
+    return parts.length ? parts.join(', ') : '—';
+  }
+
+  openEditForm(workOrder: WorkOrderGridRow): void {
+    this.editingWorkOrder = workOrder;
+    this.formOpen = true;
+  }
+
+  confirmDelete(workOrder: WorkOrderGridRow): void {
+    const plate = workOrder.vehicles?.plate_number ?? '';
+    if (!confirm(this.i18n.t('maintenance.deleteWorkOrderConfirm') + ' ' + plate + '?')) return;
+    this.maintenanceService.delete(workOrder.id).subscribe({
+      next: () => this.reloadWorkOrdersOnly(),
+      error: (err) => {
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('maintenance.failedDeleteWorkOrder');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  downloadTemplate(): void {
+    downloadImportTemplate(WORK_ORDER_IMPORT_TEMPLATE_HEADERS, 'work-orders-import-template', {
+      [WORK_ORDER_IMPORT_TEMPLATE_HEADERS[0]]: 'ABC-1234',
+      [WORK_ORDER_IMPORT_TEMPLATE_HEADERS[1]]: 'routine',
+      [WORK_ORDER_IMPORT_TEMPLATE_HEADERS[2]]: 'Replace brake pads',
+      [WORK_ORDER_IMPORT_TEMPLATE_HEADERS[3]]: '2025-01-15',
+      [WORK_ORDER_IMPORT_TEMPLATE_HEADERS[4]]: '',
+      [WORK_ORDER_IMPORT_TEMPLATE_HEADERS[5]]: '50000',
+    });
   }
 
   // -------------------------------------------------------------

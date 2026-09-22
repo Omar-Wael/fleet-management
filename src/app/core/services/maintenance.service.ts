@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { SupabaseClientService } from './../supabase/supabase-client.service';
 import { fromSupabase, fromSupabasePaged, PagedResult } from '../supabase/from-supabase.util';
 import { DataTableQuery } from '../../shared/components/data-table/data-table.models';
@@ -8,9 +8,24 @@ import { MaintenanceCategory, OilAndFilterChange, WorkOrder } from '../models/fl
 
 /** Row shape for the "Maintenance" grid. */
 export interface WorkOrderGridRow extends WorkOrder {
-  vehicles?: { plate_number: string };
+  vehicles?: {
+    plate_number: string;
+    vehicle_types?: { name_ar?: string | null; name_en?: string | null } | null;
+    operating_departments?: { name_ar?: string | null; name_en?: string | null } | null;
+  } | null;
   work_order_technicians?: { technicians: { full_name: string } }[];
-  financial_transactions?: { id: string; channel: string; amount: number }[];
+  financial_transactions?: {
+    id: string;
+    channel: string;
+    amount: number;
+    check_number?: string | null;
+    description?: string | null;
+  }[];
+  stock_disbursement_requests?: {
+    id: string;
+    request_number?: string | null;
+    status?: string | null;
+  }[];
 }
 
 /** Oil & filter change row with optional joined vehicle for the all-records grid. */
@@ -20,9 +35,14 @@ export interface OilAndFilterChangeGridRow extends OilAndFilterChange {
 
 const WORK_ORDER_GRID_SELECT = `
   *,
-  vehicles (plate_number),
+  vehicles (
+    plate_number,
+    vehicle_types (name_ar, name_en),
+    operating_departments (name_ar, name_en)
+  ),
   work_order_technicians (technicians (full_name)),
-  financial_transactions (id, channel, amount)
+  financial_transactions (id, channel, amount, check_number, description),
+  stock_disbursement_requests (id, request_number, status)
 `;
 
 @Injectable({ providedIn: 'root' })
@@ -53,12 +73,56 @@ export class MaintenanceService {
    * lookup fails). Use the vehicle filter dropdown to narrow by plate.
    */
   private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+    const filters = query.filters ?? {};
+    const needsVehicleInner =
+      !!filters['operating_department_id'] || !!filters['vehicle_type_id'];
+    const needsTechnicianInner = !!filters['technician_id'];
+
+    let select = WORK_ORDER_GRID_SELECT;
+    if (needsVehicleInner) {
+      select = select.replace('vehicles (', 'vehicles!inner (');
+    }
+    if (needsTechnicianInner) {
+      select = select.replace(
+        'work_order_technicians (',
+        'work_order_technicians!inner (',
+      );
+    }
+
     let q = this.client
       .from('work_orders')
-      .select(WORK_ORDER_GRID_SELECT, withCount ? { count: 'exact' } : undefined);
+      .select(select, withCount ? { count: 'exact' } : undefined);
 
-    if (query.filters['vehicle_id']) q = q.eq('vehicle_id', query.filters['vehicle_id']);
-    if (query.filters['openOnly'] === 'true') q = q.is('closed_at', null);
+    if (filters['vehicle_id']) q = q.eq('vehicle_id', filters['vehicle_id']);
+    if (filters['maintenance_type']) q = q.eq('maintenance_type', filters['maintenance_type']);
+    if (filters['status'] === 'open' || filters['openOnly'] === 'true') {
+      q = q.is('closed_at', null);
+    } else if (filters['status'] === 'closed') {
+      q = q.not('closed_at', 'is', null);
+    }
+    if (filters['opened_from']) q = q.gte('opened_at', filters['opened_from']);
+    if (filters['opened_to']) {
+      const to = filters['opened_to'].includes('T')
+        ? filters['opened_to']
+        : `${filters['opened_to']}T23:59:59`;
+      q = q.lte('opened_at', to);
+    }
+    if (filters['closed_from']) q = q.gte('closed_at', filters['closed_from']);
+    if (filters['closed_to']) {
+      const to = filters['closed_to'].includes('T')
+        ? filters['closed_to']
+        : `${filters['closed_to']}T23:59:59`;
+      q = q.lte('closed_at', to);
+    }
+    if (filters['operating_department_id']) {
+      q = q.eq('vehicles.operating_department_id', filters['operating_department_id']);
+    }
+    if (filters['vehicle_type_id']) {
+      q = q.eq('vehicles.vehicle_type_id', filters['vehicle_type_id']);
+    }
+    if (filters['technician_id']) {
+      q = q.eq('work_order_technicians.technician_id', filters['technician_id']);
+    }
 
     const term = query.search.trim();
     if (term) {
@@ -91,6 +155,8 @@ export class MaintenanceService {
     maintenance_categories?: MaintenanceCategory[];
     odometer_km_at_service?: number;
     maintenance_type?: string;
+    opened_at?: string;
+    closed_at?: string | null;
   }): Observable<WorkOrder> {
     return fromSupabase<WorkOrder>(
       this.client.from('work_orders').insert(workOrder).select().single(),
@@ -100,6 +166,28 @@ export class MaintenanceService {
   update(workOrderId: string, changes: Partial<WorkOrder>): Observable<WorkOrder> {
     return fromSupabase<WorkOrder>(
       this.client.from('work_orders').update(changes).eq('id', workOrderId).select().single(),
+    );
+  }
+
+  delete(workOrderId: string): Observable<void> {
+    return fromSupabase<void>(
+      this.client.from('work_order_technicians').delete().eq('work_order_id', workOrderId),
+    ).pipe(
+      switchMap(() =>
+        fromSupabase<void>(this.client.from('work_orders').delete().eq('id', workOrderId)),
+      ),
+    );
+  }
+
+  setTechnicians(workOrderId: string, technicianIds: string[]): Observable<void> {
+    return fromSupabase<void>(
+      this.client.from('work_order_technicians').delete().eq('work_order_id', workOrderId),
+    ).pipe(
+      switchMap(() =>
+        technicianIds.length
+          ? this.assignTechnicians(workOrderId, technicianIds)
+          : of(undefined as void),
+      ),
     );
   }
 
@@ -148,6 +236,27 @@ export class MaintenanceService {
   }
 
   // -------------------------------------------------------------
+
+  /** Attach an existing stock disbursement request to this work order. */
+  linkDisbursementRequest(workOrderId: string, disbursementRequestId: string): Observable<void> {
+    return fromSupabase<void>(
+      this.client
+        .from('stock_disbursement_requests')
+        .update({ work_order_id: workOrderId })
+        .eq('id', disbursementRequestId),
+    );
+  }
+
+  /** Attach an existing financial transaction (check / petty cash) to this work order. */
+  linkFinancialTransaction(workOrderId: string, financialTransactionId: string): Observable<void> {
+    return fromSupabase<void>(
+      this.client
+        .from('financial_transactions')
+        .update({ work_order_id: workOrderId })
+        .eq('id', financialTransactionId),
+    );
+  }
+
   // Oil & Filter change tracker
   // -------------------------------------------------------------
 

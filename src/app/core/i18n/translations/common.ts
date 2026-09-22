@@ -50,4 +50,5 @@ export const COMMON_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'No results match the current filters.',
     ar: 'لا توجد نتائج مطابقة للفلاتر الحالية.',
   },
+  'common.generated': { en: 'Generated', ar: 'تم الإنشاء' },
 };
