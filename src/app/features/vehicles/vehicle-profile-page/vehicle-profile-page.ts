@@ -295,14 +295,14 @@ export class VehicleProfilePage implements OnInit {
       .subscribe({
         next: ({ rows }) => {
           this.patch(() => {
-            this.workOrders = rows ?? [];
             this.tabLoading = false;
+            this.workOrders = rows ?? [];
           });
         },
         error: () => {
           this.patch(() => {
-            this.workOrders = [];
             this.tabLoading = false;
+            this.workOrders = [];
           });
         },
       });
@@ -323,14 +323,14 @@ export class VehicleProfilePage implements OnInit {
       .subscribe({
         next: ({ rows }) => {
           this.patch(() => {
-            this.overhauls = rows ?? [];
             this.tabLoading = false;
+            this.overhauls = rows ?? [];
           });
         },
         error: () => {
           this.patch(() => {
-            this.overhauls = [];
             this.tabLoading = false;
+            this.overhauls = [];
           });
         },
       });

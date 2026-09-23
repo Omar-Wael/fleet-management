@@ -1,0 +1,62 @@
+<div class="page users-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'auth.usersTitle' | translate }}</h1>
+      <p class="page-subtitle">{{ 'auth.usersSubtitle' | translate }}</p>
+    </div>
+    <div class="page-actions">
+      <a routerLink="/users/roles" class="btn btn--ghost">{{ 'auth.manageRoles' | translate }}</a>
+      <button type="button" class="btn btn--primary" (click)="reload()" [disabled]="loading">
+        {{ 'dashboard.refresh' | translate }}
+      </button>
+    </div>
+  </header>
+
+  @if (error) {
+    <div class="banner banner--error">{{ error }}</div>
+  }
+
+  <app-data-table
+    [columns]="columns"
+    [rows]="rows"
+    [total]="total"
+    [loading]="loading"
+    [filters]="filters"
+    [searchPlaceholder]="'auth.searchUsers' | translate"
+    (queryChange)="onQueryChange($event)"
+  ></app-data-table>
+
+  @if (editing) {
+    <div class="overlay" (click)="closeEdit()"></div>
+    <aside class="slide-over" role="dialog" [attr.aria-label]="'auth.assignRoles' | translate">
+      <header class="slide-over-header">
+        <h2>{{ 'auth.assignRoles' | translate }} — {{ editing.full_name || editing.email }}</h2>
+        <button type="button" class="icon-btn" (click)="closeEdit()" [attr.aria-label]="'common.close' | translate">
+          ✕
+        </button>
+      </header>
+      <div class="slide-over-body">
+        <app-searchable-select
+          [options]="roleOptions"
+          [(ngModel)]="editRoleIds"
+          [multiple]="true"
+          [placeholder]="'auth.selectRoles' | translate"
+        ></app-searchable-select>
+        <p class="hint">{{ 'auth.assignRolesHint' | translate }}</p>
+      </div>
+      <footer class="slide-over-footer">
+        <button type="button" class="btn btn--ghost" (click)="closeEdit()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn--primary"
+          (click)="saveRoles()"
+          [disabled]="savingUserId === editing.id"
+        >
+          {{ 'common.saveChanges' | translate }}
+        </button>
+      </footer>
+    </aside>
+  }
+</div>

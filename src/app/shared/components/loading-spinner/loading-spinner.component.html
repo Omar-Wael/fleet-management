@@ -1,0 +1,37 @@
+@if (overlay || fullscreen) {
+  <div
+    class="spinner-overlay"
+    [class.spinner-overlay--fullscreen]="fullscreen"
+    role="status"
+    [attr.aria-busy]="true"
+    [attr.aria-label]="message || ('common.loading' | translate)"
+  >
+    <div class="spinner-panel">
+      <span class="spinner-ring" [class]="'spinner-ring--' + size" aria-hidden="true"></span>
+      @if (message) {
+        <p class="spinner-message">
+          @if (translateMessage) {
+            {{ message | translate }}
+          } @else {
+            {{ message }}
+          }
+        </p>
+      } @else {
+        <p class="spinner-message">{{ 'common.loading' | translate }}</p>
+      }
+    </div>
+  </div>
+} @else {
+  <div class="spinner-inline" role="status" [attr.aria-busy]="true">
+    <span class="spinner-ring" [class]="'spinner-ring--' + size" aria-hidden="true"></span>
+    @if (message) {
+      <span class="spinner-message">
+        @if (translateMessage) {
+          {{ message | translate }}
+        } @else {
+          {{ message }}
+        }
+      </span>
+    }
+  </div>
+}

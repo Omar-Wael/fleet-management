@@ -1,0 +1,64 @@
+<div class="roles-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'auth.rolesTitle' | translate }}</h1>
+      <p class="page-subtitle">{{ 'auth.rolesSubtitle' | translate }}</p>
+    </div>
+    <a routerLink="/users/list" class="btn btn--ghost">{{ 'auth.usersTitle' | translate }}</a>
+  </header>
+
+  @if (error) {
+    <div class="state-message state-message--error">{{ error }}</div>
+  }
+  @if (loading) {
+    <div class="state-message">{{ 'shared.dataTable.loading' | translate }}</div>
+  } @else {
+    <div class="roles-layout">
+      <aside class="roles-side">
+        @for (r of roles; track r.id) {
+          <button
+            type="button"
+            class="role-item"
+            [class.role-item--active]="selectedRole?.id === r.id"
+            (click)="selectRole(r)"
+          >
+            <span class="role-name">{{ roleLabel(r) }}</span>
+            <span class="role-code">{{ r.code }}</span>
+          </button>
+        }
+      </aside>
+
+      <section class="roles-main">
+        @if (selectedRole) {
+          <div class="roles-main-head">
+            <h3>{{ roleLabel(selectedRole) }}</h3>
+            <button type="button" class="btn btn--primary" (click)="save()" [disabled]="saving">
+              {{ (saving ? 'common.saving' : 'common.saveChanges') | translate }}
+            </button>
+          </div>
+          @if (saveMsg) {
+            <div class="state-message state-message--ok">{{ saveMsg }}</div>
+          }
+          @for (group of permissionsByModule(); track group.module) {
+            <div class="perm-group">
+              <h4>{{ group.module }}</h4>
+              <div class="perm-grid">
+                @for (p of group.items; track p.id) {
+                  <label class="perm-chip" [class.perm-chip--on]="selectedPermIds.has(p.id)">
+                    <input
+                      type="checkbox"
+                      [checked]="selectedPermIds.has(p.id)"
+                      (change)="togglePerm(p.id)"
+                    />
+                    <span>{{ permLabel(p) }}</span>
+                    <code>{{ p.code }}</code>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        }
+      </section>
+    </div>
+  }
+</div>

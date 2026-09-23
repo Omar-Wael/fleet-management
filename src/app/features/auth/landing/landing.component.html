@@ -1,0 +1,47 @@
+<div class="landing">
+  <header class="landing-top">
+    <div class="landing-brand">
+      <span class="landing-mark">FL</span>
+      <span>{{ 'auth.appName' | translate }}</span>
+    </div>
+    <div class="landing-top-actions">
+      <button type="button" class="link-btn" (click)="toggleLang()">
+        {{ 'nav.langToggle' | translate }}
+      </button>
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/dashboard" class="btn btn--primary">{{ 'auth.goToApp' | translate }}</a>
+      } @else {
+        <a routerLink="/login" class="btn btn--ghost">{{ 'auth.signIn' | translate }}</a>
+        <a routerLink="/signup" class="btn btn--primary">{{ 'auth.signUp' | translate }}</a>
+      }
+    </div>
+  </header>
+
+  <section class="landing-hero">
+    <h1>{{ 'auth.landingTitle' | translate }}</h1>
+    <p>{{ 'auth.landingSubtitle' | translate }}</p>
+    <div class="landing-cta">
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/dashboard" class="btn btn--primary">{{ 'auth.goToApp' | translate }}</a>
+      } @else {
+        <a routerLink="/signup" class="btn btn--primary">{{ 'auth.signUp' | translate }}</a>
+        <a routerLink="/login" class="btn btn--ghost">{{ 'auth.signIn' | translate }}</a>
+      }
+    </div>
+  </section>
+
+  <section class="landing-features">
+    <article>
+      <h3>{{ 'auth.featureFleet' | translate }}</h3>
+      <p>{{ 'auth.featureFleetDesc' | translate }}</p>
+    </article>
+    <article>
+      <h3>{{ 'auth.featureMaint' | translate }}</h3>
+      <p>{{ 'auth.featureMaintDesc' | translate }}</p>
+    </article>
+    <article>
+      <h3>{{ 'auth.featureFinance' | translate }}</h3>
+      <p>{{ 'auth.featureFinanceDesc' | translate }}</p>
+    </article>
+  </section>
+</div>

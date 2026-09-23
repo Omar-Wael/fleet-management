@@ -21,7 +21,48 @@
     }
   </nav>
 
-  <button type="button" class="lang-toggle" (click)="i18n.toggle()">
-    {{ 'nav.langToggle' | translate }}
-  </button>
+  <div class="header-actions">
+    <button type="button" class="lang-toggle" (click)="i18n.toggle()">
+      {{ 'nav.langToggle' | translate }}
+    </button>
+
+    <div class="user-menu" [class.user-menu--open]="menuOpen()">
+      <button
+        type="button"
+        class="user-menu-trigger"
+        (click)="toggleMenu($event)"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-haspopup]="true"
+        [attr.aria-label]="'auth.accountMenu' | translate"
+      >
+        <span class="user-chip-avatar" aria-hidden="true">{{ initial() }}</span>
+        <span class="user-menu-text">
+          <span class="user-chip-name">{{ auth.displayName() }}</span>
+          <span class="user-chip-role">{{ roleLabel() }}</span>
+        </span>
+        <span class="user-menu-caret" aria-hidden="true">▾</span>
+      </button>
+
+      @if (menuOpen()) {
+        <div class="user-menu-dropdown" role="menu">
+          <div class="user-menu-summary">
+            <span class="user-menu-summary-name">{{ auth.displayName() }}</span>
+            <span class="user-menu-summary-role">{{ roleLabel() }}</span>
+            @if (auth.profile()?.email) {
+              <span class="user-menu-summary-email">{{ auth.profile()?.email }}</span>
+            }
+          </div>
+          <div class="user-menu-divider"></div>
+          <button type="button" class="user-menu-item" role="menuitem" (click)="goProfile()">
+            <span class="user-menu-item-icon" aria-hidden="true">👤</span>
+            {{ 'auth.profileTitle' | translate }}
+          </button>
+          <button type="button" class="user-menu-item user-menu-item--danger" role="menuitem" (click)="logout()">
+            <span class="user-menu-item-icon" aria-hidden="true">⎋</span>
+            {{ 'auth.signOut' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
 </header>

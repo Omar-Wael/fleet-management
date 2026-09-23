@@ -67,6 +67,11 @@ export const NAV_CATEGORIES: NavCategory[] = [
     labelKey: 'nav.settings',
     path: 'settings',
   },
+  {
+    id: 'users',
+    labelKey: 'nav.users',
+    path: 'users',
+  },
 ];
 
 /** Flat list of leaf nav items — used by breadcrumb matching. */
