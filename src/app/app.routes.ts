@@ -1,10 +1,13 @@
 import { Routes } from '@angular/router';
 import { DashboardPage } from './features/dashboard/dashboard-page/dashboard-page';
+import { authGuard, guestGuard, permissionGuard } from './core/auth/auth.guard';
+import { LoginComponent } from './features/auth/login/login.component';
+import { SignupComponent } from './features/auth/signup/signup.component';
+import { LandingComponent } from './features/auth/landing/landing.component';
+import { ProfileComponent } from './features/auth/profile/profile.component';
 
-export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+const protectedChildren: Routes = [
   { path: 'dashboard', component: DashboardPage, title: 'Dashboard' },
-
   {
     path: 'vehicles',
     loadChildren: () =>
@@ -91,6 +94,43 @@ export const routes: Routes = [
       import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
     title: 'Settings',
   },
+  {
+    path: 'users',
+    loadChildren: () => import('./features/users/users.routes').then((m) => m.USERS_ROUTES),
+    title: 'Users',
+    data: { permissions: ['users.manage'] },
+  },
+  {
+    path: 'profile',
+    component: ProfileComponent,
+    title: 'Profile',
+  },
+  { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+];
 
-  { path: '**', redirectTo: 'dashboard' },
+export const routes: Routes = [
+  {
+    path: 'landing',
+    component: LandingComponent,
+    title: 'Fleet Ops',
+  },
+  {
+    path: 'login',
+    component: LoginComponent,
+    canActivate: [guestGuard],
+    title: 'Login',
+  },
+  {
+    path: 'signup',
+    component: SignupComponent,
+    canActivate: [guestGuard],
+    title: 'Sign up',
+  },
+  {
+    path: '',
+    canActivate: [authGuard],
+    canActivateChild: [permissionGuard],
+    children: protectedChildren,
+  },
+  { path: '**', redirectTo: 'landing' },
 ];

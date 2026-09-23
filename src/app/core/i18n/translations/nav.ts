@@ -30,4 +30,5 @@ export const NAV_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'No oil/filter changes recorded yet.',
     ar: 'لا توجد تغييرات زيت/فلتر مسجلة بعد.',
   },
+  'nav.users': { en: 'Users & roles', ar: 'المستخدمون والأدوار' },
 };

@@ -1,4 +1,7 @@
 <div class="dashboard">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="dashboard.loadingData"></app-loading-spinner>
+  }
   <header class="dashboard-header">
     <div>
       <p class="dashboard-eyebrow">{{ 'dashboard.eyebrow' | translate }}</p>

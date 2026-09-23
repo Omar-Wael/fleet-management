@@ -1,0 +1,41 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-mark">FL</span>
+      <h1>{{ 'auth.appName' | translate }}</h1>
+      <p class="auth-sub">{{ 'auth.loginSubtitle' | translate }}</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+      <label class="field">
+        <span>{{ 'auth.email' | translate }}</span>
+        <input type="email" formControlName="email" autocomplete="username" />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <small class="field-error">{{ 'auth.emailInvalid' | translate }}</small>
+        }
+      </label>
+      <label class="field">
+        <span>{{ 'auth.password' | translate }}</span>
+        <input type="password" formControlName="password" autocomplete="current-password" />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <small class="field-error">{{ 'auth.passwordMin' | translate }}</small>
+        }
+      </label>
+
+      @if (error) {
+        <div class="auth-error">{{ error }}</div>
+      }
+
+      <button type="submit" class="btn btn--primary btn-block" [disabled]="loading">
+        {{ (loading ? 'auth.signingIn' : 'auth.signIn') | translate }}
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      {{ 'auth.noAccount' | translate }}
+      <a routerLink="/signup">{{ 'auth.signUp' | translate }}</a>
+      ·
+      <a routerLink="/landing">{{ 'auth.backToLanding' | translate }}</a>
+    </p>
+  </div>
+</div>

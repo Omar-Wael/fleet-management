@@ -17,6 +17,7 @@ import { SETTINGS_TRANSLATIONS } from './settings';
 import { DASHBOARD_TRANSLATIONS } from './dashboard';
 import { SHARED_TRANSLATIONS } from './shared';
 import { DAILY_NOTES_TRANSLATIONS } from './daily-notes';
+import { AUTH_TRANSLATIONS } from './auth';
 
 // One file per feature area, merged here. When translating another tab,
 // add a `translations/<tab>.ts` file following the same shape as
@@ -40,4 +41,5 @@ export const TRANSLATIONS: Record<string, TranslationEntry> = {
   ...DASHBOARD_TRANSLATIONS,
   ...SHARED_TRANSLATIONS,
   ...DAILY_NOTES_TRANSLATIONS,
+  ...AUTH_TRANSLATIONS,
 };

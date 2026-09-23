@@ -70,4 +70,5 @@ export const DASHBOARD_TRANSLATIONS: Record<string, TranslationEntry> = {
   'dashboard.vehicleStatusTitle': { en: 'Vehicle status', ar: 'حالة المركبات' },
   'dashboard.vehicleStatusActive': { en: 'Active', ar: 'نشطة' },
   'dashboard.vehicleStatusInactive': { en: 'Inactive', ar: 'غير نشطة' },
+  'dashboard.loadingData': { en: 'Loading dashboard data…', ar: 'جارٍ تحميل بيانات اللوحة…' },
 };

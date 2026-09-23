@@ -22,6 +22,7 @@ import {
 } from '../../../core/services/analytics.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SharedLoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface DepartmentCostChartRow {
   name: string;
@@ -56,7 +57,14 @@ const CHART_COLORS = ['#1e3a5f', '#2f547f', '#5b7ca0', '#8fa8c2', '#c3d2e0'];
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, AlertBanner, FleetGauge, TranslatePipe],
+  imports: [
+    CommonModule,
+    RouterLink,
+    AlertBanner,
+    FleetGauge,
+    TranslatePipe,
+    SharedLoadingSpinnerComponent,
+  ],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -111,8 +119,7 @@ export class DashboardPage implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.loadError =
-          err instanceof Error ? err.message : this.i18n.t('dashboard.loadError');
+        this.loadError = err instanceof Error ? err.message : this.i18n.t('dashboard.loadError');
         this.loading = false;
         this.cdr.markForCheck();
       },

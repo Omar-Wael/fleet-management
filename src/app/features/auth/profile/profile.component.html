@@ -1,0 +1,54 @@
+<div class="profile-page">
+  <header class="page-header">
+    <div>
+      <h2>{{ 'auth.profileTitle' | translate }}</h2>
+      <p class="page-subtitle">{{ roleLabels }}</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <h3>{{ 'auth.profileDetails' | translate }}</h3>
+    <form class="form-grid" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+      <label class="field">
+        <span>{{ 'auth.fullName' | translate }}</span>
+        <input type="text" formControlName="full_name" />
+      </label>
+      <label class="field">
+        <span>{{ 'auth.email' | translate }}</span>
+        <input type="email" formControlName="email" />
+      </label>
+      <label class="field">
+        <span>{{ 'auth.phone' | translate }}</span>
+        <input type="text" formControlName="phone" />
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          {{ (saving ? 'common.saving' : 'common.saveChanges') | translate }}
+        </button>
+      </div>
+      @if (saveMsg) { <div class="msg msg--ok">{{ saveMsg }}</div> }
+      @if (saveError) { <div class="msg msg--err">{{ saveError }}</div> }
+    </form>
+  </section>
+
+  <section class="card">
+    <h3>{{ 'auth.changePassword' | translate }}</h3>
+    <form class="form-grid" [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+      <label class="field">
+        <span>{{ 'auth.newPassword' | translate }}</span>
+        <input type="password" formControlName="password" autocomplete="new-password" />
+      </label>
+      <label class="field">
+        <span>{{ 'auth.confirmPassword' | translate }}</span>
+        <input type="password" formControlName="confirm" autocomplete="new-password" />
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn btn--primary" [disabled]="pwdSaving">
+          {{ (pwdSaving ? 'common.saving' : 'auth.updatePassword') | translate }}
+        </button>
+      </div>
+      @if (pwdMsg) { <div class="msg msg--ok">{{ pwdMsg }}</div> }
+      @if (pwdError) { <div class="msg msg--err">{{ pwdError }}</div> }
+    </form>
+  </section>
+</div>

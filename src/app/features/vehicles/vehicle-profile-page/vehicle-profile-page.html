@@ -492,7 +492,7 @@
                     <td class="mono">{{ d.request_number || d.id.slice(0, 8) }}</td>
                     <td class="mono">{{ d.requested_at | date: 'yyyy-MM-dd' }}</td>
                     <td>
-                      <span class="badge">{{ d.status }}</span>
+                      <span class="badge">{{ d.status | translate }}</span>
                     </td>
                     <td class="mono">
                       {{ d.issued_at ? (d.issued_at | date: 'yyyy-MM-dd') : '—' }}
@@ -596,9 +596,14 @@
                     <span class="timeline-kind">{{ ev.kind }}</span>
                     <time class="mono">{{ ev.at | date: 'yyyy-MM-dd' }}</time>
                   </div>
-                  <div class="timeline-title">{{ ev.title }}</div>
+                  <div class="timeline-title">{{ ev.title | translate }}</div>
                   @if (ev.meta) {
-                    <div class="timeline-meta muted">{{ ev.meta }}</div>
+                    <div class="timeline-meta muted">
+                      {{ ev.meta | translate }}
+                      @if (ev.kind === 'oil') {
+                        {{ 'km' | translate }}
+                      }
+                    </div>
                   }
                 </div>
               </li>

@@ -1,64 +1,68 @@
-<div class="shell" [class.sidebar-open]="layout.sidebarOpen()">
-  <aside class="shell-nav">
-    <div class="shell-brand">
-      <span class="shell-brand-mark">FL</span>
-      <span class="shell-brand-name">Fleet Ops</span>
-    </div>
+@if (showShell()) {
+  <div class="shell" [class.sidebar-open]="layout.sidebarOpen()">
+    <aside class="shell-nav">
+      <div class="shell-brand">
+        <span class="shell-brand-mark">FL</span>
+        <span class="shell-brand-name">Fleet Ops</span>
+      </div>
 
-    <nav class="shell-nav-menu">
-      @for (cat of navCategories; track cat.id) {
-        @if (cat.children?.length) {
-          <div
-            class="nav-category"
-            [class.expanded]="isCategoryExpanded(cat)"
-            [class.has-active]="hasActiveChild(cat)"
-          >
-            <button
-              type="button"
-              class="nav-category-toggle"
-              (click)="toggleCategory(cat)"
-              [attr.aria-expanded]="isCategoryExpanded(cat)"
+      <nav class="shell-nav-menu">
+        @for (cat of navCategories(); track cat.id) {
+          @if (cat.children?.length) {
+            <div
+              class="nav-category"
+              [class.expanded]="isCategoryExpanded(cat)"
+              [class.has-active]="hasActiveChild(cat)"
+            >
+              <button
+                type="button"
+                class="nav-category-toggle"
+                (click)="toggleCategory(cat)"
+                [attr.aria-expanded]="isCategoryExpanded(cat)"
+              >
+                <span class="shell-nav-label-ar">{{ cat.labelKey | translate }}</span>
+                <span class="nav-chevron" aria-hidden="true">▾</span>
+              </button>
+              @if (isCategoryExpanded(cat)) {
+                <div class="nav-subitems">
+                  @for (item of cat.children; track item.path) {
+                    <a
+                      [routerLink]="[item.path]"
+                      routerLinkActive="active"
+                      class="shell-nav-link shell-nav-link--sub"
+                      (click)="layout.closeSidebar()"
+                    >
+                      <span class="shell-nav-label-ar">{{ item.labelKey | translate }}</span>
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          } @else if (cat.path) {
+            <a
+              [routerLink]="[cat.path]"
+              routerLinkActive="active"
+              class="shell-nav-link"
+              (click)="layout.closeSidebar()"
             >
               <span class="shell-nav-label-ar">{{ cat.labelKey | translate }}</span>
-              <span class="nav-chevron" aria-hidden="true">▾</span>
-            </button>
-            @if (isCategoryExpanded(cat)) {
-              <div class="nav-subitems">
-                @for (item of cat.children; track item.path) {
-                  <a
-                    [routerLink]="[item.path]"
-                    routerLinkActive="active"
-                    class="shell-nav-link shell-nav-link--sub"
-                    (click)="layout.closeSidebar()"
-                  >
-                    <span class="shell-nav-label-ar">{{ item.labelKey | translate }}</span>
-                  </a>
-                }
-              </div>
-            }
-          </div>
-        } @else if (cat.path) {
-          <a
-            [routerLink]="[cat.path]"
-            routerLinkActive="active"
-            class="shell-nav-link"
-            (click)="layout.closeSidebar()"
-          >
-            <span class="shell-nav-label-ar">{{ cat.labelKey | translate }}</span>
-          </a>
+            </a>
+          }
         }
-      }
-    </nav>
-  </aside>
+      </nav>
+    </aside>
 
-  @if (layout.sidebarOpen()) {
-    <div class="shell-backdrop" (click)="layout.closeSidebar()"></div>
-  }
+    @if (layout.sidebarOpen()) {
+      <div class="shell-backdrop" (click)="layout.closeSidebar()"></div>
+    }
 
-  <main class="shell-main">
-    <app-header></app-header>
-    <div class="shell-content">
-      <router-outlet></router-outlet>
-    </div>
-  </main>
-</div>
+    <main class="shell-main">
+      <app-header></app-header>
+      <div class="shell-content">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+} @else {
+  <router-outlet></router-outlet>
+}
