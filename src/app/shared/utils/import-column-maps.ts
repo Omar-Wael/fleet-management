@@ -36,29 +36,138 @@ export interface VehicleImportRow {
   plate_number: string;
   vehicle_type_name: string;
   operating_department_name: string | null;
+  maintenance_workshop_name: string | null;
+  garage_location_name: string | null;
   make: string | null;
   model: string | null;
   manufacture_year: number | null;
   chassis_number: string | null;
-  odometer_km: number | null;
+  status: string | null;
   color: string | null;
-  engine_serial_number: string | null;
+  fuel_type: string | null;
+  /** Free-text engine number stored on vehicles.engine_number (NOT vehicle_type_id). */
+  engine_number: string | null;
+  odometer_km: number | null;
+  odometer_unit: string | null;
+  odometer_working: boolean | null;
+  last_odometer_reading_date: string | null;
+  custodian_name: string | null;
+  custodian_phone: string | null;
+  clutch_kit_last_change_date: string | null;
+  clutch_kit_last_change_odometer: number | null;
+  inactive_reason: string | null;
   notes: string | null;
 }
 
 export const VEHICLE_IMPORT_MAP: ColumnMapping<VehicleImportRow> = {
-  plate_number: { headers: ['Plate Number', 'رقم اللوحة'], required: true },
-  vehicle_type_name: { headers: ['Vehicle Type', 'نوع السيارة'], required: true },
-  operating_department_name: {
-    headers: ['Operating Dept', 'Operating Department', 'الإدارة المشغلة'],
+  plate_number: {
+    headers: ['Plate Number', 'رقم اللوحة', 'اللوحة'],
+    required: true,
   },
-  make: { headers: ['Make', 'الشركة المصنعة'] },
+  vehicle_type_name: {
+    headers: ['Vehicle Type', 'نوع السيارة', 'النوع'],
+    required: true,
+  },
+  operating_department_name: {
+    headers: [
+      'Operating Dept',
+      'Operating Department',
+      'الإدارة المشغلة',
+      'الإدارة',
+    ],
+  },
+  maintenance_workshop_name: {
+    headers: [
+      'Repair Workshop',
+      'Maintenance Workshop',
+      'ورشة الصيانة',
+      'ورشة الإصلاح',
+      'الورشة',
+    ],
+  },
+  garage_location_name: {
+    headers: ['Garage Location', 'Garage', 'موقع الجراج', 'الجراج', 'الموقف'],
+  },
+  make: { headers: ['Make', 'الشركة المصنعة', 'الماركة'] },
   model: { headers: ['Model', 'الموديل'] },
-  manufacture_year: { headers: ['Manufacture Year', 'Year', 'سنة الصنع'], type: 'number' },
-  chassis_number: { headers: ['Chassis No.', 'Chassis Number', 'رقم الشاسيه'] },
-  odometer_km: { headers: ['Odometer', 'Odometer (KM)', 'قراءة العداد'], type: 'number' },
+  manufacture_year: {
+    headers: ['Manufacture Year', 'Year', 'سنة الصنع'],
+    type: 'number',
+  },
+  chassis_number: {
+    headers: ['Chassis No.', 'Chassis Number', 'رقم الشاسيه', 'الشاسيه'],
+  },
+  status: {
+    headers: ['Status', 'الحالة'],
+  },
   color: { headers: ['Color', 'اللون'] },
-  engine_serial_number: { headers: ['Engine No.', 'Engine Serial Number', 'رقم المحرك'] },
+  fuel_type: {
+    headers: ['Fuel Type', 'Fuel', 'نوع الوقود', 'الوقود'],
+  },
+  engine_number: {
+    headers: [
+      'Engine No.',
+      'Engine Number',
+      'Engine Serial Number',
+      'رقم المحرك',
+      'المحرك',
+    ],
+  },
+  odometer_km: {
+    headers: ['Odometer', 'Odometer (KM)', 'قراءة العداد', 'العداد'],
+    type: 'number',
+  },
+  odometer_unit: {
+    headers: ['Odometer Unit', 'وحدة العداد'],
+  },
+  odometer_working: {
+    headers: ['Odometer Working', 'العداد يعمل'],
+    type: 'boolean',
+  },
+  last_odometer_reading_date: {
+    headers: [
+      'Last Odometer Date',
+      'Last Reading Date',
+      'تاريخ آخر قراءة',
+    ],
+    type: 'date',
+  },
+  custodian_name: {
+    headers: [
+      'Custodian Name',
+      'Custodian',
+      'صاحب العهدة',
+      'اسم العهدة',
+      'العهدة',
+    ],
+  },
+  custodian_phone: {
+    headers: [
+      'Custodian Phone',
+      'هاتف العهدة',
+      'تليفون العهدة',
+      'هاتف صاحب العهدة',
+    ],
+  },
+  clutch_kit_last_change_date: {
+    headers: [
+      'Clutch Kit Last Change Date',
+      'Last Clutch Change',
+      'تاريخ آخر تغيير كلاتش',
+    ],
+    type: 'date',
+  },
+  clutch_kit_last_change_odometer: {
+    headers: [
+      'Clutch Kit Last Change Odometer',
+      'Clutch Odometer',
+      'عداد آخر تغيير كلاتش',
+    ],
+    type: 'number',
+  },
+  inactive_reason: {
+    headers: ['Inactive Reason', 'سبب التوقف', 'سبب عدم التفعيل'],
+  },
   notes: { headers: ['Notes', 'ملاحظات'] },
 };
 
@@ -76,58 +185,125 @@ export function resolveVehicleForeignKeys(
     vehicleTypeIdByName: Map<string, string>;
     departmentIdByName: Map<string, string>;
     engineIdBySerial: Map<string, string>;
-    defaultMaintenanceWorkshopId: string; // required column on vehicles; ask the user to pick one for the whole batch, or add a "Repair Dept" column to VehicleImportRow and resolve it the same way
+    /** Optional: resolve "Repair Workshop" column by name (AR/EN). Falls back to default. */
+    workshopIdByName?: Map<string, string>;
+    /** Optional: resolve "Garage Location" column by garage_name. */
+    garageLocationIdByName?: Map<string, string>;
+    defaultMaintenanceWorkshopId: string; // required column on vehicles when row has no workshop name
   },
 ): { resolved: Partial<Vehicle>[]; unresolved: { row: VehicleImportRow; reason: string }[] } {
   const resolved: Partial<Vehicle>[] = [];
   const unresolved: { row: VehicleImportRow; reason: string }[] = [];
 
+  const allowedStatus = new Set([
+    'active',
+    'inactive',
+    'lodged',
+    'disposed',
+    'under_repair',
+    'maintenance',
+    'out_of_service',
+  ]);
+  const allowedOdometerUnit = new Set(['km', 'hours', 'other']);
+
   for (const row of rows) {
-    const vehicleTypeId = lookups.vehicleTypeIdByName.get(
-      row.vehicle_type_name.trim().toLowerCase(),
-    );
+    const typeKey = (row.vehicle_type_name || '').trim().toLowerCase();
+    const vehicleTypeId = lookups.vehicleTypeIdByName.get(typeKey);
     if (!vehicleTypeId) {
       unresolved.push({ row, reason: `Unknown vehicle type: "${row.vehicle_type_name}"` });
       continue;
     }
 
+    let workshopId = lookups.defaultMaintenanceWorkshopId;
+    if (row.maintenance_workshop_name?.trim() && lookups.workshopIdByName) {
+      const found = lookups.workshopIdByName.get(
+        row.maintenance_workshop_name.trim().toLowerCase(),
+      );
+      if (found) workshopId = found;
+    }
+    if (!workshopId) {
+      unresolved.push({
+        row,
+        reason: 'Missing maintenance workshop (pick a default or fill Repair Workshop column)',
+      });
+      continue;
+    }
+
+    const statusRaw = (row.status || '').trim().toLowerCase().replace(/\s+/g, '_');
+    const status = allowedStatus.has(statusRaw) ? statusRaw : 'active';
+
+    const unitRaw = (row.odometer_unit || '').trim().toLowerCase();
+    const odometer_unit = (allowedOdometerUnit.has(unitRaw) ? unitRaw : 'km') as Vehicle['odometer_unit'];
+
+    const garageId =
+      row.garage_location_name?.trim() && lookups.garageLocationIdByName
+        ? (lookups.garageLocationIdByName.get(row.garage_location_name.trim().toLowerCase()) ??
+          null)
+        : null;
+
     resolved.push({
-      plate_number: row.plate_number,
+      plate_number: row.plate_number?.trim(),
       vehicle_type_id: vehicleTypeId,
-      operating_department_id: row.operating_department_name
+      operating_department_id: row.operating_department_name?.trim()
         ? (lookups.departmentIdByName.get(row.operating_department_name.trim().toLowerCase()) ??
           null)
         : null,
-      maintenance_workshop_id: lookups.defaultMaintenanceWorkshopId,
-      current_engine_id: row.engine_serial_number
-        ? (lookups.engineIdBySerial.get(row.engine_serial_number.trim().toLowerCase()) ?? null)
+      maintenance_workshop_id: workshopId,
+      // Optional link to engines table if serial already exists there.
+      // Always independent from vehicle_type_id (resolved from "Vehicle Type" column).
+      current_engine_id: row.engine_number?.trim()
+        ? (lookups.engineIdBySerial.get(row.engine_number.trim().toLowerCase()) ?? null)
         : null,
-      make: row.make,
-      model: row.model,
+      current_garage_location_id: garageId,
+      make: row.make?.trim() || null,
+      model: row.model?.trim() || null,
       manufacture_year: row.manufacture_year,
-      chassis_number: row.chassis_number,
+      chassis_number: row.chassis_number?.trim() || null,
+      status,
       odometer_km: row.odometer_km ?? 0,
-      color: row.color ?? null,
-      notes: row.notes ?? null,
-      engine_number: row.engine_serial_number ?? null,
+      odometer_unit,
+      odometer_working: row.odometer_working ?? true,
+      last_odometer_reading_date: row.last_odometer_reading_date || null,
+      color: row.color?.trim() || null,
+      fuel_type: row.fuel_type?.trim() || null,
+      notes: row.notes?.trim() || null,
+      // Persist free-text engine number on vehicles.engine_number
+      engine_number: row.engine_number?.trim() || null,
+      custodian_name: row.custodian_name?.trim() || null,
+      custodian_phone: row.custodian_phone?.trim() || null,
+      clutch_kit_last_change_date: row.clutch_kit_last_change_date || null,
+      clutch_kit_last_change_odometer: row.clutch_kit_last_change_odometer,
+      inactive_reason: row.inactive_reason?.trim() || null,
     });
   }
 
   return { resolved, unresolved };
 }
 
-/** Header row for the downloadable Vehicles import template — matches the first (English) variant of each VEHICLE_IMPORT_MAP field. */
+/** Header row for the downloadable Vehicles import template — first (English) label of each map field. */
 export const VEHICLE_IMPORT_TEMPLATE_HEADERS = [
   'Plate Number',
   'Vehicle Type',
   'Operating Dept',
+  'Repair Workshop',
+  'Garage Location',
   'Make',
   'Model',
   'Manufacture Year',
   'Chassis No.',
-  'Odometer',
+  'Status',
   'Color',
+  'Fuel Type',
   'Engine No.',
+  'Odometer',
+  'Odometer Unit',
+  'Odometer Working',
+  'Last Odometer Date',
+  'Custodian Name',
+  'Custodian Phone',
+  'Clutch Kit Last Change Date',
+  'Clutch Kit Last Change Odometer',
+  'Inactive Reason',
   'Notes',
 ];
 

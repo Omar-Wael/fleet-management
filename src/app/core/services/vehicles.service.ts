@@ -83,7 +83,7 @@ export class VehiclesService {
    * month), restricting the grid to just those vehicles.
    */
   private buildGridQuery(query: DataTableQuery, withCount: boolean) {
-    const fuelFilter = query.filters['fuel_type'] as string | undefined;
+    const fuelFilter = (query.filters['fuel_type'] as string | undefined)?.trim();
     // Filtering on an embedded relation requires !inner, otherwise PostgREST
     // ignores the nested filter on a left join and fuel_type appears empty.
     const select = fuelFilter
@@ -92,14 +92,12 @@ export class VehiclesService {
       vehicle_types (*),
       operating_departments (*),
       maintenance_workshops (*),
-      engines:current_engine_id!inner (*),
+      engines:current_engine_id (*),
       garage_locations:current_garage_location_id (*)
     `
       : VEHICLE_LOOKUP_SELECT;
 
-    let q = this.client
-      .from('vehicles')
-      .select(select, withCount ? { count: 'exact' } : undefined);
+    let q = this.client.from('vehicles').select(select, withCount ? { count: 'exact' } : undefined);
 
     if (query.filters['operating_department_id']) {
       q = q.eq('operating_department_id', query.filters['operating_department_id']);
@@ -120,7 +118,7 @@ export class VehiclesService {
       q = q.eq('manufacture_year', Number(query.filters['manufacture_year']));
     }
     if (fuelFilter) {
-      q = q.eq('engines.fuel_type', fuelFilter);
+      q = q.eq('fuel_type', fuelFilter);
     }
     if (query.filters['alertPlates']) {
       q = q.in('plate_number', query.filters['alertPlates'].split(','));
@@ -138,7 +136,6 @@ export class VehiclesService {
     const sortAscending = query.sort ? query.sort.dir === 'asc' : true;
     return q.order(sortField, { ascending: sortAscending });
   }
-
 
   /** Distinct non-empty make values for filter dropdowns. */
   listDistinctMakes(): Observable<string[]> {
@@ -171,19 +168,17 @@ export class VehiclesService {
 
   getById(vehicleId: string): Observable<VehicleWithLookups> {
     return fromSupabase<VehicleWithLookups>(
-      this.client.from('vehicles').select(VEHICLE_LOOKUP_SELECT).eq('id', vehicleId).single()
+      this.client.from('vehicles').select(VEHICLE_LOOKUP_SELECT).eq('id', vehicleId).single(),
     );
   }
 
   create(vehicle: Partial<Vehicle>): Observable<Vehicle> {
-    return fromSupabase<Vehicle>(
-      this.client.from('vehicles').insert(vehicle).select().single()
-    );
+    return fromSupabase<Vehicle>(this.client.from('vehicles').insert(vehicle).select().single());
   }
 
   update(vehicleId: string, changes: Partial<Vehicle>): Observable<Vehicle> {
     return fromSupabase<Vehicle>(
-      this.client.from('vehicles').update(changes).eq('id', vehicleId).select().single()
+      this.client.from('vehicles').update(changes).eq('id', vehicleId).select().single(),
     );
   }
 
@@ -198,7 +193,7 @@ export class VehiclesService {
    */
   bulkUpsert(rows: Partial<Vehicle>[]): Observable<Vehicle[]> {
     return fromSupabase<Vehicle[]>(
-      this.client.from('vehicles').upsert(rows, { onConflict: 'plate_number' }).select()
+      this.client.from('vehicles').upsert(rows, { onConflict: 'plate_number' }).select(),
     );
   }
 
@@ -219,7 +214,7 @@ export class VehiclesService {
               .select('*')
               .eq('vehicle_id', vehicleId)
               .order('opened_at', { ascending: false })
-              .limit(1)
+              .limit(1),
           ).pipe(map((rows) => rows[0] ?? null)),
           lastOilChange: fromSupabase<OilAndFilterChange[]>(
             this.client
@@ -228,7 +223,7 @@ export class VehiclesService {
               .eq('vehicle_id', vehicleId)
               .in('change_type', ['oil', 'oil_and_filter'])
               .order('change_date', { ascending: false })
-              .limit(1)
+              .limit(1),
           ).pipe(map((rows) => rows[0] ?? null)),
           lastFilterChange: fromSupabase<OilAndFilterChange[]>(
             this.client
@@ -237,10 +232,10 @@ export class VehiclesService {
               .eq('vehicle_id', vehicleId)
               .in('change_type', ['filter', 'oil_and_filter'])
               .order('change_date', { ascending: false })
-              .limit(1)
+              .limit(1),
           ).pipe(map((rows) => rows[0] ?? null)),
           licensing: fromSupabase<VehicleLicensing[]>(
-            this.client.from('vehicle_licensing').select('*').eq('vehicle_id', vehicleId).limit(1)
+            this.client.from('vehicle_licensing').select('*').eq('vehicle_id', vehicleId).limit(1),
           ).pipe(map((rows) => rows[0] ?? null)),
           openOverhaul: fromSupabase<Overhaul[]>(
             this.client
@@ -249,7 +244,7 @@ export class VehiclesService {
               .eq('vehicle_id', vehicleId)
               .neq('current_stage', 'completed')
               .order('entry_date', { ascending: false })
-              .limit(1)
+              .limit(1),
           ).pipe(map((rows) => rows[0] ?? null)),
           activeLodging: fromSupabase<GarageLodging[]>(
             this.client
@@ -258,30 +253,30 @@ export class VehiclesService {
               .eq('vehicle_id', vehicleId)
               .is('exit_date', null)
               .order('entry_date', { ascending: false })
-              .limit(1)
+              .limit(1),
           ).pipe(map((rows) => rows[0] ?? null)),
           compatibleEngines: fromSupabase<{ engines: Engine }[]>(
             this.client
               .from('engine_compatible_vehicles')
               .select('engines (*)')
-              .eq('vehicle_id', vehicleId)
+              .eq('vehicle_id', vehicleId),
           ).pipe(map((rows) => rows.map((r) => r.engines).filter(Boolean))),
-        })
-      )
+        }),
+      ),
     );
   }
 
   /** Top dashboard alert banner: licenses due for renewal this month. */
   getLicensesDueThisMonth(): Observable<VAlertLicenseDue[]> {
     return fromSupabase<VAlertLicenseDue[]>(
-      this.client.from('v_alert_licenses_due_this_month').select('*')
+      this.client.from('v_alert_licenses_due_this_month').select('*'),
     );
   }
 
   /** Top dashboard alert banner: preventive maintenance due this month. */
   getMaintenanceDueThisMonth(): Observable<VAlertMaintenanceDue[]> {
     return fromSupabase<VAlertMaintenanceDue[]>(
-      this.client.from('v_alert_maintenance_due_this_month').select('*')
+      this.client.from('v_alert_maintenance_due_this_month').select('*'),
     );
   }
 
@@ -292,7 +287,7 @@ export class VehiclesService {
    */
   recordOilOrFilterChange(entry: Partial<OilAndFilterChange>): Observable<OilAndFilterChange> {
     return fromSupabase<OilAndFilterChange>(
-      this.client.from('oil_and_filter_changes').insert(entry).select().single()
+      this.client.from('oil_and_filter_changes').insert(entry).select().single(),
     );
   }
 
@@ -302,9 +297,9 @@ export class VehiclesService {
       switchMap((vehicle) => {
         if (!vehicle.current_engine_id) return of(null);
         return fromSupabase<Engine>(
-          this.client.from('engines').select('*').eq('id', vehicle.current_engine_id).single()
+          this.client.from('engines').select('*').eq('id', vehicle.current_engine_id).single(),
         );
-      })
+      }),
     );
   }
 }
