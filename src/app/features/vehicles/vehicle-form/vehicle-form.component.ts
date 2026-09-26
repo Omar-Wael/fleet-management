@@ -36,9 +36,12 @@ import { EntityImageUploadComponent } from '../../../shared/components/entity-im
  * assumes exists. Adjust this list once the real enum is confirmed.
  */
 const VEHICLE_STATUS_OPTIONS: { value: string; labelKey: string }[] = [
-  { value: 'active', labelKey: 'common.active' },
-  { value: 'maintenance', labelKey: 'vehicles.statusMaintenance' },
-  { value: 'out_of_service', labelKey: 'vehicles.statusOutOfService' },
+  { value: 'active', labelKey: 'active' },
+  { value: 'inactive', labelKey: 'inactive' },
+  { value: 'lodged', labelKey: 'lodged' },
+  { value: 'disposed', labelKey: 'disposed' },
+  { value: 'under_repair', labelKey: 'under_repair' },
+  { value: 'out_of_service', labelKey: 'out_of_service' },
 ];
 
 @Component({
@@ -90,8 +93,12 @@ export class VehicleFormComponent implements OnInit, OnChanges {
 
   // options
   fuelTypeOptions: SearchableSelectOption[] = [
-    { value: 'diesel', label: 'Diesel / ديزل' },
-    { value: 'gasoline', label: 'Gasoline' },
+    { value: 'diesel', label: 'diesel' },
+    { value: 'gasoline', label: 'gasoline' },
+    { value: 'petrol_95', label: 'petrol_95' },
+    { value: 'petrol_92', label: 'petrol_92' },
+    { value: 'petrol_90', label: 'petrol_90' },
+    { value: 'petrol_80', label: 'petrol_80' },
   ];
 
   constructor(
@@ -107,6 +114,10 @@ export class VehicleFormComponent implements OnInit, OnChanges {
     this.statusSelectOptions = VEHICLE_STATUS_OPTIONS.map((s) => ({
       value: s.value,
       label: this.i18n.t(s.labelKey),
+    }));
+    this.fuelTypeOptions = this.fuelTypeOptions.map((o) => ({
+      ...o,
+      label: this.i18n.t(`vehicles.fuel.${o.label}`),
     }));
     this.odometerUnitOptions = [
       { value: 'km', label: this.i18n.t('vehicles.unitKm') },

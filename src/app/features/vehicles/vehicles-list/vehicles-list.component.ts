@@ -77,7 +77,14 @@ export class VehiclesListComponent implements OnInit {
   vehicleTypes: VehicleType[] = [];
   distinctMakes: string[] = [];
 
-  readonly statusOptions = ['active', 'maintenance', 'out_of_service'];
+  readonly statusOptions = [
+    'active',
+    'inactive',
+    'lodged',
+    'disposed',
+    'under_repair',
+    'out_of_service',
+  ];
 
   columns: DataTableColumn<VehicleWithLookups>[] = [];
   filters: DataTableFilter[] = [];
@@ -118,6 +125,8 @@ export class VehiclesListComponent implements OnInit {
 
   private vehicleTypeIdByName = new Map<string, string>();
   private departmentIdByName = new Map<string, string>();
+  private workshopIdByName = new Map<string, string>();
+  private garageLocationIdByName = new Map<string, string>();
   private engineIdBySerial = new Map<string, string>();
   private engineBySerial = new Map<string, Engine>();
 
@@ -139,13 +148,32 @@ export class VehiclesListComponent implements OnInit {
       vehicleTypes: this.lookupsService.listVehicleTypes(),
       departments: this.lookupsService.listOperatingDepartments(),
       workshops: this.lookupsService.listMaintenanceWorkshops(),
+      garageLocations: this.lookupsService.listGarageLocations(),
       engines: this.enginesService.list(),
     }).subscribe({
-      next: ({ licensesDue, maintenanceDue, vehicleTypes, departments, workshops, engines }) => {
+      next: ({
+        licensesDue,
+        maintenanceDue,
+        vehicleTypes,
+        departments,
+        workshops,
+        garageLocations,
+        engines,
+      }) => {
         this.licensesDue = licensesDue;
         this.maintenanceDue = maintenanceDue;
         this.departments = departments;
         this.workshops = workshops;
+        this.workshopIdByName = new Map();
+        for (const w of workshops) {
+          if (w.name_ar) this.workshopIdByName.set(w.name_ar.trim().toLowerCase(), w.id);
+          if (w.name_en) this.workshopIdByName.set(w.name_en.trim().toLowerCase(), w.id);
+        }
+        this.garageLocationIdByName = new Map();
+        for (const g of garageLocations || []) {
+          if (g.garage_name)
+            this.garageLocationIdByName.set(g.garage_name.trim().toLowerCase(), g.id);
+        }
         this.vehicleTypes = vehicleTypes;
 
         this.vehiclesService.listDistinctMakes().subscribe({
@@ -218,18 +246,31 @@ export class VehiclesListComponent implements OnInit {
       {
         key: 'fuel_type',
         header: this.i18n.t('vehicles.fuelType'),
-        render: (v) => this.resolveEngine(v)?.fuel_type || effectiveFuelType(v) || '—',
+        render: (v) =>
+          this.formatFuelType(effectiveFuelType(v) || this.resolveEngine(v)?.fuel_type),
+      },
+      {
+        key: 'status',
+        header: this.i18n.t('common.status'),
+        render: (v) => '',
+        badge: (v) =>
+          v.status === 'active'
+            ? { text: this.i18n.t(v.status), variant: 'ok' }
+            : { text: this.i18n.t(v.status), variant: 'danger' },
       },
       {
         key: 'repair_dept',
         header: this.i18n.t('vehicles.repairDept'),
-        render: (v) => v.maintenance_workshops?.workshop_type || '—',
+        render: (v) => this.formatWorkshopType(v.maintenance_workshops?.workshop_type || '—'),
       },
       {
         key: 'odometer',
         header: this.i18n.t('vehicles.odometerStatus'),
         mono: true,
-        render: (v) => `${this.formatOdometer(v)} ${v.odometer_unit ?? ''}`.trim(),
+        render: (v) =>
+          v.odometer_working
+            ? `${this.formatOdometer(v)} ${this.formatOdometerUnit(v) ?? ''}`.trim()
+            : '',
         badge: (v) =>
           v.odometer_working
             ? null
@@ -248,12 +289,12 @@ export class VehiclesListComponent implements OnInit {
         mono: true,
         render: (v) => v.engine_number || '—',
       },
-      {
-        key: 'engine_serial_number',
-        header: this.i18n.t('vehicles.engineSerialNumber'),
-        mono: true,
-        render: (v) => this.resolveEngine(v)?.engine_serial_number || '—',
-      },
+      // {
+      //   key: 'engine_serial_number',
+      //   header: this.i18n.t('vehicles.engineSerialNumber'),
+      //   mono: true,
+      //   render: (v) => this.resolveEngine(v)?.engine_serial_number || '—',
+      // },
       {
         key: 'notes',
         header: this.i18n.t('common.notes'),
@@ -292,8 +333,28 @@ export class VehiclesListComponent implements OnInit {
     ];
   }
 
+  formatStatus(status: string | null | undefined): string {
+    if (!status) return '—';
+    const key = `vehicles.status.${status}`;
+    const translated = this.i18n.t(key);
+    if (translated !== key) return translated;
+    return status;
+  }
+
+  formatFuelType(raw: string | null | undefined): string {
+    if (!raw?.trim()) return '—';
+    const code = raw.trim().toLowerCase().replace(/\s+/g, '_');
+    const key = `vehicles.fuel.${code}`;
+    const tr = this.i18n.t(key);
+    return tr !== key ? tr : raw; // لو مفيش مفتاح، اعرض القيمة الخام
+  }
+
   private formatOdometer(v: VehicleWithLookups): string {
     return v.odometer_km == null ? '—' : new Intl.NumberFormat().format(v.odometer_km);
+  }
+
+  private formatOdometerUnit(v: VehicleWithLookups): string {
+    return this.i18n.t(`${v.odometer_unit || 'km'}`);
   }
 
   private formatWorkshopType(type: string | null | undefined): string {
@@ -310,7 +371,17 @@ export class VehiclesListComponent implements OnInit {
   private buildFilters(): void {
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 40 }, (_, i) => String(currentYear - i));
-    const fuelTypes = ['diesel', 'petrol', 'gasoline', 'electric', 'hybrid', 'cng', 'lpg'];
+    const fuelTypes = [
+      'petrol_92',
+      'petrol_95',
+      'diesel',
+      // 'electric',
+      // 'hybrid',
+      // 'cng',
+      'gasoline',
+      'petrol_90',
+      'petrol_80',
+    ];
 
     this.filters = [
       {
@@ -620,13 +691,25 @@ export class VehiclesListComponent implements OnInit {
       'Plate Number': 'e.g. ABC-1234',
       'Vehicle Type': this.vehicleTypes[0]?.name_en || this.vehicleTypes[0]?.name_ar || '',
       'Operating Dept': this.departments[0]?.name_en || this.departments[0]?.name_ar || '',
+      'Repair Workshop': this.workshops[0]?.name_en || this.workshops[0]?.name_ar || '',
+      'Garage Location': '',
       Make: 'Toyota',
       Model: 'Hilux',
       'Manufacture Year': '2020',
       'Chassis No.': '',
-      Odometer: '50000',
+      Status: 'active',
       Color: 'White',
+      'Fuel Type': 'diesel',
       'Engine No.': '',
+      Odometer: '50000',
+      'Odometer Unit': 'km',
+      'Odometer Working': 'true',
+      'Last Odometer Date': '',
+      'Custodian Name': '',
+      'Custodian Phone': '',
+      'Clutch Kit Last Change Date': '',
+      'Clutch Kit Last Change Odometer': '',
+      'Inactive Reason': '',
       Notes: '',
     });
   }
@@ -645,6 +728,8 @@ export class VehiclesListComponent implements OnInit {
           vehicleTypeIdByName: this.vehicleTypeIdByName,
           departmentIdByName: this.departmentIdByName,
           engineIdBySerial: this.engineIdBySerial,
+          workshopIdByName: this.workshopIdByName,
+          garageLocationIdByName: this.garageLocationIdByName,
           defaultMaintenanceWorkshopId: workshopId,
         });
 
@@ -722,6 +807,7 @@ export class VehiclesListComponent implements OnInit {
       },
       { header: 'Make', accessor: (v) => v.make },
       { header: 'Model', accessor: (v) => v.model },
+      { header: 'Manufacture Year', accessor: (v) => v.manufacture_year },
       {
         header: 'Operating Dept',
         accessor: (v) => v.operating_departments?.name_en || v.operating_departments?.name_ar || '',
@@ -731,7 +817,16 @@ export class VehiclesListComponent implements OnInit {
       { header: 'Odometer', accessor: (v) => v.odometer_km },
       { header: 'Color', accessor: (v) => v.color },
       { header: 'Chassis No.', accessor: (v) => v.chassis_number },
-      { header: 'Engine No.', accessor: (v) => v.engines?.engine_serial_number || '' },
+      { header: 'Custodian Name', accessor: (v) => v.custodian_name || '' },
+      { header: 'Custodian Phone', accessor: (v) => v.custodian_phone || '' },
+      { header: 'Status', accessor: (v) => v.status || '' },
+      { header: 'Fuel Type', accessor: (v) => v.fuel_type || v.engines?.fuel_type || '' },
+      { header: 'Odometer Unit', accessor: (v) => v.odometer_unit || '' },
+      { header: 'Notes', accessor: (v) => v.notes || '' },
+      {
+        header: 'Engine No.',
+        accessor: (v) => v.engine_number || v.engines?.engine_serial_number || '',
+      },
       { header: 'Notes', accessor: (v) => v.notes },
     ];
   }
@@ -753,7 +848,16 @@ export class VehiclesListComponent implements OnInit {
       { header: 'Odometer', accessor: (v) => v.odometer_km },
       { header: 'Color', accessor: (v) => v.color },
       { header: 'Chassis No.', accessor: (v) => v.chassis_number },
-      { header: 'Engine No.', accessor: (v) => v.engines?.engine_serial_number || '' },
+      { header: 'Custodian Name', accessor: (v) => v.custodian_name || '' },
+      { header: 'Custodian Phone', accessor: (v) => v.custodian_phone || '' },
+      { header: 'Status', accessor: (v) => v.status || '' },
+      { header: 'Fuel Type', accessor: (v) => v.fuel_type || v.engines?.fuel_type || '' },
+      { header: 'Odometer Unit', accessor: (v) => v.odometer_unit || '' },
+      { header: 'Notes', accessor: (v) => v.notes || '' },
+      {
+        header: 'Engine No.',
+        accessor: (v) => v.engine_number || v.engines?.engine_serial_number || '',
+      },
     ];
   }
 }

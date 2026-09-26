@@ -257,7 +257,7 @@ export interface Vehicle {
   clutch_kit_last_change_date: string | null;
   clutch_kit_last_change_odometer: number | null;
   notes?: string | null;
-  engine_number?: string | null; // for import mapping only, not stored in DB
+  engine_number?: string | null; // free-text on vehicles table (distinct from current_engine_id FK)
   fuel_type?: string | null;
 }
 
@@ -272,7 +272,7 @@ export interface VehicleWithLookups extends Vehicle {
   operating_departments?: OperatingDepartment;
   maintenance_workshops?: MaintenanceWorkshop;
   engines?: Engine; // current engine
-  engine_number?: string | null; // for import mapping only, not stored in DB
+  engine_number?: string | null; // free-text on vehicles table (distinct from current_engine_id FK)
   garage_locations?: GarageLocation | null;
   color?: string | null;
   notes?: string | null;
