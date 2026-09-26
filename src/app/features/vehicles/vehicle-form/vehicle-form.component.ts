@@ -191,6 +191,7 @@ export class VehicleFormComponent implements OnInit, OnChanges {
         odometer_unit: this.vehicle.odometer_unit,
         last_odometer_reading_date: this.vehicle.last_odometer_reading_date,
         status: this.vehicle.status,
+        fuel_type: this.vehicle.fuel_type,
         current_garage_location_id: this.vehicle.current_garage_location_id,
         custodian_name: this.vehicle.custodian_name,
         custodian_phone: this.vehicle.custodian_phone,
