@@ -71,7 +71,11 @@ export class SparePartsCatalogComponent implements OnInit {
   // ---- import state ----
   importing = false;
   importError: string | null = null;
-  importSummary: { savedCount: number; unresolvedCount: number } | null = null;
+  importSummary: {
+    savedCount: number;
+    unresolvedCount: number;
+    mergedCount: number;
+  } | null = null;
 
   constructor(
     private sparePartsService: SparePartsService,
@@ -314,30 +318,86 @@ export class SparePartsCatalogComponent implements OnInit {
     this.importSummary = null;
 
     importFileWithMapping<SparePartImportRow>(file, SPARE_PART_IMPORT_MAP)
-      .then((result) => {
+      .then(async (result) => {
         const resolved = prepareSparePartRowsForImport(result.valid);
         const totalUnresolved = result.errors.length;
 
         if (resolved.length === 0) {
           this.importing = false;
           this.importError = this.i18n.t('spareParts.catalog.importNoRows');
+          this.cdr.markForCheck();
           return;
         }
 
-        this.sparePartsService.bulkUpsert(resolved).subscribe({
-          next: (saved) => {
-            this.importing = false;
-            this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
-            this.reloadPartsOnly();
-          },
-          error: (err) => {
-            this.importing = false;
-            this.importError =
-              err instanceof Error
-                ? err.message
-                : this.i18n.t('spareParts.catalog.importUpsertFailed');
-          },
-        });
+        // bulkUpsert alone only de-dupes on part_code (nullable — two rows
+        // with no code, or two different codes for the same name, both slip
+        // through). So resolve each row against existing + already-imported
+        // parts by name_ar/name_en (case-insensitive, trimmed) as well as
+        // part_code first, and update the matched row instead of inserting a
+        // new one. The DB unique indexes on name_ar/name_en are the final
+        // safety net if a name still slips past this matching.
+        const existing = await this.sparePartsService.list().toPromise();
+        const byCode = new Map<string, SparePart>();
+        const byName = new Map<string, SparePart>();
+        for (const p of existing ?? []) {
+          if (p.part_code) byCode.set(p.part_code.trim().toLowerCase(), p);
+          if (p.name_ar) byName.set(p.name_ar.trim().toLowerCase(), p);
+          if (p.name_en) byName.set(p.name_en.trim().toLowerCase(), p);
+        }
+
+        const findMatch = (row: Partial<SparePart>): SparePart | undefined => {
+          const codeKey = row.part_code?.trim().toLowerCase();
+          if (codeKey && byCode.has(codeKey)) return byCode.get(codeKey);
+          const arKey = row.name_ar?.trim().toLowerCase();
+          if (arKey && byName.has(arKey)) return byName.get(arKey);
+          const enKey = row.name_en?.trim().toLowerCase();
+          if (enKey && byName.has(enKey)) return byName.get(enKey);
+          return undefined;
+        };
+
+        const rememberSaved = (p: SparePart) => {
+          if (p.part_code) byCode.set(p.part_code.trim().toLowerCase(), p);
+          if (p.name_ar) byName.set(p.name_ar.trim().toLowerCase(), p);
+          if (p.name_en) byName.set(p.name_en.trim().toLowerCase(), p);
+        };
+
+        let savedCount = 0;
+        let mergedCount = 0;
+        const rowErrors: string[] = [];
+
+        for (const row of resolved) {
+          try {
+            const match = findMatch(row);
+            let saved: SparePart | undefined;
+            if (match) {
+              saved = await this.sparePartsService.update(match.id, row).toPromise();
+              mergedCount++;
+            } else {
+              saved = await this.sparePartsService.create(row).toPromise();
+            }
+            savedCount++;
+            if (saved) rememberSaved(saved);
+          } catch (err: any) {
+            // 23505 = unique_violation — e.g. a name that matched nothing in
+            // our snapshot but collided at the DB level. Count it as merged
+            // rather than failing the whole import.
+            if (err?.code === '23505') {
+              mergedCount++;
+            } else {
+              rowErrors.push(
+                `${row.name_ar ?? row.part_code ?? '?'}: ${err?.message ?? String(err)}`,
+              );
+            }
+          }
+        }
+
+        this.importing = false;
+        this.importSummary = { savedCount, unresolvedCount: totalUnresolved, mergedCount };
+        if (rowErrors.length) {
+          this.importError = rowErrors.slice(0, 5).join('; ');
+        }
+        this.reloadPartsOnly();
+        this.cdr.markForCheck();
       })
       .catch((err) => {
         this.importing = false;

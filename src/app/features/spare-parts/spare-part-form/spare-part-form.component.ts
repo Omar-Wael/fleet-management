@@ -218,12 +218,7 @@ export class SparePartFormComponent implements OnChanges {
     this.cdr.markForCheck();
     this.saveError = null;
 
-    const {
-      vehicle_ids,
-      engine_ids,
-      vendor_ids,
-      ...partFields
-    } = this.form.value;
+    const { vehicle_ids, engine_ids, vendor_ids, ...partFields } = this.form.value;
 
     const payload: Partial<SparePart> = {
       ...partFields,
@@ -234,12 +229,17 @@ export class SparePartFormComponent implements OnChanges {
       (payload as { id?: string }).id = this.pendingEntityId;
     }
 
-    const savePart$ = this.isEditMode
-      ? this.sparePartsService.update(this.part!.id, payload)
-      : this.sparePartsService.create(payload);
-
-    savePart$
+    this.sparePartsService
+      .findDuplicateByName(payload.name_ar, payload.name_en, this.part?.id ?? null)
       .pipe(
+        switchMap((duplicate) => {
+          if (duplicate) {
+            throw new Error(this.i18n.t('spareParts.partForm.duplicateNameError'));
+          }
+          return this.isEditMode
+            ? this.sparePartsService.update(this.part!.id, payload)
+            : this.sparePartsService.create(payload);
+        }),
         switchMap((savedPart) => {
           const partId = savedPart.id;
           return forkJoin({
@@ -251,10 +251,7 @@ export class SparePartFormComponent implements OnChanges {
               partId,
               (engine_ids as string[]) || [],
             ),
-            vendors: this.sparePartsService.setPartVendors(
-              partId,
-              (vendor_ids as string[]) || [],
-            ),
+            vendors: this.sparePartsService.setPartVendors(partId, (vendor_ids as string[]) || []),
             part: of(savedPart),
           });
         }),
@@ -269,8 +266,16 @@ export class SparePartFormComponent implements OnChanges {
         error: (err) => {
           this.saving = false;
           this.cdr.markForCheck();
-          this.saveError =
-            err instanceof Error ? err.message : this.i18n.t('spareParts.partForm.saveError');
+          // 23505 = Postgres unique_violation. Covers the rare race where two
+          // saves for the same new name land between our pre-check and the
+          // insert/update — the DB-level unique index on name_ar/name_en is
+          // the final guard, this just keeps the message friendly.
+          if ((err as { code?: string })?.code === '23505') {
+            this.saveError = this.i18n.t('spareParts.partForm.duplicateNameError');
+          } else {
+            this.saveError =
+              err instanceof Error ? err.message : this.i18n.t('spareParts.partForm.saveError');
+          }
         },
       });
   }

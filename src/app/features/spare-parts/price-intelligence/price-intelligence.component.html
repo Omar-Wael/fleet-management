@@ -11,12 +11,14 @@
     <div class="part-picker">
       <label class="field">
         <span>{{ 'spareParts.priceIntelligence.fieldSparePart' | translate }}</span>
-        <select [(ngModel)]="selectedPartId" [ngModelOptions]="{ standalone: true }" (change)="onPartChange()">
-          <option value="" disabled>{{ 'spareParts.priceIntelligence.selectPartPlaceholder' | translate }}</option>
-          @for (p of parts; track p.id) {
-            <option [value]="p.id">{{ p.name_en || p.name_ar }}</option>
-          }
-        </select>
+        <app-searchable-select
+          [options]="partOptions"
+          [(ngModel)]="selectedPartId"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onPartChange()"
+          [placeholder]="'spareParts.priceIntelligence.selectPartPlaceholder' | translate"
+          [clearable]="true"
+        ></app-searchable-select>
       </label>
 
       @if (selectedPartId) {
@@ -31,12 +33,12 @@
         <div class="field-grid">
           <label class="field">
             <span>{{ 'spareParts.priceIntelligence.fieldVendor' | translate }}</span>
-            <select formControlName="vendor_id">
-              <option [ngValue]="null">{{ 'common.none' | translate }}</option>
-              @for (v of vendors; track v.id) {
-                <option [ngValue]="v.id">{{ v.name }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="vendor_id"
+              [options]="vendorOptions"
+              [placeholder]="'common.none' | translate"
+              [clearable]="true"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
@@ -65,9 +67,18 @@
         }
 
         <div class="form-actions">
-          <button type="button" class="btn btn--ghost" (click)="cancelLogForm()" [disabled]="saving">{{ 'common.cancel' | translate }}</button>
+          <button
+            type="button"
+            class="btn btn--ghost"
+            (click)="cancelLogForm()"
+            [disabled]="saving"
+          >
+            {{ 'common.cancel' | translate }}
+          </button>
           <button type="submit" class="btn btn--primary" [disabled]="saving">
-            {{ (saving ? 'common.saving' : 'spareParts.priceIntelligence.logPriceSubmit') | translate }}
+            {{
+              (saving ? 'common.saving' : 'spareParts.priceIntelligence.logPriceSubmit') | translate
+            }}
           </button>
         </div>
       </form>
@@ -75,7 +86,9 @@
 
     @if (selectedPartId) {
       @if (detailLoading) {
-        <div class="state-message">{{ 'spareParts.priceIntelligence.loadingPriceData' | translate }}</div>
+        <div class="state-message">
+          {{ 'spareParts.priceIntelligence.loadingPriceData' | translate }}
+        </div>
       } @else if (detailError) {
         <div class="state-message state-message--error">{{ detailError }}</div>
       } @else {
@@ -95,15 +108,17 @@
               <tbody>
                 @for (h of history; track h.id) {
                   <tr>
-                    <td>{{ h.purchase_date | date : 'dd/MM/yyyy' }}</td>
+                    <td>{{ h.purchase_date | date: 'dd/MM/yyyy' }}</td>
                     <td>{{ vendorName(h.vendor_id) }}</td>
-                    <td class="mono">{{ h.unit_price | number : '1.2-2' }}</td>
+                    <td class="mono">{{ h.unit_price | number: '1.2-2' }}</td>
                     <td class="mono">{{ h.quantity }}</td>
                     <td>{{ h.notes || '—' }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5" class="empty-row">{{ 'spareParts.priceIntelligence.noPurchaseHistory' | translate }}</td>
+                    <td colspan="5" class="empty-row">
+                      {{ 'spareParts.priceIntelligence.noPurchaseHistory' | translate }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -125,15 +140,17 @@
               <tbody>
                 @for (t of trend; track t.month) {
                   <tr>
-                    <td>{{ t.month | date : 'MMM yyyy' }}</td>
-                    <td class="mono">{{ t.avg_unit_price | number : '1.2-2' }}</td>
-                    <td class="mono">{{ t.min_unit_price | number : '1.2-2' }}</td>
-                    <td class="mono">{{ t.max_unit_price | number : '1.2-2' }}</td>
+                    <td>{{ t.month | date: 'MMM yyyy' }}</td>
+                    <td class="mono">{{ t.avg_unit_price | number: '1.2-2' }}</td>
+                    <td class="mono">{{ t.min_unit_price | number: '1.2-2' }}</td>
+                    <td class="mono">{{ t.max_unit_price | number: '1.2-2' }}</td>
                     <td class="mono">{{ t.purchase_count }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5" class="empty-row">{{ 'spareParts.priceIntelligence.noTrendData' | translate }}</td>
+                    <td colspan="5" class="empty-row">
+                      {{ 'spareParts.priceIntelligence.noTrendData' | translate }}
+                    </td>
                   </tr>
                 }
               </tbody>

@@ -32,16 +32,18 @@ export class SparePartsService {
     let query = this.client.from('spare_parts').select('*');
     if (search) {
       query = query.or(
-        `name_ar.ilike.%${search}%,name_en.ilike.%${search}%,part_code.ilike.%${search}%`
+        `name_ar.ilike.%${search}%,name_en.ilike.%${search}%,part_code.ilike.%${search}%`,
       );
     }
     return fromSupabase<SparePart[]>(query.order('name_ar', { ascending: true }));
   }
 
-  private buildCatalogGridQuery(query: DataTableQuery, withCount: boolean, restrictIds?: string[] | null) {
-    let q = this.client
-      .from('spare_parts')
-      .select('*', withCount ? { count: 'exact' } : undefined);
+  private buildCatalogGridQuery(
+    query: DataTableQuery,
+    withCount: boolean,
+    restrictIds?: string[] | null,
+  ) {
+    let q = this.client.from('spare_parts').select('*', withCount ? { count: 'exact' } : undefined);
 
     // Classification filter
     if (query.filters['classification']) {
@@ -68,7 +70,7 @@ export class SparePartsService {
     if (term) {
       const escaped = term.replace(/[%,]/g, '');
       q = q.or(
-        `name_ar.ilike.%${escaped}%,name_en.ilike.%${escaped}%,part_code.ilike.%${escaped}%`
+        `name_ar.ilike.%${escaped}%,name_en.ilike.%${escaped}%,part_code.ilike.%${escaped}%`,
       );
     }
 
@@ -157,14 +159,43 @@ export class SparePartsService {
   }
 
   create(part: Partial<SparePart>): Observable<SparePart> {
-    return fromSupabase<SparePart>(
-      this.client.from('spare_parts').insert(part).select().single()
-    );
+    return fromSupabase<SparePart>(this.client.from('spare_parts').insert(part).select().single());
+  }
+
+  /**
+   * Looks for an existing spare part whose name_ar OR name_en matches
+   * (case-insensitive, trimmed) either of the given names. Used to stop
+   * duplicate parts being created — by the manual add/edit form and by
+   * every bulk-import path — on top of the DB-level unique indexes
+   * (idx_spare_parts_name_ar_ci / idx_spare_parts_name_en_ci) which are
+   * the final guard if two imports race each other.
+   * @param excludePartId when editing, exclude the part's own row from the match.
+   */
+  findDuplicateByName(
+    nameAr: string | null | undefined,
+    nameEn?: string | null,
+    excludePartId?: string | null,
+  ): Observable<SparePart | null> {
+    const ar = nameAr?.trim();
+    const en = nameEn?.trim();
+    if (!ar && !en) return of(null);
+
+    const clauses: string[] = [];
+    if (ar) clauses.push(`name_ar.ilike.${ar}`, `name_en.ilike.${ar}`);
+    if (en) clauses.push(`name_ar.ilike.${en}`, `name_en.ilike.${en}`);
+
+    let query = this.client
+      .from('spare_parts')
+      .select('*')
+      .or(Array.from(new Set(clauses)).join(','));
+    if (excludePartId) query = query.neq('id', excludePartId);
+
+    return fromSupabase<SparePart[]>(query.limit(1)).pipe(map((rows) => rows[0] ?? null));
   }
 
   update(partId: string, changes: Partial<SparePart>): Observable<SparePart> {
     return fromSupabase<SparePart>(
-      this.client.from('spare_parts').update(changes).eq('id', partId).select().single()
+      this.client.from('spare_parts').update(changes).eq('id', partId).select().single(),
     );
   }
 
@@ -178,7 +209,7 @@ export class SparePartsService {
 
   bulkUpsert(rows: Partial<SparePart>[]): Observable<SparePart[]> {
     return fromSupabase<SparePart[]>(
-      this.client.from('spare_parts').upsert(rows, { onConflict: 'part_code' }).select()
+      this.client.from('spare_parts').upsert(rows, { onConflict: 'part_code' }).select(),
     );
   }
 
@@ -203,7 +234,7 @@ export class SparePartsService {
         .from('vehicles')
         .select('current_engine_id, vehicle_type_id')
         .eq('id', vehicleId)
-        .single()
+        .single(),
     ).pipe(
       switchMap((v) => {
         const requests: Observable<SparePart[]>[] = [];
@@ -211,8 +242,8 @@ export class SparePartsService {
         // 0. General parts (available for every vehicle)
         requests.push(
           fromSupabase<SparePart[]>(
-            this.client.from('spare_parts').select('*').eq('is_general', true)
-          )
+            this.client.from('spare_parts').select('*').eq('is_general', true),
+          ),
         );
 
         // 1. Engine compatible
@@ -222,8 +253,8 @@ export class SparePartsService {
               this.client
                 .from('engine_compatible_parts')
                 .select('spare_parts (*)')
-                .eq('engine_id', v.current_engine_id)
-            ).pipe(map((rows) => rows.map((r) => r.spare_parts).filter(Boolean)))
+                .eq('engine_id', v.current_engine_id),
+            ).pipe(map((rows) => rows.map((r) => r.spare_parts).filter(Boolean))),
           );
         }
 
@@ -233,8 +264,8 @@ export class SparePartsService {
             this.client
               .from('vehicle_compatible_parts')
               .select('spare_parts (*)')
-              .eq('vehicle_id', vehicleId)
-          ).pipe(map((rows) => rows.map((r) => r.spare_parts).filter(Boolean)))
+              .eq('vehicle_id', vehicleId),
+          ).pipe(map((rows) => rows.map((r) => r.spare_parts).filter(Boolean))),
         );
 
         // 3. Vehicle-type compatible
@@ -244,8 +275,8 @@ export class SparePartsService {
               this.client
                 .from('vehicle_type_compatible_parts')
                 .select('spare_parts (*)')
-                .eq('vehicle_type_id', v.vehicle_type_id)
-            ).pipe(map((rows) => rows.map((r) => r.spare_parts).filter(Boolean)))
+                .eq('vehicle_type_id', v.vehicle_type_id),
+            ).pipe(map((rows) => rows.map((r) => r.spare_parts).filter(Boolean))),
           );
         }
 
@@ -258,54 +289,51 @@ export class SparePartsService {
               }
             }
             return Array.from(mapById.values()).sort((a, b) =>
-              (a.name_ar || '').localeCompare(b.name_ar || '')
+              (a.name_ar || '').localeCompare(b.name_ar || ''),
             );
-          })
+          }),
         );
-      })
+      }),
     );
   }
 
   /** Link / unlink part ↔ engine */
   setEngineCompatibility(engineId: string, sparePartIds: string[]): Observable<null> {
     return from(
-      this.client.from('engine_compatible_parts').delete().eq('engine_id', engineId) as any
+      this.client.from('engine_compatible_parts').delete().eq('engine_id', engineId) as any,
     ).pipe(
       switchMap(() => {
         if (!sparePartIds.length) return of(null);
         const rows = sparePartIds.map((id) => ({ engine_id: engineId, spare_part_id: id }));
-        return from(
-          this.client.from('engine_compatible_parts').insert(rows) as any
-        ).pipe(map(() => null));
-      })
+        return from(this.client.from('engine_compatible_parts').insert(rows) as any).pipe(
+          map(() => null),
+        );
+      }),
     );
   }
 
   /** Link / unlink part ↔ vehicle */
   setVehicleCompatibility(vehicleId: string, sparePartIds: string[]): Observable<null> {
     return from(
-      this.client.from('vehicle_compatible_parts').delete().eq('vehicle_id', vehicleId) as any
+      this.client.from('vehicle_compatible_parts').delete().eq('vehicle_id', vehicleId) as any,
     ).pipe(
       switchMap(() => {
         if (!sparePartIds.length) return of(null);
         const rows = sparePartIds.map((id) => ({ vehicle_id: vehicleId, spare_part_id: id }));
-        return from(
-          this.client.from('vehicle_compatible_parts').insert(rows) as any
-        ).pipe(map(() => null));
-      })
+        return from(this.client.from('vehicle_compatible_parts').insert(rows) as any).pipe(
+          map(() => null),
+        );
+      }),
     );
   }
 
   /** Link / unlink part ↔ vehicle type */
-  setVehicleTypeCompatibility(
-    vehicleTypeId: string,
-    sparePartIds: string[]
-  ): Observable<null> {
+  setVehicleTypeCompatibility(vehicleTypeId: string, sparePartIds: string[]): Observable<null> {
     return from(
       this.client
         .from('vehicle_type_compatible_parts')
         .delete()
-        .eq('vehicle_type_id', vehicleTypeId) as any
+        .eq('vehicle_type_id', vehicleTypeId) as any,
     ).pipe(
       switchMap(() => {
         if (!sparePartIds.length) return of(null);
@@ -313,24 +341,30 @@ export class SparePartsService {
           vehicle_type_id: vehicleTypeId,
           spare_part_id: id,
         }));
-        return from(
-          this.client.from('vehicle_type_compatible_parts').insert(rows) as any
-        ).pipe(map(() => null));
-      })
+        return from(this.client.from('vehicle_type_compatible_parts').insert(rows) as any).pipe(
+          map(() => null),
+        );
+      }),
     );
   }
 
   /** Engine IDs linked to a spare part (for catalogue form). */
   getEngineIdsForPart(sparePartId: string): Observable<string[]> {
     return fromSupabase<{ engine_id: string }[]>(
-      this.client.from('engine_compatible_parts').select('engine_id').eq('spare_part_id', sparePartId)
+      this.client
+        .from('engine_compatible_parts')
+        .select('engine_id')
+        .eq('spare_part_id', sparePartId),
     ).pipe(map((rows) => rows.map((r) => r.engine_id)));
   }
 
   /** Vehicle IDs linked to a spare part (for catalogue form). */
   getVehicleIdsForPart(sparePartId: string): Observable<string[]> {
     return fromSupabase<{ vehicle_id: string }[]>(
-      this.client.from('vehicle_compatible_parts').select('vehicle_id').eq('spare_part_id', sparePartId)
+      this.client
+        .from('vehicle_compatible_parts')
+        .select('vehicle_id')
+        .eq('spare_part_id', sparePartId),
     ).pipe(map((rows) => rows.map((r) => r.vehicle_id)));
   }
 
@@ -340,15 +374,15 @@ export class SparePartsService {
    */
   setPartEngineLinks(sparePartId: string, engineIds: string[]): Observable<null> {
     return from(
-      this.client.from('engine_compatible_parts').delete().eq('spare_part_id', sparePartId) as any
+      this.client.from('engine_compatible_parts').delete().eq('spare_part_id', sparePartId) as any,
     ).pipe(
       switchMap(() => {
         if (!engineIds.length) return of(null);
         const rows = engineIds.map((engine_id) => ({ engine_id, spare_part_id: sparePartId }));
         return from(this.client.from('engine_compatible_parts').insert(rows) as any).pipe(
-          map(() => null)
+          map(() => null),
         );
-      })
+      }),
     );
   }
 
@@ -357,15 +391,15 @@ export class SparePartsService {
    */
   setPartVehicleLinks(sparePartId: string, vehicleIds: string[]): Observable<null> {
     return from(
-      this.client.from('vehicle_compatible_parts').delete().eq('spare_part_id', sparePartId) as any
+      this.client.from('vehicle_compatible_parts').delete().eq('spare_part_id', sparePartId) as any,
     ).pipe(
       switchMap(() => {
         if (!vehicleIds.length) return of(null);
         const rows = vehicleIds.map((vehicle_id) => ({ vehicle_id, spare_part_id: sparePartId }));
         return from(this.client.from('vehicle_compatible_parts').insert(rows) as any).pipe(
-          map(() => null)
+          map(() => null),
         );
-      })
+      }),
     );
   }
 
@@ -375,7 +409,7 @@ export class SparePartsService {
 
   listVendorsForPart(sparePartId: string): Observable<SparePartVendor[]> {
     return fromSupabase<SparePartVendor[]>(
-      this.client.from('spare_part_vendors').select('*').eq('spare_part_id', sparePartId)
+      this.client.from('spare_part_vendors').select('*').eq('spare_part_id', sparePartId),
     );
   }
 
@@ -386,10 +420,10 @@ export class SparePartsService {
   setPartVendors(
     sparePartId: string,
     vendorIds: string[],
-    opts?: { preferredVendorId?: string | null }
+    opts?: { preferredVendorId?: string | null },
   ): Observable<null> {
     return from(
-      this.client.from('spare_part_vendors').delete().eq('spare_part_id', sparePartId) as any
+      this.client.from('spare_part_vendors').delete().eq('spare_part_id', sparePartId) as any,
     ).pipe(
       switchMap(() => {
         if (!vendorIds.length) return of(null);
@@ -400,9 +434,9 @@ export class SparePartsService {
           is_preferred: preferred ? vendor_id === preferred : false,
         }));
         return from(this.client.from('spare_part_vendors').insert(rows) as any).pipe(
-          map(() => null)
+          map(() => null),
         );
-      })
+      }),
     );
   }
 
@@ -416,7 +450,7 @@ export class SparePartsService {
         .from('v_part_price_history_last_10')
         .select('*')
         .eq('spare_part_id', sparePartId)
-        .order('purchase_date', { ascending: false })
+        .order('purchase_date', { ascending: false }),
     );
   }
 
@@ -426,7 +460,7 @@ export class SparePartsService {
         .from('v_part_price_trend')
         .select('*')
         .eq('spare_part_id', sparePartId)
-        .order('month', { ascending: true })
+        .order('month', { ascending: true }),
     );
   }
 
@@ -462,7 +496,7 @@ export class SparePartsService {
     if (term) {
       const escaped = term.replace(/[%,]/g, '');
       q = q.or(
-        `name.ilike.%${escaped}%,contact_person.ilike.%${escaped}%,specialty.ilike.%${escaped}%`
+        `name.ilike.%${escaped}%,contact_person.ilike.%${escaped}%,specialty.ilike.%${escaped}%`,
       );
     }
 
@@ -480,7 +514,7 @@ export class SparePartsService {
 
   createVendor(vendor: Partial<ExternalWorkshop>): Observable<ExternalWorkshop> {
     return fromSupabase<ExternalWorkshop>(
-      this.client.from('external_workshops').insert(vendor).select().single()
+      this.client.from('external_workshops').insert(vendor).select().single(),
     );
   }
 
@@ -489,13 +523,13 @@ export class SparePartsService {
       this.client
         .from('v_vendor_performance')
         .select('*')
-        .order('avg_unit_price', { ascending: true })
+        .order('avg_unit_price', { ascending: true }),
     );
   }
 
   getLastDisbursement(
     sparePartId: string,
-    vehicleId: string
+    vehicleId: string,
   ): Observable<VLastPartDisbursement | null> {
     return fromSupabase<VLastPartDisbursement[]>(
       this.client
@@ -503,8 +537,7 @@ export class SparePartsService {
         .select('*')
         .eq('spare_part_id', sparePartId)
         .eq('vehicle_id', vehicleId)
-        .limit(1)
+        .limit(1),
     ).pipe(switchMap((rows) => of(rows[0] ?? null)));
   }
 }
-
