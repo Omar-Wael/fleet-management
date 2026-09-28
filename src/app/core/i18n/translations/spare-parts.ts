@@ -26,6 +26,10 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.catalog.importedCount': { en: 'Imported', ar: 'تم استيراد' },
   'spareParts.catalog.importedUnit': { en: 'part(s).', ar: 'قطعة/قطع.' },
   'spareParts.catalog.skippedRows': { en: 'row(s) skipped.', ar: 'صف/صفوف تم تخطيها.' },
+  'spareParts.catalog.mergedRows': {
+    en: 'matched an existing part and were updated instead of duplicated',
+    ar: 'طابقت صنف موجود وتم تحديثه بدل تكراره',
+  },
   'spareParts.catalog.searchPlaceholder': {
     en: 'Search part code, name…',
     ar: 'ابحث برمز القطعة أو الاسم…',
@@ -44,7 +48,10 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'No spare parts match the current filters.',
     ar: 'لا توجد قطع غيار مطابقة للفلاتر الحالية.',
   },
-  'spareParts.catalog.loadError': { en: 'Failed to load spare parts.', ar: 'فشل تحميل قطع الغيار.' },
+  'spareParts.catalog.loadError': {
+    en: 'Failed to load spare parts.',
+    ar: 'فشل تحميل قطع الغيار.',
+  },
   'spareParts.catalog.importNoRows': {
     en: 'No rows could be imported. Check that "Name (Arabic)" is filled in for every row.',
     ar: 'لم يتم استيراد أي صف. تأكد من تعبئة "الاسم (عربي)" في كل صف.',
@@ -78,6 +85,10 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   },
   'spareParts.partForm.addSubmit': { en: 'Add Part', ar: 'إضافة قطعة' },
   'spareParts.partForm.saveError': { en: 'Failed to save spare part.', ar: 'فشل حفظ قطعة الغيار.' },
+  'spareParts.partForm.duplicateNameError': {
+    en: 'A spare part with this name (Arabic or English) already exists.',
+    ar: 'يوجد بالفعل صنف بنفس الاسم (عربي أو إنجليزي).',
+  },
 
   // ---------------------------------------------------------------
   // Disbursement status labels — shared between disbursement-requests
@@ -312,13 +323,28 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.disbursement.issuedAt': { en: 'Issued At', ar: 'تاريخ الصرف' },
   'spareParts.disbursement.searchPlaceholder': { en: 'Search notes…', ar: 'بحث في الملاحظات…' },
   'spareParts.disbursement.importedCount': { en: 'Imported requests:', ar: 'طلبات مستوردة:' },
-  'spareParts.disbursement.importSkipped': { en: 'row(s) skipped (missing vehicle/technician/parts).', ar: 'صف(وف) تم تخطيها (ناقص مركبة/فني/قطع).' },
-  'spareParts.disbursement.importParseFailed': { en: 'Could not parse the import file.', ar: 'تعذر قراءة ملف الاستيراد.' },
-  'spareParts.disbursement.importFailed': { en: 'Bulk import failed.', ar: 'فشل الاستيراد الجماعي.' },
+  'spareParts.disbursement.importSkipped': {
+    en: 'row(s) skipped (missing vehicle/technician/parts).',
+    ar: 'صف(وف) تم تخطيها (ناقص مركبة/فني/قطع).',
+  },
+  'spareParts.disbursement.importParseFailed': {
+    en: 'Could not parse the import file.',
+    ar: 'تعذر قراءة ملف الاستيراد.',
+  },
+  'spareParts.disbursement.importFailed': {
+    en: 'Bulk import failed.',
+    ar: 'فشل الاستيراد الجماعي.',
+  },
   'spareParts.disbursementForm.modeCatalog': { en: 'From catalogue', ar: 'من الكتالوج' },
   'spareParts.disbursementForm.modeCustom': { en: 'Free text', ar: 'نص حر' },
-  'spareParts.disbursementForm.customPartPlaceholder': { en: 'Part name (not in catalogue)', ar: 'اسم القطعة (ليست في الكتالوج)' },
-  'spareParts.disbursementForm.selectTechniciansPlaceholder': { en: 'Select technician(s)…', ar: 'اختر الفني(ون)…' },
+  'spareParts.disbursementForm.customPartPlaceholder': {
+    en: 'Part name (not in catalogue)',
+    ar: 'اسم القطعة (ليست في الكتالوج)',
+  },
+  'spareParts.disbursementForm.selectTechniciansPlaceholder': {
+    en: 'Select technician(s)…',
+    ar: 'اختر الفني(ون)…',
+  },
 
   'spareParts.requestNumber': { en: 'Request #', ar: 'رقم الطلب' },
   'spareParts.technicians': { en: 'Technicians', ar: 'الفنيون' },
@@ -345,7 +371,10 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.classification.other': { en: 'Other', ar: 'أخرى' },
 
   // --- Part form extras ---
-  'spareParts.partForm.isGeneral': { en: 'General part (available for all vehicles)', ar: 'صنف عام (متاح لجميع المركبات)' },
+  'spareParts.partForm.isGeneral': {
+    en: 'General part (available for all vehicles)',
+    ar: 'صنف عام (متاح لجميع المركبات)',
+  },
   'spareParts.partForm.isGeneralShort': { en: 'General', ar: 'عام' },
   'spareParts.partForm.selectClassification': { en: 'Select classification…', ar: 'اختر التصنيف…' },
   'spareParts.partForm.compatibilitySection': { en: 'Compatibility', ar: 'التوافق' },
@@ -362,8 +391,14 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.partForm.selectVendors': { en: 'Select vendor(s)…', ar: 'اختر مورد/موردين…' },
 
   // --- Disbursement form extras ---
-  'spareParts.disbursementForm.editTitle': { en: 'Edit Disbursement Request', ar: 'تعديل طلب الصرف' },
-  'spareParts.disbursementForm.selectWorkshopPlaceholder': { en: 'Select repair department…', ar: 'اختر ورشة الصيانة…' },
+  'spareParts.disbursementForm.editTitle': {
+    en: 'Edit Disbursement Request',
+    ar: 'تعديل طلب الصرف',
+  },
+  'spareParts.disbursementForm.selectWorkshopPlaceholder': {
+    en: 'Select repair department…',
+    ar: 'اختر ورشة الصيانة…',
+  },
   'spareParts.disbursementForm.lastOrderedDate': { en: 'Last ordered date', ar: 'آخر تاريخ طلب' },
 
   // --- Drawer extras ---
@@ -375,8 +410,20 @@ export const SPARE_PARTS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'spareParts.disbursementDrawer.colCondition': { en: 'Condition', ar: 'الحالة' },
   'spareParts.yes': { en: 'Yes', ar: 'نعم' },
   'spareParts.no': { en: 'No', ar: 'لا' },
-  'spareParts.catalog.confirmDelete': { en: 'Delete part "{name}"? This cannot be undone.', ar: 'حذف القطعة "{name}"؟ لا يمكن التراجع عن هذا الإجراء.' },
-  'spareParts.catalog.deleteError': { en: 'Failed to delete part. It may be used on existing requests.', ar: 'فشل حذف القطعة. قد تكون مستخدمة في طلبات موجودة.' },
-  'spareParts.disbursement.confirmDelete': { en: 'Delete request {number} for vehicle {plate}? This cannot be undone.', ar: 'حذف الطلب {number} للمركبة {plate}؟ لا يمكن التراجع عن هذا الإجراء.' },
-  'spareParts.disbursement.deleteError': { en: 'Failed to delete request. It may be linked to financial records.', ar: 'فشل حذف الطلب. قد يكون مرتبطاً بسجلات مالية.' },
+  'spareParts.catalog.confirmDelete': {
+    en: 'Delete part "{name}"? This cannot be undone.',
+    ar: 'حذف القطعة "{name}"؟ لا يمكن التراجع عن هذا الإجراء.',
+  },
+  'spareParts.catalog.deleteError': {
+    en: 'Failed to delete part. It may be used on existing requests.',
+    ar: 'فشل حذف القطعة. قد تكون مستخدمة في طلبات موجودة.',
+  },
+  'spareParts.disbursement.confirmDelete': {
+    en: 'Delete request {number} for vehicle {plate}? This cannot be undone.',
+    ar: 'حذف الطلب {number} للمركبة {plate}؟ لا يمكن التراجع عن هذا الإجراء.',
+  },
+  'spareParts.disbursement.deleteError': {
+    en: 'Failed to delete request. It may be linked to financial records.',
+    ar: 'فشل حذف الطلب. قد يكون مرتبطاً بسجلات مالية.',
+  },
 };

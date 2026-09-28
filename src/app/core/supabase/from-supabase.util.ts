@@ -30,7 +30,13 @@ export function fromSupabase<T>(query: PromiseLike<PostgrestLikeResponse>): Obse
   return from(Promise.resolve(query)).pipe(
     map((res) => {
       if (res.error) {
-        throw new Error(res.error.message);
+        // Preserve the Postgres error code (e.g. '23505' unique_violation) on
+        // the thrown Error so callers can distinguish "duplicate" failures
+        // from other errors without parsing the message string. See
+        // SparePartsService / SparePartFormComponent for a consumer.
+        const err = new Error(res.error.message) as Error & { code?: string };
+        if (res.error.code) err.code = res.error.code;
+        throw err;
       }
       return res.data as T;
     }),

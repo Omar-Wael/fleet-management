@@ -16,11 +16,20 @@
       <button type="button" class="btn btn--ghost" (click)="downloadTemplate()">
         {{ 'common.downloadTemplate' | translate }}
       </button>
-      <button type="button" class="btn btn--ghost" (click)="onImportButtonClick(importFileInput)" [disabled]="importing">
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="onImportButtonClick(importFileInput)"
+        [disabled]="importing"
+      >
         {{ (importing ? 'common.importing' : 'common.import') | translate }}
       </button>
-      <button type="button" class="btn btn--ghost" (click)="exportExcel()">{{ 'common.exportExcel' | translate }}</button>
-      <button type="button" class="btn btn--ghost" (click)="exportPdf()">{{ 'common.exportPdf' | translate }}</button>
+      <button type="button" class="btn btn--ghost" (click)="exportExcel()">
+        {{ 'common.exportExcel' | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="exportPdf()">
+        {{ 'common.exportPdf' | translate }}
+      </button>
       <button type="button" class="btn btn--primary" (click)="openAddForm()">
         {{ 'spareParts.catalog.addButton' | translate }}
       </button>
@@ -35,6 +44,9 @@
     <div class="state-message state-message--ok">
       {{ 'spareParts.catalog.importedCount' | translate }} {{ importSummary.savedCount }}
       {{ 'spareParts.catalog.importedUnit' | translate }}
+      @if (importSummary.mergedCount) {
+        ({{ importSummary.mergedCount }} {{ 'spareParts.catalog.mergedRows' | translate }})
+      }
       @if (importSummary.unresolvedCount) {
         {{ importSummary.unresolvedCount }} {{ 'spareParts.catalog.skippedRows' | translate }}
       }

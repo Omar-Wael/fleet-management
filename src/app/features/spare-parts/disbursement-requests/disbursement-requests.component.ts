@@ -12,8 +12,7 @@ import {
 import { VehiclesService } from '../../../core/services/vehicles.service';
 import { TechniciansService } from '../../../core/services/technicians.service';
 import { SparePartsService } from '../../../core/services/spare-parts.service';
-import { forkJoin, of, from } from 'rxjs';
-import { switchMap, concatMap, toArray } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 import {
   DisbursementStatus,
   MaintenanceWorkshop,
@@ -295,18 +294,18 @@ export class DisbursementRequestsComponent implements OnInit {
           label: this.i18n.t(this.statusLabelKeys[s]),
         })),
       },
-      // {
-      //   key: 'dateFrom',
-      //   label: this.i18n.t('common.from'),
-      //   value: this.currentQuery.filters['dateFrom'] ?? '',
-      //   type: 'date',
-      // },
-      // {
-      //   key: 'dateTo',
-      //   label: this.i18n.t('common.to'),
-      //   value: this.currentQuery.filters['dateTo'] ?? '',
-      //   type: 'date',
-      // },
+      {
+        key: 'dateFrom',
+        label: this.i18n.t('common.from'),
+        value: this.currentQuery.filters['dateFrom'] ?? '',
+        type: 'date',
+      },
+      {
+        key: 'dateTo',
+        label: this.i18n.t('common.to'),
+        value: this.currentQuery.filters['dateTo'] ?? '',
+        type: 'date',
+      },
       {
         key: 'vehicleId',
         label: this.i18n.t('spareParts.disbursement.vehicle'),
@@ -469,7 +468,14 @@ export class DisbursementRequestsComponent implements OnInit {
   }
 
   // -------------------------------------------------------------
-  // Bulk import — 1 ITEM per row
+  // Bulk import — one or more items per row
+  //
+  // • Classic style (still supported): one part + one qty per row.
+  // • Multi style: "Part A, Part B" in Part column and "4, 2" in Qty
+  //   → expands to two line items (Part A × 4, Part B × 2).
+  //   If fewer qtys than parts are given, remaining parts default to 1.
+  //   If more qtys than parts, extra qtys are ignored.
+  //
   // Rows sharing the same Request Number (or Vehicle+Technicians+Notes)
   // are grouped into one disbursement request.
   // Columns: Request Number | Vehicle Plate | Technician Names |
@@ -494,8 +500,9 @@ export class DisbursementRequestsComponent implements OnInit {
         'Request Number': '',
         'Vehicle Plate': 'ABC-1234',
         'Technician Names': 'Ahmed Ali, Khaled Omar',
-        'Part Code or Name': 'Oil Filter',
-        Qty: 2,
+        // Example of multi-item row: "Oil Filter, Air Filter" + "4, 2"
+        'Part Code or Name': 'Oil Filter, Air Filter',
+        Qty: '4, 2',
         Condition: 'new, used, imported',
         'Has Sample': 'false',
         'Requested At': '2026-08-29',
@@ -531,13 +538,31 @@ export class DisbursementRequestsComponent implements OnInit {
           return '';
         };
 
-        // 1 item per row
+        // One Excel row can hold multiple parts (comma-separated) with matching
+        // quantities (also comma-separated). Expand each physical row into one
+        // or more logical item rows so the rest of the pipeline stays unchanged.
         const normalized = rawRows
-          .map((r) => {
+          .flatMap((r) => {
             const rawSample = getCell(r, 'Has Sample', 'has_sample', 'sample').toLowerCase();
-            return {
+            const plate = getCell(r, 'Vehicle Plate', 'plate', 'plate_number');
+            const partCell = getCell(r, 'Part Code or Name', 'part', 'part_name', 'part_code');
+            const qtyCell = getCell(r, 'Qty', 'quantity', 'qty') || '1';
+
+            const partNames = partCell
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
+            const qtys = qtyCell.split(',').map((s) => {
+              const n = Number(String(s).trim());
+              return Number.isFinite(n) && n > 0 ? n : 1;
+            });
+
+            // No parts → nothing to emit for this row
+            if (!partNames.length) return [];
+
+            const base = {
               request_number: getCell(r, 'Request Number', 'request_number') || undefined,
-              plate: getCell(r, 'Vehicle Plate', 'plate', 'plate_number'),
+              plate,
               technicians: getCell(
                 r,
                 'Technician Names',
@@ -545,13 +570,18 @@ export class DisbursementRequestsComponent implements OnInit {
                 'technician_names',
                 'technician',
               ),
-              part: getCell(r, 'Part Code or Name', 'part', 'part_name', 'part_code'),
-              qty: Number(getCell(r, 'Qty', 'quantity', 'qty') || '1') || 1,
               condition: (getCell(r, 'Condition', 'condition') || 'new').toLowerCase(),
               has_sample: rawSample === 'true' || rawSample === '1' || rawSample === 'yes',
               requested_at: getCell(r, 'Requested At', 'requested_at', 'requested at') || null,
               notes: getCell(r, 'Notes', 'notes') || null,
             };
+
+            return partNames.map((part, idx) => ({
+              ...base,
+              part,
+              // Pair by index; extra parts get qty 1; extra qtys are ignored
+              qty: qtys[idx] ?? 1,
+            }));
           })
           .filter((r) => r.plate && r.part);
 
@@ -656,19 +686,51 @@ export class DisbursementRequestsComponent implements OnInit {
               return;
             }
 
+            // Cache of spare parts created during THIS import run, keyed by
+            // trimmed/lower-cased free-text name. Without this cache, the same
+            // new item repeated across multiple requests in one import file
+            // would be inserted into spare_parts once per occurrence instead
+            // of once overall, because partByCode/partByName are a snapshot
+            // taken before the import started and are never refreshed.
+            const newlyCreatedParts = new Map<string, string>();
+
             const ensurePartId = async (item: {
               spare_part_id: string | null;
               free_name: string;
             }): Promise<string> => {
               if (item.spare_part_id) return item.spare_part_id;
-              const part = await this.sparePartsService
-                .create({
-                  name_ar: item.free_name,
-                  name_en: item.free_name,
-                  current_stock_qty: 0,
-                })
-                .toPromise();
-              return part!.id;
+
+              const nameKey = item.free_name.trim().toLowerCase();
+              const cached = newlyCreatedParts.get(nameKey);
+              if (cached) return cached;
+
+              try {
+                const part = await this.sparePartsService
+                  .create({
+                    name_ar: item.free_name,
+                    name_en: item.free_name,
+                    current_stock_qty: 0,
+                  })
+                  .toPromise();
+
+                newlyCreatedParts.set(nameKey, part!.id);
+                return part!.id;
+              } catch (err: any) {
+                // 23505 = unique_violation on the name_ar/name_en unique
+                // indexes — a part with this name exists but wasn't in our
+                // initial partByName snapshot (created after this import
+                // started). Re-look-up instead of failing the whole import.
+                if (err?.code === '23505') {
+                  const dup = await this.sparePartsService
+                    .findDuplicateByName(item.free_name, item.free_name)
+                    .toPromise();
+                  if (dup) {
+                    newlyCreatedParts.set(nameKey, dup.id);
+                    return dup.id;
+                  }
+                }
+                throw err;
+              }
             };
 
             (async () => {

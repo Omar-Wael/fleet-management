@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -18,18 +18,29 @@ import {
 } from '../../../core/models/fleet.models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { SharedSearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.models';
 
 @Component({
   selector: 'app-price-intelligence',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, FormsModule, TranslatePipe],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    ReactiveFormsModule,
+    FormsModule,
+    TranslatePipe,
+    SharedSearchableSelectComponent,
+  ],
   templateUrl: './price-intelligence.component.html',
   styleUrls: ['./price-intelligence.component.scss'],
-changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PriceIntelligenceComponent implements OnInit {
   parts: SparePart[] = [];
   vendors: ExternalWorkshop[] = [];
+  partOptions: SearchableSelectOption[] = [];
+  vendorOptions: SearchableSelectOption[] = [];
   lookupsLoading = true;
   lookupsError: string | null = null;
 
@@ -69,11 +80,23 @@ export class PriceIntelligenceComponent implements OnInit {
       next: ({ parts, vendors }) => {
         this.parts = parts;
         this.vendors = vendors;
+        this.partOptions = parts.map((p) => ({
+          value: p.id,
+          label: p.name_ar || p.name_en || p.id,
+          sublabel: p.name_en && p.name_en !== p.name_ar ? p.name_en : p.part_code || undefined,
+        }));
+        this.vendorOptions = vendors.map((v) => ({
+          value: v.id,
+          label: v.name,
+        }));
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.lookupsError = err instanceof Error ? err.message : this.i18n.t('spareParts.disbursementForm.lookupsError');
+        this.lookupsError =
+          err instanceof Error
+            ? err.message
+            : this.i18n.t('spareParts.disbursementForm.lookupsError');
         this.lookupsLoading = false;
         this.cdr.markForCheck();
       },
@@ -90,6 +113,7 @@ export class PriceIntelligenceComponent implements OnInit {
     if (!this.selectedPartId) {
       this.history = [];
       this.trend = [];
+      this.cdr.markForCheck();
       return;
     }
     this.loadDetail();
@@ -98,20 +122,24 @@ export class PriceIntelligenceComponent implements OnInit {
   private loadDetail(): void {
     this.detailLoading = true;
     this.detailError = null;
+    this.cdr.markForCheck();
 
     forkJoin({
       history: this.sparePartsService.getPriceHistory(this.selectedPartId),
       trend: this.sparePartsService.getPriceTrend(this.selectedPartId),
     }).subscribe({
       next: ({ history, trend }) => {
+        this.detailLoading = false;
         this.history = history;
         this.trend = trend;
-        this.detailLoading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.detailError = err instanceof Error ? err.message : this.i18n.t('spareParts.priceIntelligence.detailError');
         this.detailLoading = false;
+        this.detailError =
+          err instanceof Error
+            ? err.message
+            : this.i18n.t('spareParts.priceIntelligence.detailError');
         this.cdr.markForCheck();
       },
     });
@@ -121,10 +149,12 @@ export class PriceIntelligenceComponent implements OnInit {
     this.saveError = null;
     this.form.reset({ quantity: 1, purchase_date: new Date().toISOString().slice(0, 10) });
     this.formOpen = true;
+    this.cdr.markForCheck();
   }
 
   cancelLogForm(): void {
     this.formOpen = false;
+    this.cdr.markForCheck();
   }
 
   submit(): void {
@@ -147,7 +177,11 @@ export class PriceIntelligenceComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          this.saveError = err instanceof Error ? err.message : this.i18n.t('spareParts.priceIntelligence.saveError');
+          this.saveError =
+            err instanceof Error
+              ? err.message
+              : this.i18n.t('spareParts.priceIntelligence.saveError');
+          this.cdr.markForCheck();
         },
       });
   }
