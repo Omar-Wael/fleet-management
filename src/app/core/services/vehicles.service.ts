@@ -153,6 +153,21 @@ export class VehiclesService {
     );
   }
 
+  listDistinctModels(): Observable<string[]> {
+    return fromSupabase<{ model: string | null }[]>(
+      this.client.from('vehicles').select('model').not('model', 'is', null).order('model'),
+    ).pipe(
+      map((rows) => {
+        const set = new Set<string>();
+        for (const r of rows) {
+          const m = (r.model || '').trim();
+          if (m) set.add(m);
+        }
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+      }),
+    );
+  }
+
   /** Server-side counterpart to list() for the Vehicles grid — drives SharedDataTableComponent. */
   listPaged(query: DataTableQuery): Observable<PagedResult<VehicleWithLookups>> {
     const from = (query.page - 1) * query.pageSize;
