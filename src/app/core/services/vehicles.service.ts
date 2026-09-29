@@ -82,47 +82,89 @@ export class VehiclesService {
    * the alert banner's "Review" link (licenses/maintenance due this
    * month), restricting the grid to just those vehicles.
    */
+  // private buildGridQuery(query: DataTableQuery, withCount: boolean) {
+  //   const fuelFilter = (query.filters['fuel_type'] as string | undefined)?.trim();
+  //   // Filtering on an embedded relation requires !inner, otherwise PostgREST
+  //   // ignores the nested filter on a left join and fuel_type appears empty.
+  //   const select = fuelFilter
+  //     ? `
+  //     *,
+  //     vehicle_types (*),
+  //     operating_departments (*),
+  //     maintenance_workshops (*),
+  //     engines:current_engine_id (*),
+  //     garage_locations:current_garage_location_id (*)
+  //   `
+  //     : VEHICLE_LOOKUP_SELECT;
+
+  //   let q = this.client.from('vehicles').select(select, withCount ? { count: 'exact' } : undefined);
+
+  //   if (query.filters['operating_department_id']) {
+  //     q = q.eq('operating_department_id', query.filters['operating_department_id']);
+  //   }
+  //   if (query.filters['maintenance_workshop_id']) {
+  //     q = q.eq('maintenance_workshop_id', query.filters['maintenance_workshop_id']);
+  //   }
+  //   if (query.filters['status']) {
+  //     q = q.eq('status', query.filters['status']);
+  //   }
+  //   if (query.filters['vehicle_type_id']) {
+  //     q = q.eq('vehicle_type_id', query.filters['vehicle_type_id']);
+  //   }
+  //   if (query.filters['make']) {
+  //     q = q.ilike('make', query.filters['make']);
+  //   }
+  //   if (query.filters['manufacture_year']) {
+  //     q = q.eq('manufacture_year', Number(query.filters['manufacture_year']));
+  //   }
+  //   if (fuelFilter) {
+  //     q = q.eq('fuel_type', fuelFilter);
+  //   }
+  //   if (query.filters['alertPlates']) {
+  //     q = q.in('plate_number', query.filters['alertPlates'].split(','));
+  //   }
+
+  //   const term = query.search.trim();
+  //   if (term) {
+  //     const escaped = term.replace(/[%,]/g, '');
+  //     q = q.or(
+  //       `plate_number.ilike.%${escaped}%,chassis_number.ilike.%${escaped}%,make.ilike.%${escaped}%,model.ilike.%${escaped}%`,
+  //     );
+  //   }
+
+  //   const sortField = query.sort?.field ?? 'plate_number';
+  //   const sortAscending = query.sort ? query.sort.dir === 'asc' : true;
+  //   return q.order(sortField, { ascending: sortAscending });
+  // }
   private buildGridQuery(query: DataTableQuery, withCount: boolean) {
-    const fuelFilter = (query.filters['fuel_type'] as string | undefined)?.trim();
-    // Filtering on an embedded relation requires !inner, otherwise PostgREST
-    // ignores the nested filter on a left join and fuel_type appears empty.
-    const select = fuelFilter
-      ? `
-      *,
-      vehicle_types (*),
-      operating_departments (*),
-      maintenance_workshops (*),
-      engines:current_engine_id (*),
-      garage_locations:current_garage_location_id (*)
-    `
-      : VEHICLE_LOOKUP_SELECT;
+    // Multi-select filters arrive as comma-joined strings ("a,b,c") — turn them into arrays.
+    const toList = (value: unknown): string[] =>
+      String(value ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-    let q = this.client.from('vehicles').select(select, withCount ? { count: 'exact' } : undefined);
+    const departments = toList(query.filters['operating_department_id']);
+    const workshops = toList(query.filters['maintenance_workshop_id']);
+    const statuses = toList(query.filters['status']);
+    const vehicleTypes = toList(query.filters['vehicle_type_id']);
+    const makes = toList(query.filters['make']);
+    const years = toList(query.filters['manufacture_year']).map(Number).filter(Number.isFinite);
+    const fuelTypes = toList(query.filters['fuel_type']);
+    const alertPlates = toList(query.filters['alertPlates']);
 
-    if (query.filters['operating_department_id']) {
-      q = q.eq('operating_department_id', query.filters['operating_department_id']);
-    }
-    if (query.filters['maintenance_workshop_id']) {
-      q = q.eq('maintenance_workshop_id', query.filters['maintenance_workshop_id']);
-    }
-    if (query.filters['status']) {
-      q = q.eq('status', query.filters['status']);
-    }
-    if (query.filters['vehicle_type_id']) {
-      q = q.eq('vehicle_type_id', query.filters['vehicle_type_id']);
-    }
-    if (query.filters['make']) {
-      q = q.ilike('make', query.filters['make']);
-    }
-    if (query.filters['manufacture_year']) {
-      q = q.eq('manufacture_year', Number(query.filters['manufacture_year']));
-    }
-    if (fuelFilter) {
-      q = q.eq('fuel_type', fuelFilter);
-    }
-    if (query.filters['alertPlates']) {
-      q = q.in('plate_number', query.filters['alertPlates'].split(','));
-    }
+    let q = this.client
+      .from('vehicles')
+      .select(VEHICLE_LOOKUP_SELECT, withCount ? { count: 'exact' } : undefined);
+
+    if (departments.length) q = q.in('operating_department_id', departments);
+    if (workshops.length) q = q.in('maintenance_workshop_id', workshops);
+    if (statuses.length) q = q.in('status', statuses);
+    if (vehicleTypes.length) q = q.in('vehicle_type_id', vehicleTypes);
+    if (makes.length) q = q.in('make', makes);
+    if (years.length) q = q.in('manufacture_year', years);
+    if (fuelTypes.length) q = q.in('fuel_type', fuelTypes);
+    if (alertPlates.length) q = q.in('plate_number', alertPlates);
 
     const term = query.search.trim();
     if (term) {
