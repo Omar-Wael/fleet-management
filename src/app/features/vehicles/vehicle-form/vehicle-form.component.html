@@ -89,12 +89,24 @@
 
           <label class="field">
             <span>{{ 'vehicles.make' | translate }}</span>
-            <input type="text" formControlName="make" />
+            <app-searchable-select
+              formControlName="make"
+              [options]="makeOptions"
+              [creatable]="true"
+              [clearable]="true"
+              [placeholder]="'vehicles.make' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field">
             <span>{{ 'vehicles.model' | translate }}</span>
-            <input type="text" formControlName="model" />
+            <app-searchable-select
+              formControlName="model"
+              [options]="modelOptions"
+              [creatable]="true"
+              [clearable]="true"
+              [placeholder]="'vehicles.model' | translate"
+            ></app-searchable-select>
           </label>
 
           <label class="field">

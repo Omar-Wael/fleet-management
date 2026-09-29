@@ -37,6 +37,10 @@ import { SearchableSelectOption } from './searchable-select.models';
  *   matching options and passes them back in via `[options]` (used for
  *   very large lookups, e.g. picking one vehicle out of a large fleet).
  *
+ * Set `[creatable]="true"` to allow free-text values that are not in
+ * `options` (e.g. vehicle make / model). Typing a new term shows an
+ * "Add …" row; selecting it writes the typed string to the control.
+ *
  * Usage:
  *   <app-searchable-select
  *     [options]="workshopOptions"
@@ -68,6 +72,13 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
   @Input() serverSearch = false;
   @Input() loading = false;
   @Input() noMatchesText = '';
+  /**
+   * When true, the user may type a value that is not in `options` and
+   * confirm it (Enter or the synthetic "Add …" row). The free-text string
+   * is written to the form control as-is. Useful for open vocabularies
+   * such as vehicle make / model.
+   */
+  @Input() creatable = false;
 
   @Output() search = new EventEmitter<string>();
 
@@ -155,6 +166,7 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
   onSearchInput(term: string): void {
     this.searchTerm = term;
     this.highlightedIndex = 0;
+    this.cdr.markForCheck();
 
     if (this.serverSearch) {
       if (this.searchDebounceHandle) clearTimeout(this.searchDebounceHandle);
@@ -164,12 +176,13 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
 
   get filteredOptions(): SearchableSelectOption[] {
     const base = this.serverSearch ? this.options : this.searchFilteredOptions();
-    if (!this.multiple) return base;
+    const withCreate = this.appendCreateOption(base);
+    if (!this.multiple) return withCreate;
 
     // Selected options float to the top. Array.prototype.sort is stable
     // (ES2019+), so ties (both selected or both unselected) keep their
     // original relative order.
-    return [...base].sort((a, b) => Number(this.isSelected(b)) - Number(this.isSelected(a)));
+    return [...withCreate].sort((a, b) => Number(this.isSelected(b)) - Number(this.isSelected(a)));
   }
 
   private searchFilteredOptions(): SearchableSelectOption[] {
@@ -179,6 +192,21 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
       (o) =>
         o.label.toLowerCase().includes(term) || (o.sublabel ?? '').toLowerCase().includes(term),
     );
+  }
+
+  /** Synthetic option so the user can commit free text when `creatable`. */
+  private appendCreateOption(base: SearchableSelectOption[]): SearchableSelectOption[] {
+    if (!this.creatable || this.multiple) return base;
+    const term = this.searchTerm.trim();
+    if (!term) return base;
+    const alreadyExists = this.options.some(
+      (o) =>
+        o.value.toLowerCase() === term.toLowerCase() ||
+        o.label.toLowerCase() === term.toLowerCase(),
+    );
+    if (alreadyExists) return base;
+    const label = this.i18n.t('shared.searchableSelect.addNew').replace('{term}', term);
+    return [...base, { value: term, label, sublabel: term }];
   }
 
   // ---- selection ----
@@ -260,11 +288,18 @@ export class SharedSearchableSelectComponent implements ControlValueAccessor, On
     if (this.multiple) {
       const values = Array.isArray(this.value) ? this.value : [];
       return values
-        .map((v) => this.options.find((o) => o.value === v)?.label)
+        .map(
+          (v) =>
+            this.options.find((o) => o.value === v)?.label ??
+            (this.creatable ? String(v) : undefined),
+        )
         .filter((l): l is string => !!l);
     }
+    if (this.value == null || this.value === '') return [];
     const match = this.options.find((o) => o.value === this.value);
-    return match ? [match.label] : [];
+    if (match) return [match.label];
+    // Creatable / free-text value not present in options — still show it
+    return [String(this.value)];
   }
 
   get hasSelection(): boolean {

@@ -218,4 +218,5 @@ export const VEHICLES_TRANSLATIONS: Record<string, TranslationEntry> = {
   'vehicles.selectFuelType': { en: 'Select fuel type…', ar: 'اختر نوع الوقود…' },
   'vehicles.fuelFromEngine': { en: 'From engine', ar: 'من المحرك' },
   'vehicles.fuelTypeHint': { en: 'Select fuel type', ar: 'اختر نوع الوقود' },
+  'shared.searchableSelect.addNew': { en: 'Add "{term}"', ar: 'إضافة "{term}"' },
 };

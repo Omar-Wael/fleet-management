@@ -79,6 +79,8 @@ export class VehicleFormComponent implements OnInit, OnChanges {
   garageLocationOptions: SearchableSelectOption[] = [];
   engineOptions: SearchableSelectOption[] = [];
   odometerUnitOptions: SearchableSelectOption[] = [];
+  makeOptions: SearchableSelectOption[] = [];
+  modelOptions: SearchableSelectOption[] = [];
 
   readonly statusOptions = VEHICLE_STATUS_OPTIONS;
   statusSelectOptions: SearchableSelectOption[] = [];
@@ -198,6 +200,7 @@ export class VehicleFormComponent implements OnInit, OnChanges {
         color: this.vehicle.color,
         notes: this.vehicle.notes,
       });
+      this.ensureCurrentMakeModelInOptions();
     } else {
       this.form.reset({
         vehicle_type_id: '',
@@ -212,6 +215,20 @@ export class VehicleFormComponent implements OnInit, OnChanges {
     }
   }
 
+  /** If the vehicle being edited has a make/model not yet in the distinct
+   *  lists (e.g. lookups loaded before patch, or a one-off value), inject
+   *  it so the searchable select can display the current selection. */
+  private ensureCurrentMakeModelInOptions(): void {
+    const make = (this.form.value.make || this.vehicle?.make || '').trim();
+    if (make && !this.makeOptions.some((o) => o.value.toLowerCase() === make.toLowerCase())) {
+      this.makeOptions = [{ value: make, label: make }, ...this.makeOptions];
+    }
+    const model = (this.form.value.model || this.vehicle?.model || '').trim();
+    if (model && !this.modelOptions.some((o) => o.value.toLowerCase() === model.toLowerCase())) {
+      this.modelOptions = [{ value: model, label: model }, ...this.modelOptions];
+    }
+  }
+
   private loadLookups(): void {
     this.lookupsLoading = true;
     this.cdr.markForCheck();
@@ -223,8 +240,10 @@ export class VehicleFormComponent implements OnInit, OnChanges {
       workshops: this.lookupsService.listMaintenanceWorkshops(),
       garageLocations: this.lookupsService.listGarageLocations(),
       engines: this.enginesService.list(),
+      makes: this.vehiclesService.listDistinctMakes(),
+      models: this.vehiclesService.listDistinctModels(),
     }).subscribe({
-      next: ({ vehicleTypes, departments, workshops, garageLocations, engines }) => {
+      next: ({ vehicleTypes, departments, workshops, garageLocations, engines, makes, models }) => {
         this.vehicleTypes = vehicleTypes;
         this.departments = departments;
         this.workshops = workshops;
@@ -233,7 +252,7 @@ export class VehicleFormComponent implements OnInit, OnChanges {
 
         this.vehicleTypeOptions = vehicleTypes.map((t) => ({
           value: t.id,
-          label: t.name_en || t.name_ar,
+          label: t.name_ar || t.name_en || '—',
         }));
         this.departmentOptions = departments.map((d) => ({
           value: d.id,
@@ -257,6 +276,12 @@ export class VehicleFormComponent implements OnInit, OnChanges {
             [e.manufacturer, e.model_name].filter(Boolean).join(' ') ||
             this.i18n.t('vehicles.unknownModel'),
         }));
+
+        // Distinct free-text values already stored on vehicles — user can
+        // also type a brand-new make/model via [creatable]="true".
+        this.makeOptions = makes.map((m) => ({ value: m, label: m }));
+        this.modelOptions = models.map((m) => ({ value: m, label: m }));
+        this.ensureCurrentMakeModelInOptions();
 
         this.lookupsLoading = false;
         this.cdr.markForCheck();
