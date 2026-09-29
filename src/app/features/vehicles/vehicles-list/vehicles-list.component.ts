@@ -388,6 +388,7 @@ export class VehiclesListComponent implements OnInit {
         key: 'operating_department_id',
         label: this.i18n.t('vehicles.allDepartments'),
         value: this.currentQuery.filters['operating_department_id'] ?? '',
+        multiple: true,
         options: this.departments.map((d) => ({
           value: d.id,
           label: d.name_ar || d.name_en || '',
@@ -397,6 +398,7 @@ export class VehiclesListComponent implements OnInit {
         key: 'maintenance_workshop_id',
         label: this.i18n.t('vehicles.allRepairDepts'),
         value: this.currentQuery.filters['maintenance_workshop_id'] ?? '',
+        multiple: true,
         options: this.workshops.map((w) => ({
           value: w.id,
           label: `${w.name_ar || w.name_en} (${this.formatWorkshopType(w.workshop_type)})`,
@@ -405,6 +407,7 @@ export class VehiclesListComponent implements OnInit {
       {
         key: 'vehicle_type_id',
         label: this.i18n.t('vehicles.allVehicleTypes'),
+        multiple: true,
         value: this.currentQuery.filters['vehicle_type_id'] ?? '',
         options: this.vehicleTypes.map((vt) => ({
           value: vt.id,
@@ -413,18 +416,21 @@ export class VehiclesListComponent implements OnInit {
       },
       {
         key: 'make',
+        multiple: true,
         label: this.i18n.t('vehicles.allMakes'),
         value: this.currentQuery.filters['make'] ?? '',
         options: this.distinctMakes.map((m) => ({ value: m, label: m })),
       },
       {
         key: 'manufacture_year',
+        multiple: true,
         label: this.i18n.t('vehicles.allYears'),
         value: this.currentQuery.filters['manufacture_year'] ?? '',
         options: years.map((y) => ({ value: y, label: y })),
       },
       {
         key: 'fuel_type',
+        multiple: true,
         label: this.i18n.t('vehicles.allFuelTypes'),
         value: this.currentQuery.filters['fuel_type'] ?? '',
         options: fuelTypes.map((f) => {
@@ -435,6 +441,7 @@ export class VehiclesListComponent implements OnInit {
       },
       {
         key: 'status',
+        multiple: true,
         label: this.i18n.t('vehicles.allStatuses'),
         value: this.currentQuery.filters['status'] ?? '',
         options: this.statusOptions.map((s) => ({
