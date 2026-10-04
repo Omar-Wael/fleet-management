@@ -162,22 +162,16 @@ export class GarageLodgingListComponent implements OnInit {
         header: this.i18n.t('garageLodging.garage'),
         render: (l) => l.garage_locations?.garage_name || '—',
       },
-      {
-        key: 'zone',
-        header: this.i18n.t('garageLodging.zone'),
-        render: (l) => l.garage_locations?.zone_label || '—',
-      },
+      // {
+      //   key: 'zone',
+      //   header: this.i18n.t('garageLodging.zone'),
+      //   render: (l) => l.garage_locations?.zone_label || '—',
+      // },
       {
         key: 'reason',
         header: this.i18n.t('garageLodging.reason'),
         truncate: true,
         render: (l) => l.reason,
-      },
-      {
-        key: 'notes',
-        header: this.i18n.t('garageLodging.notes'),
-        truncate: true,
-        render: (l) => l.notes || '—',
       },
       {
         key: 'entry_date',
@@ -196,7 +190,7 @@ export class GarageLodgingListComponent implements OnInit {
         key: 'duration',
         header: this.i18n.t('garageLodging.duration'),
         mono: true,
-        render: (l) => (l.duration_days ?? '—') + '',
+        render: (l) => (l.duration_days ?? this.calculateDuration(l.entry_date, l.exit_date)) + '',
       },
       {
         key: 'status',
@@ -206,6 +200,12 @@ export class GarageLodgingListComponent implements OnInit {
           l.exit_date
             ? { text: this.i18n.t('garageLodging.statusClosed'), variant: 'ok' }
             : { text: this.i18n.t('garageLodging.statusInGarage'), variant: 'warn' },
+      },
+      {
+        key: 'notes',
+        header: this.i18n.t('garageLodging.notes'),
+        truncate: true,
+        render: (l) => l.notes || '—',
       },
       {
         key: 'actions',
@@ -391,6 +391,19 @@ export class GarageLodgingListComponent implements OnInit {
           err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
       },
     });
+  }
+
+  calculateDuration(entryDate: string, exitDate: string | null): number | null {
+    if (!entryDate) return null;
+
+    const entry = new Date(entryDate);
+    const exit = exitDate ? new Date(exitDate) : new Date();
+
+    // Convert milliseconds to days (1000 ms * 60 s * 60 m * 24 h)
+    const diffInMs = exit.getTime() - entry.getTime();
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    return Math.round(diffInDays);
   }
 
   // -------------------------------------------------------------

@@ -18,7 +18,10 @@ export const GARAGE_LODGING_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'Save the record first to attach images.',
     ar: 'احفظ السجل أولاً لإضافة الصور.',
   },
-  'garageLodging.loadingFormOptions': { en: 'Loading form options…', ar: 'جارٍ تحميل خيارات النموذج…' },
+  'garageLodging.loadingFormOptions': {
+    en: 'Loading form options…',
+    ar: 'جارٍ تحميل خيارات النموذج…',
+  },
   'garageLodging.loadingList': {
     en: 'Loading garage lodging records…',
     ar: 'جارٍ تحميل سجلات مبيت الورشة…',
@@ -44,11 +47,20 @@ export const GARAGE_LODGING_TRANSLATIONS: Record<string, TranslationEntry> = {
   'garageLodging.zone': { en: 'Zone', ar: 'المنطقة' },
   'garageLodging.duration': { en: 'Duration', ar: 'المدة' },
   'garageLodging.allVehicles': { en: 'All Vehicles', ar: 'كل السيارات' },
-  'garageLodging.currentlyInGarageOnly': { en: 'Currently in garage only', ar: 'المودعة حاليًا فقط' },
+  'garageLodging.currentlyInGarageOnly': {
+    en: 'Currently in garage only',
+    ar: 'المودعة حاليًا فقط',
+  },
 
   // Vehicle stat banner
-  'garageLodging.loadingVehicleStat': { en: 'Loading vehicle stat…', ar: 'جارٍ تحميل إحصائية السيارة…' },
-  'garageLodging.visitsThisYear': { en: 'garage visit(s) this year', ar: 'زيارة/زيارات للورشة هذا العام' },
+  'garageLodging.loadingVehicleStat': {
+    en: 'Loading vehicle stat…',
+    ar: 'جارٍ تحميل إحصائية السيارة…',
+  },
+  'garageLodging.visitsThisYear': {
+    en: 'garage visit(s) this year',
+    ar: 'زيارة/زيارات للورشة هذا العام',
+  },
   'garageLodging.totalDaysLodged': { en: 'total day(s) lodged', ar: 'إجمالي أيام المبيت' },
   'garageLodging.noVisitsThisYear': {
     en: 'No garage visits recorded for this vehicle this year.',
@@ -74,4 +86,31 @@ export const GARAGE_LODGING_TRANSLATIONS: Record<string, TranslationEntry> = {
     en: 'No rows could be imported. Check that the plate number matches an existing vehicle.',
     ar: 'لم يتم استيراد أي صف. تأكد من أن رقم اللوحة يطابق سيارة موجودة.',
   },
+  // Drawer / Detail View
+  'garageLodging.detailTitle': { en: 'Lodging Record Details', ar: 'تفاصيل سجل المبيت' },
+  'garageLodging.sectionRecord': { en: 'Record Overview', ar: 'نظرة عامة على السجل' },
+  'garageLodging.sectionThisYear': { en: 'Current Year Summary', ar: 'ملخص العام الحالي' },
+  'garageLodging.sectionByYear': { en: 'Visits by Year', ar: 'الزيارات حسب السنة' },
+  'garageLodging.sectionByMonth': { en: 'Visits by Month', ar: 'الزيارات حسب الشهر' },
+  'garageLodging.sectionHistory': { en: 'Vehicle Lodging History', ar: 'سجل مبيت السيارة' },
+  'garageLodging.loadingAnalysis': {
+    en: 'Loading history & analysis…',
+    ar: 'جارٍ تحميل السجل والتحليلات…',
+  },
+  'garageLodging.noHistory': {
+    en: 'No historical lodging records found for this vehicle.',
+    ar: 'لا يوجد سجل مبيت سابق لهذه السيارة.',
+  },
+  'garageLodging.year': { en: 'Year', ar: 'السنة' },
+  'garageLodging.visits': { en: 'Visits', ar: 'الزيارات' },
+  'garageLodging.totalDays': { en: 'Total Days', ar: 'إجمالي الأيام' },
+  'garageLodging.month': { en: 'Month', ar: 'الشهر' },
+  'garageLodging.days': { en: 'days', ar: 'أيام' },
+
+  // External namespaces (if defined within the same translation object)
+  'common.close': { en: 'Close', ar: 'إغلاق' },
+  'common.status': { en: 'Status', ar: 'الحالة' },
+  'vehicles.vehicleType': { en: 'Vehicle Type', ar: 'نوع السيارة' },
+  'vehicles.make': { en: 'Make', ar: 'الماركة' },
+  'vehicles.operatingDept': { en: 'Operating Department', ar: 'القسم المشغل' },
 };

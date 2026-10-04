@@ -666,6 +666,38 @@ export interface VPartPriceTrend {
 export interface VAlertLicenseDue extends VehicleLicensing {
   plate_number: string;
   operating_department_id: string | null;
+  /** Present when reading from v_alert_licensing_due */
+  license_overdue?: boolean;
+  license_due_soon?: boolean;
+  insurance_overdue?: boolean;
+  insurance_due_soon?: boolean;
+  inspection_overdue?: boolean;
+  inspection_due_soon?: boolean;
+}
+
+export interface VDashboardKpiCounts {
+  vehicles: number;
+  vehicles_active: number;
+  vehicles_out_of_service: number;
+  work_orders_open: number;
+  work_orders_period: number;
+  work_orders_prev: number;
+  overhauls_open: number;
+  disbursement_requested: number;
+  disbursement_period: number;
+  disbursement_prev: number;
+  parts_below_reorder: number;
+  licenses_overdue: number;
+  spend_period: number;
+  spend_prev: number;
+}
+
+export interface VDashboardKpiSnapshot {
+  period: { from: string; to: string };
+  previous_period: { from: string; to: string };
+  counts: VDashboardKpiCounts;
+  vehicle_status: { status: string; count: number }[];
+  disbursement_status: { status: string; count: number }[];
 }
 
 export interface VAlertMaintenanceDue extends MaintenanceSchedule {

@@ -115,7 +115,7 @@ export class GarageLodgingDetailDrawerComponent implements OnChanges {
       if (!entry) continue;
       const year = Number(entry.slice(0, 4));
       const yearMonth = entry.slice(0, 7); // YYYY-MM
-      const days = row.duration_days ?? 0;
+      const days = row.duration_days ?? this.calculateDuration(row.entry_date, row.exit_date) ?? 0;
 
       const m = byMonth.get(yearMonth) ?? { visits: 0, totalDays: 0 };
       m.visits += 1;
@@ -162,5 +162,18 @@ export class GarageLodgingDetailDrawerComponent implements OnChanges {
 
   close(): void {
     this.closed.emit();
+  }
+
+  calculateDuration(entryDate: string, exitDate: string | null): number | null {
+    if (!entryDate) return null;
+
+    const entry = new Date(entryDate);
+    const exit = exitDate ? new Date(exitDate) : new Date();
+
+    // Convert milliseconds to days (1000 ms * 60 s * 60 m * 24 h)
+    const diffInMs = exit.getTime() - entry.getTime();
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    return Math.round(diffInDays);
   }
 }

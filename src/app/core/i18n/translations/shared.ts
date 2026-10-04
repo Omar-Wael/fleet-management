@@ -19,6 +19,8 @@ export const SHARED_TRANSLATIONS: Record<string, TranslationEntry> = {
     ar: 'سيارات مستحقة للصيانة الوقائية',
   },
   'shared.alertBanner.review': { en: 'Review', ar: 'مراجعة' },
+  'shared.alertBanner.insurance': { en: 'insurance', ar: 'تأمين' },
+  'shared.alertBanner.inspection': { en: 'inspection', ar: 'فحص' },
   'shared.alertBanner.allClear': {
     en: 'No licenses or preventive maintenance due this month.',
     ar: 'لا توجد رخص أو صيانة وقائية مستحقة هذا الشهر.',

@@ -2,15 +2,75 @@
   @if (loading) {
     <app-loading-spinner [overlay]="true" message="dashboard.loadingData"></app-loading-spinner>
   }
+
   <header class="dashboard-header">
     <div>
       <p class="dashboard-eyebrow">{{ 'dashboard.eyebrow' | translate }}</p>
       <h1 class="dashboard-title">{{ 'dashboard.title' | translate }}</h1>
+      @if (overview.loadedAt) {
+        <p class="dashboard-updated">
+          {{ 'dashboard.lastUpdated' | translate }}:
+          {{ overview.loadedAt | date: 'dd/MM/yyyy HH:mm' }}
+        </p>
+      }
     </div>
     <button type="button" class="refresh-btn" (click)="loadDashboard()" [disabled]="loading">
       {{ (loading ? 'dashboard.refreshing' : 'dashboard.refresh') | translate }}
     </button>
   </header>
+
+  <section class="welcome-banner">
+    <div class="welcome-text">
+      <h2>{{ 'dashboard.welcomeTitle' | translate }}</h2>
+      <p class="welcome-date">{{ today | date: 'fullDate' }}</p>
+      <p class="period-hint">
+        {{ 'dashboard.periodLabel' | translate }}: {{ overview.period.from | date: 'dd/MM/yyyy' }} –
+        {{ overview.period.to | date: 'dd/MM/yyyy' }}
+      </p>
+    </div>
+    <div class="welcome-chips">
+      <span class="chip"
+        >🚗 {{ overview.counts.vehicles }} {{ 'dashboard.chipVehicles' | translate }}</span
+      >
+      <span class="chip"
+        >👷 {{ overview.counts.techniciansActive }}
+        {{ 'dashboard.chipTechnicians' | translate }}</span
+      >
+      <span class="chip"
+        >🏢 {{ overview.counts.departments }} {{ 'dashboard.chipDepartments' | translate }}</span
+      >
+    </div>
+  </section>
+
+  <!-- Global filters -->
+  <section class="filter-bar">
+    <div class="filter-field filter-field--dept">
+      <label>{{ 'dashboard.filterDepartment' | translate }}</label>
+      <app-searchable-select
+        [options]="departmentOptions"
+        [(ngModel)]="filterDepartmentId"
+        [placeholder]="'dashboard.filterAllDepartments' | translate"
+        [searchPlaceholder]="'common.search' | translate"
+        [clearable]="true"
+      ></app-searchable-select>
+    </div>
+    <div class="filter-field">
+      <label>{{ 'dashboard.filterFrom' | translate }}</label>
+      <input type="date" [(ngModel)]="filterDateFrom" />
+    </div>
+    <div class="filter-field">
+      <label>{{ 'dashboard.filterTo' | translate }}</label>
+      <input type="date" [(ngModel)]="filterDateTo" />
+    </div>
+    <div class="filter-actions">
+      <button type="button" class="btn btn--primary" (click)="applyFilters()" [disabled]="loading">
+        {{ 'dashboard.applyFilters' | translate }}
+      </button>
+      <button type="button" class="btn btn--ghost" (click)="clearFilters()" [disabled]="loading">
+        {{ 'dashboard.clearFilters' | translate }}
+      </button>
+    </div>
+  </section>
 
   @if (loadError) {
     <div class="dashboard-error">
@@ -21,195 +81,509 @@
     </div>
   }
 
+  @if (overview.sectionErrors.length) {
+    <div class="dashboard-section-warn">
+      {{ 'dashboard.partialLoadWarning' | translate }}
+      <ul>
+        @for (e of overview.sectionErrors; track e.section) {
+          <li>{{ e.section }}: {{ e.message }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  <!-- Tabs -->
+  <nav class="dashboard-tabs" role="tablist">
+    @for (t of tabs; track t.id) {
+      <button
+        type="button"
+        role="tab"
+        class="tab-btn"
+        [class.tab-btn--active]="activeTab === t.id"
+        [attr.aria-selected]="activeTab === t.id"
+        (click)="setTab(t.id)"
+      >
+        {{ t.labelKey | translate }}
+      </button>
+    }
+  </nav>
+
   <div class="dashboard-content" [class.is-loading]="loading">
-    <section class="welcome-banner">
-      <div class="welcome-text">
-        <h2>{{ 'dashboard.welcomeTitle' | translate }}</h2>
-        <p class="welcome-date">{{ today | date: 'fullDate' }}</p>
-      </div>
-      <div class="welcome-chips">
-        <span class="chip"
-          >🚗 {{ overview.counts.vehicles }} {{ 'dashboard.chipVehicles' | translate }}</span
-        >
-        <span class="chip"
-          >👷 {{ overview.counts.techniciansActive }}
-          {{ 'dashboard.chipTechnicians' | translate }}</span
-        >
-        <span class="chip"
-          >🏢 {{ overview.counts.departments }} {{ 'dashboard.chipDepartments' | translate }}</span
-        >
-      </div>
-    </section>
+    <!-- ========== OVERVIEW ========== -->
+    @if (activeTab === 'overview') {
+      <app-alert-banner
+        [licenses]="overview.licensesDueThisMonth"
+        [maintenance]="overview.maintenanceDueThisMonth"
+        (viewLicenses)="onReviewLicenses()"
+        (viewMaintenance)="onReviewMaintenance()"
+      ></app-alert-banner>
 
-    <app-alert-banner
-      [licenses]="overview.licensesDueThisMonth"
-      [maintenance]="overview.maintenanceDueThisMonth"
-      (viewLicenses)="onReviewLicenses()"
-      (viewMaintenance)="onReviewMaintenance()"
-    ></app-alert-banner>
+      <section class="stat-grid">
+        <a
+          routerLink="/maintenance"
+          class="stat-card stat-card--green"
+          [class.stat-card--alert]="overview.counts.workOrdersOpen > 0"
+        >
+          <span class="stat-value">{{ overview.counts.workOrdersOpen }}</span>
+          <span class="stat-label">{{ 'dashboard.statOpenWorkOrders' | translate }}</span>
+          <span class="stat-delta" [class]="deltaClass(overview.deltas.workOrders)">
+            {{ formatDelta(overview.deltas.workOrders) }}
+            <span class="delta-hint">{{ 'dashboard.vsPrevPeriod' | translate }}</span>
+          </span>
+        </a>
 
-    <section class="stat-grid">
-      <a routerLink="/vehicles" class="stat-card stat-card--blue">
-        <span class="stat-value">{{ overview.counts.vehicles }}</span>
-        <span class="stat-label">{{ 'dashboard.statVehicles' | translate }}</span>
-        <span class="stat-hint"
-          ><b>{{ overview.counts.vehiclesActive }}</b>
-          {{ 'dashboard.vehiclesActiveUnit' | translate }}</span
+        <a
+          routerLink="/vehicles"
+          class="stat-card stat-card--blue"
+          [class.stat-card--alert]="overview.counts.vehiclesOutOfService > 0"
         >
-      </a>
-      <a routerLink="/technicians" class="stat-card stat-card--mint">
-        <span class="stat-value">{{ overview.counts.techniciansActive }}</span>
-        <span class="stat-label">{{ 'dashboard.statTechnicians' | translate }}</span>
-        <span class="stat-hint"
-          ><b>{{ overview.counts.technicians }}</b> {{ 'dashboard.statTotal' | translate }}</span
-        >
-      </a>
-      <a routerLink="/spare-parts/disbursements" class="stat-card stat-card--peach">
-        <span class="stat-value">{{ overview.counts.disbursementRequests }}</span>
-        <span class="stat-label">{{ 'dashboard.statPartsRequests' | translate }}</span>
-        <span class="stat-hint"
-          ><b>{{ overview.counts.disbursementRequested }}</b>
-          {{ 'dashboard.statTotal' | translate }}</span
-        >
-      </a>
-      <a routerLink="/spare-parts/catalog" class="stat-card stat-card--lavender">
-        <span class="stat-value">{{ overview.counts.spareParts }}</span>
-        <span class="stat-label">{{ 'dashboard.statCatalog' | translate }}</span>
-      </a>
-      <a routerLink="/maintenance" class="stat-card stat-card--green">
-        <span class="stat-value">{{ overview.counts.workOrders }}</span>
-        <span class="stat-label">{{ 'dashboard.statWorkOrders' | translate }}</span>
-      </a>
-      <a routerLink="/overhauls" class="stat-card stat-card--pink">
-        <span class="stat-value">{{ overview.counts.overhaulsOpen }}</span>
-        <span class="stat-label">{{ 'dashboard.overhaulsInProgressLabel' | translate }}</span>
-        <span class="stat-hint"
-          ><b>{{ overview.counts.overhaulsTotal }}</b> {{ 'dashboard.statTotal' | translate }}</span
-        >
-      </a>
-      <a routerLink="/settings/departments" class="stat-card">
-        <span class="stat-value">{{ overview.counts.departments }}</span>
-        <span class="stat-label">{{ 'dashboard.statDepartments' | translate }}</span>
-      </a>
-      <div class="stat-card stat-card--gauge">
-        <app-fleet-gauge
-          [value]="fleetHealthPercent"
-          [label]="'dashboard.vehiclesActiveLabel' | translate"
-        ></app-fleet-gauge>
-        <p class="kpi-subline">
-          {{ overview.counts.vehiclesActive }}/{{ overview.counts.vehicles }}
-          {{ 'dashboard.vehiclesActiveUnit' | translate }}
-        </p>
-      </div>
-    </section>
+          <span class="stat-value">{{ overview.counts.vehiclesOutOfService }}</span>
+          <span class="stat-label">{{ 'dashboard.statOutOfService' | translate }}</span>
+          <span class="stat-hint">
+            <b>{{ overview.counts.vehiclesActive }}</b>
+            {{ 'dashboard.vehiclesActiveUnit' | translate }}
+          </span>
+        </a>
 
-    <section class="mid-row">
-      <div class="panel panel--activity">
-        <h2 class="panel-title">{{ 'dashboard.recentActivityTitle' | translate }}</h2>
-        @if (overview.recentActivity.length) {
-          <ul class="activity-list">
-            @for (a of overview.recentActivity; track a.title + a.at) {
-              <li class="activity-row">
-                <span class="activity-icon">{{ activityIcon(a.kind) }}</span>
-                <div class="activity-body">
-                  <span class="activity-title">{{ a.title }} — {{ a.subtitle }}</span>
-                  <span class="activity-date">{{ a.at | date: 'dd/MM/yyyy' }}</span>
+        <a
+          routerLink="/spare-parts/disbursements"
+          class="stat-card stat-card--peach"
+          [class.stat-card--alert]="overview.counts.disbursementRequested > 0"
+        >
+          <span class="stat-value">{{ overview.counts.disbursementRequested }}</span>
+          <span class="stat-label">{{ 'dashboard.statPendingPartsRequests' | translate }}</span>
+          <span class="stat-delta" [class]="deltaClass(overview.deltas.disbursements)">
+            {{ formatDelta(overview.deltas.disbursements) }}
+            <span class="delta-hint">{{ 'dashboard.vsPrevPeriod' | translate }}</span>
+          </span>
+        </a>
+
+        <a
+          routerLink="/spare-parts/catalog"
+          class="stat-card stat-card--lavender"
+          [class.stat-card--alert]="overview.counts.partsBelowReorder > 0"
+        >
+          <span class="stat-value">{{ overview.counts.partsBelowReorder }}</span>
+          <span class="stat-label">{{ 'dashboard.statPartsBelowReorder' | translate }}</span>
+          <span class="stat-hint">
+            <b>{{ overview.counts.spareParts }}</b> {{ 'dashboard.statInCatalog' | translate }}
+          </span>
+        </a>
+
+        <a routerLink="/overhauls" class="stat-card stat-card--pink">
+          <span class="stat-value">{{ overview.counts.overhaulsOpen }}</span>
+          <span class="stat-label">{{ 'dashboard.overhaulsInProgressLabel' | translate }}</span>
+          <span class="stat-hint">
+            <b>{{ overview.counts.overhaulsTotal }}</b> {{ 'dashboard.statTotal' | translate }}
+          </span>
+        </a>
+
+        <a
+          routerLink="/vehicles"
+          class="stat-card stat-card--mint"
+          [class.stat-card--alert]="overview.counts.licensesOverdue > 0"
+        >
+          <span class="stat-value">{{ overview.counts.licensesOverdue }}</span>
+          <span class="stat-label">{{ 'dashboard.statLicensesOverdue' | translate }}</span>
+          <span class="stat-hint">
+            <b>{{ overview.licensesDueThisMonth.length }}</b>
+            {{ 'dashboard.licensesDueThisMonthHint' | translate }}
+          </span>
+        </a>
+
+        <div class="stat-card">
+          <span class="stat-value">{{ formatCurrency(overview.counts.spendPeriod) }}</span>
+          <span class="stat-label">{{ 'dashboard.statSpendPeriod' | translate }}</span>
+          <span class="stat-delta" [class]="deltaClass(overview.deltas.spend)">
+            {{ formatDelta(overview.deltas.spend) }}
+            <span class="delta-hint">{{ 'dashboard.vsPrevPeriod' | translate }}</span>
+          </span>
+        </div>
+
+        <div class="stat-card stat-card--gauge">
+          <app-fleet-gauge
+            [value]="fleetHealthPercent"
+            [label]="'dashboard.vehiclesActiveLabel' | translate"
+          ></app-fleet-gauge>
+          <p class="kpi-subline">
+            {{ overview.counts.vehiclesActive }}/{{ overview.counts.vehicles }}
+            {{ 'dashboard.vehiclesActiveUnit' | translate }}
+          </p>
+        </div>
+      </section>
+
+      <section class="mid-row">
+        <div class="panel panel--activity">
+          <h2 class="panel-title">{{ 'dashboard.recentActivityTitle' | translate }}</h2>
+          @if (overview.recentActivity.length) {
+            <ul class="activity-list">
+              @for (a of overview.recentActivity; track a.kind + a.at + a.subtitle) {
+                <li class="parent-activity-row">
+                  <div class="activity-row">
+                    <span class="activity-icon">{{ activityIcon(a.kind) }}</span>
+                    <h2 class="activity-head-title">{{ activityKindLabel(a.kind) }}</h2>
+                  </div>
+                  <div class="activity-row">
+                    <div class="activity-body">
+                      <span class="activity-title">{{ activityTitle(a) }} — {{ a.subtitle }}</span>
+                      <span class="activity-date">{{ a.at | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="panel-empty">{{ 'dashboard.noRecentActivity' | translate }}</p>
+          }
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">{{ 'dashboard.vehicleStatusTitle' | translate }}</h2>
+          <div class="bar-list">
+            @for (s of overview.vehicleStatus; track s.status) {
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>{{ s.status | translate }}</span>
+                  <span class="bar-count"
+                    >{{ s.count }} · {{ statusPercent(overview.vehicleStatus, s.status) }}%</span
+                  >
                 </div>
-              </li>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill bar-fill--green"
+                    [style.width.%]="statusPercent(overview.vehicleStatus, s.status)"
+                  ></div>
+                </div>
+              </div>
             }
-          </ul>
-        } @else {
-          <p class="panel-empty">{{ 'dashboard.noRecentActivity' | translate }}</p>
-        }
-      </div>
-
-      <div class="panel">
-        <h2 class="panel-title">{{ 'dashboard.partsRequestStatusTitle' | translate }}</h2>
-        <div class="bar-list">
-          @for (s of overview.disbursementStatus; track s.status) {
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>{{ s.status | translate }}</span>
-                <span class="bar-count"
-                  >{{ s.count }} · {{ statusPercent(overview.disbursementStatus, s.status) }}%</span
-                >
-              </div>
-              <div class="bar-track">
-                <div
-                  class="bar-fill"
-                  [style.width.%]="statusPercent(overview.disbursementStatus, s.status)"
-                ></div>
-              </div>
-            </div>
-          }
-          @if (!overview.disbursementStatus.length) {
-            <p class="panel-empty">{{ 'dashboard.noPartsRequests' | translate }}</p>
-          }
-        </div>
-      </div>
-
-      <div class="panel">
-        <h2 class="panel-title">{{ 'dashboard.vehicleStatusTitle' | translate }}</h2>
-        <div class="bar-list">
-          @for (s of overview.vehicleStatus; track s.status) {
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>{{ s.status | translate }}</span>
-                <span class="bar-count"
-                  >{{ s.count }} · {{ statusPercent(overview.vehicleStatus, s.status) }}%</span
-                >
-              </div>
-              <div class="bar-track">
-                <div
-                  class="bar-fill bar-fill--green"
-                  [style.width.%]="statusPercent(overview.vehicleStatus, s.status)"
-                ></div>
-              </div>
-            </div>
-          }
-          @if (!overview.vehicleStatus.length) {
-            <p class="panel-empty">{{ 'dashboard.noVehicleStatus' | translate }}</p>
-          }
-        </div>
-      </div>
-    </section>
-
-    <section class="analytics-row">
-      <div class="panel panel--chart">
-        <h2 class="panel-title">{{ 'dashboard.costByDepartmentTitle' | translate }}</h2>
-        <div class="chart-canvas-wrap">
-          <canvas #costChartCanvas></canvas>
-        </div>
-        @if (!departmentCostChartData.length) {
-          <p class="panel-empty">{{ 'dashboard.noCostsYet' | translate }}</p>
-        }
-      </div>
-
-      <div class="panel panel--list">
-        <h2 class="panel-title">{{ 'dashboard.technicianPerformanceTitle' | translate }}</h2>
-        <p class="panel-subtitle">{{ 'dashboard.rankedByBounceRate' | translate }}</p>
-        @if (overview.technicianKpis.length) {
-          <ol class="technician-list">
-            @for (t of overview.technicianKpis; track t.technician_id) {
-              <li class="technician-row">
-                <span class="technician-name">{{ t.full_name }}</span>
-                <span class="technician-stats">
-                  <span class="stat">
-                    <span class="stat-value">{{ t.work_orders_count }}</span>
-                    <span class="stat-label">{{ 'dashboard.statJobs' | translate }}</span>
-                  </span>
-                  <span class="stat">
-                    <span class="stat-value">{{ (t.bounce_rate * 100).toFixed(0) }}%</span>
-                    <span class="stat-label">{{ 'dashboard.statBounce' | translate }}</span>
-                  </span>
-                </span>
-              </li>
+            @if (!overview.vehicleStatus.length) {
+              <p class="panel-empty">{{ 'dashboard.noVehicleStatus' | translate }}</p>
             }
-          </ol>
-        } @else {
-          <p class="panel-empty">{{ 'dashboard.noTechnicianActivity' | translate }}</p>
-        }
-      </div>
-    </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="analytics-row">
+        <div class="panel panel--chart">
+          <h2 class="panel-title">{{ 'dashboard.costByDepartmentTitle' | translate }}</h2>
+          <div class="chart-canvas-wrap">
+            <canvas #costChartCanvas></canvas>
+          </div>
+          @if (!departmentCostChartData.length) {
+            <p class="panel-empty">{{ 'dashboard.noCostsYet' | translate }}</p>
+          }
+        </div>
+        <div class="panel panel--list">
+          <h2 class="panel-title">{{ 'dashboard.technicianPerformanceTitle' | translate }}</h2>
+          <p class="panel-subtitle">{{ 'dashboard.rankedByBounceRate' | translate }}</p>
+          @if (overview.technicianKpis.length) {
+            <ol class="technician-list">
+              @for (t of overview.technicianKpis; track t.technician_id) {
+                <li class="technician-row">
+                  <span class="technician-name">{{ t.full_name }}</span>
+                  <span class="technician-stats">
+                    <span class="stat">
+                      <span class="stat-value">{{ t.work_orders_count }}</span>
+                      <span class="stat-label">{{ 'dashboard.statJobs' | translate }}</span>
+                    </span>
+                    <span class="stat">
+                      <span class="stat-value">{{ (t.bounce_rate * 100).toFixed(0) }}%</span>
+                      <span class="stat-label">{{ 'dashboard.statBounce' | translate }}</span>
+                    </span>
+                  </span>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="panel-empty">{{ 'dashboard.noTechnicianActivity' | translate }}</p>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ========== MAINTENANCE ========== -->
+    @if (activeTab === 'maintenance') {
+      <section class="stat-grid stat-grid--3">
+        <div class="stat-card stat-card--green">
+          <span class="stat-value">{{ overview.counts.workOrdersOpen }}</span>
+          <span class="stat-label">{{ 'dashboard.statOpenWorkOrders' | translate }}</span>
+        </div>
+        <div class="stat-card stat-card--pink">
+          <span class="stat-value">{{ overview.counts.overhaulsOpen }}</span>
+          <span class="stat-label">{{ 'dashboard.overhaulsInProgressLabel' | translate }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ overview.deltas.workOrders.current }}</span>
+          <span class="stat-label">{{ 'dashboard.statWorkOrdersPeriod' | translate }}</span>
+          <span class="stat-delta" [class]="deltaClass(overview.deltas.workOrders)">
+            {{ formatDelta(overview.deltas.workOrders) }}
+          </span>
+        </div>
+      </section>
+
+      <section class="mid-row">
+        <div class="panel panel--wide">
+          <h2 class="panel-title">{{ 'dashboard.openWorkOrdersTitle' | translate }}</h2>
+          @if (overview.openWorkOrders.length) {
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th>{{ 'dashboard.colPlate' | translate }}</th>
+                  <th>{{ 'dashboard.colType' | translate }}</th>
+                  <th>{{ 'dashboard.colOpened' | translate }}</th>
+                  <th>{{ 'dashboard.colAgeDays' | translate }}</th>
+                  <th>{{ 'dashboard.colFlags' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (wo of overview.openWorkOrders; track wo.id) {
+                  <tr>
+                    <td>{{ wo.plate_number }}</td>
+                    <td>{{ 'maintenance.type.' + wo.maintenance_type | translate }}</td>
+                    <td>{{ wo.opened_at | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ wo.age_days | number: '1.0-0' }}</td>
+                    <td>
+                      @if (wo.is_premature_failure) {
+                        <span class="badge badge--warn">{{
+                          'dashboard.flagPremature' | translate
+                        }}</span>
+                      }
+                      @if (wo.is_under_warranty) {
+                        <span class="badge">{{ 'dashboard.flagWarranty' | translate }}</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="panel-empty">{{ 'dashboard.noOpenWorkOrders' | translate }}</p>
+          }
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">
+            {{ 'dashboard.overhaulsByStageTitle' | translate }} ({{
+              overview.overhaulsByStage.length
+            }})
+          </h2>
+          <div class="bar-list">
+            @for (s of overview.overhaulsByStage; track s.stage) {
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>{{ s.stage | translate }}</span>
+                  <span class="bar-count"
+                    >{{ s.count }} ({{ (s.count * 100) / overview.overhaulsByStage.length }}%)</span
+                  >
+                </div>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill"
+                    [style.width.%]="(s.count * 100) / overview.overhaulsByStage.length"
+                  ></div>
+                </div>
+              </div>
+            }
+            @if (!overview.overhaulsByStage.length) {
+              <p class="panel-empty">{{ 'dashboard.noOverhaulsOpen' | translate }}</p>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ========== PARTS ========== -->
+    @if (activeTab === 'parts') {
+      <section class="stat-grid stat-grid--3">
+        <div
+          class="stat-card stat-card--peach"
+          [class.stat-card--alert]="overview.counts.disbursementRequested > 0"
+        >
+          <span class="stat-value">{{ overview.counts.disbursementRequested }}</span>
+          <span class="stat-label">{{ 'dashboard.statPendingPartsRequests' | translate }}</span>
+        </div>
+        <div
+          class="stat-card stat-card--lavender"
+          [class.stat-card--alert]="overview.counts.partsBelowReorder > 0"
+        >
+          <span class="stat-value">{{ overview.counts.partsBelowReorder }}</span>
+          <span class="stat-label">{{ 'dashboard.statPartsBelowReorder' | translate }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ overview.deltas.disbursements.current }}</span>
+          <span class="stat-label">{{ 'dashboard.statRequestsPeriod' | translate }}</span>
+          <span class="stat-delta" [class]="deltaClass(overview.deltas.disbursements)">
+            {{ formatDelta(overview.deltas.disbursements) }}
+          </span>
+        </div>
+      </section>
+
+      <section class="mid-row">
+        <div class="panel">
+          <h2 class="panel-title">{{ 'dashboard.partsRequestStatusTitle' | translate }}</h2>
+          <div class="bar-list">
+            @for (s of overview.disbursementStatus; track s.status) {
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>{{ s.status | translate }}</span>
+                  <span class="bar-count"
+                    >{{ s.count }} ·
+                    {{ statusPercent(overview.disbursementStatus, s.status) }}%</span
+                  >
+                </div>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill"
+                    [style.width.%]="statusPercent(overview.disbursementStatus, s.status)"
+                  ></div>
+                </div>
+              </div>
+            }
+            @if (!overview.disbursementStatus.length) {
+              <p class="panel-empty">{{ 'dashboard.noPartsRequests' | translate }}</p>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ========== FINANCE ========== -->
+    @if (activeTab === 'finance') {
+      <section class="stat-grid stat-grid--3">
+        <div class="stat-card">
+          <span class="stat-value">{{ formatCurrency(overview.counts.spendPeriod) }}</span>
+          <span class="stat-label">{{ 'dashboard.statSpendPeriod' | translate }}</span>
+          <span class="stat-delta" [class]="deltaClass(overview.deltas.spend)">
+            {{ formatDelta(overview.deltas.spend) }}
+          </span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ overview.checksByStage.length }}</span>
+          <span class="stat-label">{{ 'dashboard.statCheckStages' | translate }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ overview.pettyCashStatus.length }}</span>
+          <span class="stat-label">{{ 'dashboard.statPettyCashStatuses' | translate }}</span>
+        </div>
+      </section>
+
+      <section class="mid-row">
+        <div class="panel">
+          <h2 class="panel-title">{{ 'dashboard.checksByStageTitle' | translate }}</h2>
+          <div class="bar-list">
+            @for (s of overview.checksByStage; track s.stage) {
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>{{ s.stage }}</span>
+                  <span class="bar-count"
+                    >{{ s.count }} · {{ formatCurrency(s.total_amount || 0) }}</span
+                  >
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" [style.width.%]="s.count * 8"></div>
+                </div>
+              </div>
+            }
+            @if (!overview.checksByStage.length) {
+              <p class="panel-empty">{{ 'dashboard.noChecks' | translate }}</p>
+            }
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-title">{{ 'dashboard.pettyCashTitle' | translate }}</h2>
+          <div class="bar-list">
+            @for (s of overview.pettyCashStatus; track s.stage) {
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>{{ s.stage }}</span>
+                  <span class="bar-count"
+                    >{{ s.count }} · {{ formatCurrency(s.total_amount || 0) }}</span
+                  >
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill bar-fill--green" [style.width.%]="s.count * 8"></div>
+                </div>
+              </div>
+            }
+            @if (!overview.pettyCashStatus.length) {
+              <p class="panel-empty">{{ 'dashboard.noPettyCash' | translate }}</p>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ========== FLEET ========== -->
+    @if (activeTab === 'fleet') {
+      <section class="stat-grid stat-grid--3">
+        <div class="stat-card stat-card--blue">
+          <span class="stat-value">{{ overview.counts.vehiclesActive }}</span>
+          <span class="stat-label">{{ 'dashboard.vehiclesActiveLabel' | translate }}</span>
+        </div>
+        <div class="stat-card" [class.stat-card--alert]="overview.openMissions.length > 0">
+          <span class="stat-value">{{ overview.openMissions.length }}</span>
+          <span class="stat-label">{{ 'dashboard.statOpenMissions' | translate }}</span>
+        </div>
+        <div class="stat-card" [class.stat-card--alert]="overview.openLodgings.length > 0">
+          <span class="stat-value">{{ overview.openLodgings.length }}</span>
+          <span class="stat-label">{{ 'dashboard.statOpenLodgings' | translate }}</span>
+        </div>
+      </section>
+
+      <section class="mid-row">
+        <div class="panel">
+          <h2 class="panel-title">{{ 'dashboard.vehicleStatusTitle' | translate }}</h2>
+          <div class="bar-list">
+            @for (s of overview.vehicleStatus; track s.status) {
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>{{ s.status | translate }}</span>
+                  <span class="bar-count"
+                    >{{ s.count }} · {{ statusPercent(overview.vehicleStatus, s.status) }}%</span
+                  >
+                </div>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill bar-fill--green"
+                    [style.width.%]="statusPercent(overview.vehicleStatus, s.status)"
+                  ></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-title">{{ 'dashboard.openMissionsTitle' | translate }}</h2>
+          <app-data-table
+            [columns]="missionColumns"
+            [rows]="missionRows"
+            [total]="missionTotal"
+            [loading]="loading"
+            [searchable]="true"
+            [searchPlaceholder]="'common.search' | translate"
+            [emptyMessage]="'dashboard.noOpenMissions' | translate"
+            [pageSize]="10"
+            (queryChange)="onMissionQueryChange($event)"
+          ></app-data-table>
+        </div>
+      </section>
+
+      <section class="mid-row">
+        <div class="panel panel--wide">
+          <h2 class="panel-title">{{ 'dashboard.openLodgingsTitle' | translate }}</h2>
+          <app-data-table
+            [columns]="lodgingColumns"
+            [rows]="lodgingRows"
+            [total]="lodgingTotal"
+            [loading]="loading"
+            [searchable]="true"
+            [searchPlaceholder]="'common.search' | translate"
+            [emptyMessage]="'dashboard.noOpenLodgings' | translate"
+            [pageSize]="10"
+            (queryChange)="onLodgingQueryChange($event)"
+          ></app-data-table>
+        </div>
+      </section>
+    }
   </div>
 </div>

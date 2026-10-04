@@ -362,7 +362,8 @@ a.stat-card:hover {
 
 .mid-row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr;
+  // grid-template-columns: 1.2fr 1fr 1fr;
+  grid-template-columns: 1.2fr 1.2fr;
   gap: 1rem;
 }
 @media (max-width: 960px) {
@@ -379,13 +380,25 @@ a.stat-card:hover {
   flex-direction: column;
   gap: 0.5rem;
 }
+.parent-activity-row {
+  display: flex;
+  flex-direction: column;
+  background: var(--fleet-bg);
+  border-radius: 0.5rem;
+}
 .activity-row {
   display: flex;
   gap: 0.65rem;
   align-items: flex-start;
-  padding: 0.55rem 0.65rem;
-  border-radius: 0.5rem;
-  background: var(--fleet-bg);
+  // padding: 0.55rem 0.65rem;
+  padding: 0.25rem;
+}
+.activity-head-title {
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .activity-icon {
   font-size: 1rem;
@@ -438,4 +451,182 @@ a.stat-card:hover {
 }
 .bar-fill--green {
   background: var(--fleet-green);
+}
+
+/* Last updated + partial section warnings */
+.dashboard-updated {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--fleet-ink-muted);
+}
+
+.dashboard-section-warn {
+  margin: 0 1.25rem 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: #fff8e6;
+  border: 1px solid #f0d78c;
+  color: #6b5a1e;
+  font-size: 0.85rem;
+}
+
+.dashboard-section-warn ul {
+  margin: 0.4rem 0 0;
+  padding-inline-start: 1.25rem;
+}
+
+/* Highlight actionable cards that need attention */
+.stat-card--alert {
+  box-shadow: 0 0 0 2px rgba(220, 80, 60, 0.35);
+}
+
+.stat-card--alert .stat-value {
+  color: #c0392b;
+}
+
+/* Filters */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  padding: 0.75rem 1.25rem;
+  margin: 0 0 0.5rem;
+  background: var(--fleet-surface, #fff);
+  border-bottom: 1px solid var(--fleet-line, #e5e7eb);
+}
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 140px;
+}
+.filter-field--dept {
+  min-width: 220px;
+  flex: 1;
+}
+.filter-field label {
+  font-size: 0.75rem;
+  color: var(--fleet-ink-muted, #6b7280);
+}
+.filter-field input[type='date'] {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--fleet-line, #d1d5db);
+  border-radius: 6px;
+  font: inherit;
+}
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+.btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.btn--primary {
+  background: var(--fleet-primary, #1e3a5f);
+  color: #fff;
+}
+.btn--ghost {
+  background: transparent;
+  border-color: var(--fleet-line, #d1d5db);
+}
+
+/* Tabs */
+.dashboard-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--fleet-line, #e5e7eb);
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 0.65rem 1rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 500;
+  color: var(--fleet-ink-muted, #6b7280);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.tab-btn--active {
+  color: var(--fleet-primary, #1e3a5f);
+  border-bottom-color: var(--fleet-primary, #1e3a5f);
+}
+
+/* MoM delta */
+.stat-delta {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+.delta--up {
+  color: #c0392b;
+}
+.delta--down {
+  color: #1e7a46;
+}
+.delta--flat {
+  color: var(--fleet-ink-muted, #6b7280);
+}
+.delta-hint {
+  font-weight: 400;
+  opacity: 0.8;
+  margin-inline-start: 0.25rem;
+}
+
+.period-hint {
+  font-size: 0.8rem;
+  color: var(--fleet-amber, #6b7280);
+  margin: 0.25rem 0 0;
+}
+
+.stat-grid--3 {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.panel--wide {
+  grid-column: 1 / -1;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.dash-table th,
+.dash-table td {
+  text-align: start;
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid var(--fleet-line, #e5e7eb);
+}
+.dash-table th {
+  font-weight: 600;
+  color: var(--fleet-ink-muted, #6b7280);
+  font-size: 0.75rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  background: #e8eef5;
+  margin-inline-end: 0.25rem;
+}
+.badge--warn {
+  background: #fde8e6;
+  color: #c0392b;
+}
+
+.alert-sub {
+  font-size: 0.85em;
+  opacity: 0.85;
 }

@@ -12,6 +12,7 @@ import {
   Vehicle,
   WorkOrder,
   OilAndFilterChange,
+  VehicleMission,
 } from '../../core/models/fleet.models';
 
 // =====================================================================
@@ -69,21 +70,10 @@ export const VEHICLE_IMPORT_MAP: ColumnMapping<VehicleImportRow> = {
     required: true,
   },
   operating_department_name: {
-    headers: [
-      'Operating Dept',
-      'Operating Department',
-      'الإدارة المشغلة',
-      'الإدارة',
-    ],
+    headers: ['Operating Dept', 'Operating Department', 'الإدارة المشغلة', 'الإدارة'],
   },
   maintenance_workshop_name: {
-    headers: [
-      'Repair Workshop',
-      'Maintenance Workshop',
-      'ورشة الصيانة',
-      'ورشة الإصلاح',
-      'الورشة',
-    ],
+    headers: ['Repair Workshop', 'Maintenance Workshop', 'ورشة الصيانة', 'ورشة الإصلاح', 'الورشة'],
   },
   garage_location_name: {
     headers: ['Garage Location', 'Garage', 'موقع الجراج', 'الجراج', 'الموقف'],
@@ -105,13 +95,7 @@ export const VEHICLE_IMPORT_MAP: ColumnMapping<VehicleImportRow> = {
     headers: ['Fuel Type', 'Fuel', 'نوع الوقود', 'الوقود'],
   },
   engine_number: {
-    headers: [
-      'Engine No.',
-      'Engine Number',
-      'Engine Serial Number',
-      'رقم المحرك',
-      'المحرك',
-    ],
+    headers: ['Engine No.', 'Engine Number', 'Engine Serial Number', 'رقم المحرك', 'المحرك'],
   },
   odometer_km: {
     headers: ['Odometer', 'Odometer (KM)', 'قراءة العداد', 'العداد'],
@@ -125,44 +109,21 @@ export const VEHICLE_IMPORT_MAP: ColumnMapping<VehicleImportRow> = {
     type: 'boolean',
   },
   last_odometer_reading_date: {
-    headers: [
-      'Last Odometer Date',
-      'Last Reading Date',
-      'تاريخ آخر قراءة',
-    ],
+    headers: ['Last Odometer Date', 'Last Reading Date', 'تاريخ آخر قراءة'],
     type: 'date',
   },
   custodian_name: {
-    headers: [
-      'Custodian Name',
-      'Custodian',
-      'صاحب العهدة',
-      'اسم العهدة',
-      'العهدة',
-    ],
+    headers: ['Custodian Name', 'Custodian', 'صاحب العهدة', 'اسم العهدة', 'العهدة'],
   },
   custodian_phone: {
-    headers: [
-      'Custodian Phone',
-      'هاتف العهدة',
-      'تليفون العهدة',
-      'هاتف صاحب العهدة',
-    ],
+    headers: ['Custodian Phone', 'هاتف العهدة', 'تليفون العهدة', 'هاتف صاحب العهدة'],
   },
   clutch_kit_last_change_date: {
-    headers: [
-      'Clutch Kit Last Change Date',
-      'Last Clutch Change',
-      'تاريخ آخر تغيير كلاتش',
-    ],
+    headers: ['Clutch Kit Last Change Date', 'Last Clutch Change', 'تاريخ آخر تغيير كلاتش'],
     type: 'date',
   },
   clutch_kit_last_change_odometer: {
-    headers: [
-      'Clutch Kit Last Change Odometer',
-      'Clutch Odometer',
-      'عداد آخر تغيير كلاتش',
-    ],
+    headers: ['Clutch Kit Last Change Odometer', 'Clutch Odometer', 'عداد آخر تغيير كلاتش'],
     type: 'number',
   },
   inactive_reason: {
@@ -233,7 +194,9 @@ export function resolveVehicleForeignKeys(
     const status = allowedStatus.has(statusRaw) ? statusRaw : 'active';
 
     const unitRaw = (row.odometer_unit || '').trim().toLowerCase();
-    const odometer_unit = (allowedOdometerUnit.has(unitRaw) ? unitRaw : 'km') as Vehicle['odometer_unit'];
+    const odometer_unit = (
+      allowedOdometerUnit.has(unitRaw) ? unitRaw : 'km'
+    ) as Vehicle['odometer_unit'];
 
     const garageId =
       row.garage_location_name?.trim() && lookups.garageLocationIdByName
@@ -329,7 +292,10 @@ export const WORK_ORDER_IMPORT_MAP: ColumnMapping<WorkOrderImportRow> = {
   repair_types: { headers: ['Repair Type', 'نوع الإصلاح'] },
   maintenance_categories: { headers: ['Maintenance Category', 'فئة الصيانة'] },
   odometer_km_at_service: { headers: ['Odometer', 'قراءة العداد'], type: 'number' },
-  opened_at: { headers: ['Date', 'Opened At', 'Entry Date', 'تاريخ الدخول', 'التاريخ'], type: 'date' },
+  opened_at: {
+    headers: ['Date', 'Opened At', 'Entry Date', 'تاريخ الدخول', 'التاريخ'],
+    type: 'date',
+  },
   closed_at: { headers: ['Closed At', 'Exit Date', 'تاريخ الخروج'], type: 'date' },
 };
 
@@ -650,7 +616,7 @@ export const OVERHAUL_IMPORT_MAP: ColumnMapping<OverhaulImportRow> = {
     required: true,
   },
   machine_shop_name: {
-    headers: ['Machine Shop', 'ورشة العمرة', 'ورشة المكن'],
+    headers: ['Machine Shop', 'ورشة العمرة', 'ورشة الخراطة'],
   },
   entry_date: {
     headers: ['Entry Date', 'تاريخ الدخول'],
@@ -1104,3 +1070,142 @@ export function resolveOilFilterChangeForeignKeys(
 
   return { resolved, unresolved };
 }
+// ---------------------------------------------------------------------
+// Vehicle missions tab import
+// ---------------------------------------------------------------------
+
+export interface VehicleMissionImportRow {
+  plate_number: string;
+  recipient_name: string;
+  recipient_phone: string | null;
+  receiving_department_name: string | null;
+  handover_date: string;
+  odometer_at_handover: number | null;
+  odometer_unit_at_handover: string | null;
+  return_date: string | null;
+  odometer_at_return: number | null;
+  odometer_unit_at_return: string | null;
+  notes: string | null;
+}
+
+export const VEHICLE_MISSION_IMPORT_MAP: ColumnMapping<VehicleMissionImportRow> = {
+  plate_number: { headers: ['Plate Number', 'رقم اللوحة'], required: true },
+  recipient_name: { headers: ['Recipient Name', 'Recipient', 'اسم المستلم'], required: true },
+  recipient_phone: { headers: ['Recipient Phone', 'Phone', 'هاتف المستلم'] },
+  receiving_department_name: {
+    headers: ['Receiving Department', 'Department', 'الإدارة المستلمة', 'الإدارة'],
+  },
+  handover_date: { headers: ['Handover Date', 'تاريخ التسليم'], type: 'date', required: true },
+  odometer_at_handover: {
+    headers: ['Odometer at Handover', 'Odometer Out', 'عداد التسليم'],
+    type: 'number',
+  },
+  odometer_unit_at_handover: {
+    headers: ['Odometer Unit at Handover', 'Odometer Unit', 'وحدة العداد'],
+  },
+  return_date: { headers: ['Return Date', 'تاريخ الرجوع'], type: 'date' },
+  odometer_at_return: {
+    headers: ['Odometer at Return', 'Odometer In', 'عداد الرجوع'],
+    type: 'number',
+  },
+  odometer_unit_at_return: {
+    headers: ['Odometer Unit at Return', 'وحدة عداد الرجوع'],
+  },
+  notes: { headers: ['Notes', 'ملاحظات'] },
+};
+
+const MISSION_ODOMETER_UNIT_ALIASES: Record<string, 'km' | 'hours' | 'other'> = {
+  km: 'km',
+  كم: 'km',
+  hours: 'hours',
+  hour: 'hours',
+  ساعات: 'hours',
+  ساعة: 'hours',
+  other: 'other',
+  أخرى: 'other',
+  اخرى: 'other',
+};
+
+function normalizeMissionOdometerUnit(
+  raw: string | null | undefined,
+): 'km' | 'hours' | 'other' | null {
+  if (!raw?.trim()) return null;
+  const key = raw.trim().toLowerCase();
+  return MISSION_ODOMETER_UNIT_ALIASES[key] || MISSION_ODOMETER_UNIT_ALIASES[raw.trim()] || 'other';
+}
+
+/**
+ * Resolves plate_number -> vehicle_id (required) and optional receiving
+ * department name -> receiving_department_id. Free-text department name is
+ * always stored on receiving_department_name even when no FK match.
+ */
+export function resolveVehicleMissionForeignKeys(
+  rows: VehicleMissionImportRow[],
+  vehicleIdByPlate: Map<string, string>,
+  departmentIdByName?: Map<string, string>,
+): {
+  resolved: Partial<VehicleMission>[];
+  unresolved: { row: VehicleMissionImportRow; reason: string }[];
+} {
+  const resolved: Partial<VehicleMission>[] = [];
+  const unresolved: { row: VehicleMissionImportRow; reason: string }[] = [];
+
+  for (const row of rows) {
+    const vehicleId = vehicleIdByPlate.get(row.plate_number?.trim().toLowerCase());
+    if (!vehicleId) {
+      unresolved.push({ row, reason: `Unknown plate number: "${row.plate_number}"` });
+      continue;
+    }
+    if (!row.recipient_name?.trim()) {
+      unresolved.push({ row, reason: 'Missing recipient name' });
+      continue;
+    }
+    if (!row.handover_date) {
+      unresolved.push({ row, reason: 'Missing handover date' });
+      continue;
+    }
+
+    const deptName = row.receiving_department_name?.trim() || null;
+    let receivingDepartmentId: string | null = null;
+    if (deptName && departmentIdByName) {
+      receivingDepartmentId = departmentIdByName.get(deptName.toLowerCase()) ?? null;
+    }
+
+    resolved.push({
+      vehicle_id: vehicleId,
+      recipient_name: row.recipient_name.trim(),
+      recipient_phone: row.recipient_phone?.trim() || null,
+      receiving_department_id: receivingDepartmentId,
+      receiving_department_name: deptName,
+      handover_date: row.handover_date,
+      odometer_at_handover:
+        row.odometer_at_handover != null && !Number.isNaN(Number(row.odometer_at_handover))
+          ? Number(row.odometer_at_handover)
+          : null,
+      odometer_unit_at_handover: normalizeMissionOdometerUnit(row.odometer_unit_at_handover),
+      return_date: row.return_date || null,
+      odometer_at_return:
+        row.odometer_at_return != null && !Number.isNaN(Number(row.odometer_at_return))
+          ? Number(row.odometer_at_return)
+          : null,
+      odometer_unit_at_return: normalizeMissionOdometerUnit(row.odometer_unit_at_return),
+      notes: row.notes?.trim() || null,
+    });
+  }
+
+  return { resolved, unresolved };
+}
+
+export const VEHICLE_MISSION_IMPORT_TEMPLATE_HEADERS = [
+  'Plate Number',
+  'Recipient Name',
+  'Recipient Phone',
+  'Receiving Department',
+  'Handover Date',
+  'Odometer at Handover',
+  'Odometer Unit at Handover',
+  'Return Date',
+  'Odometer at Return',
+  'Odometer Unit at Return',
+  'Notes',
+];

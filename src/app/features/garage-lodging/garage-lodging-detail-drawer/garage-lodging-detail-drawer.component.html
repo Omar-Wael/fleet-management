@@ -9,7 +9,14 @@
           <span class="mono plate">{{ lodging!.vehicles!.plate_number }}</span>
         }
       </h2>
-      <button type="button" class="icon-btn" (click)="close()" [attr.aria-label]="'common.close' | translate">✕</button>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="close()"
+        [attr.aria-label]="'common.close' | translate"
+      >
+        ✕
+      </button>
     </header>
 
     @if (lodging) {
@@ -22,14 +29,24 @@
             <dd class="mono">{{ lodging.vehicles?.plate_number || '—' }}</dd>
 
             <dt>{{ 'vehicles.vehicleType' | translate }}</dt>
-            <dd>{{ lodging.vehicles?.vehicle_types?.name_ar || lodging.vehicles?.vehicle_types?.name_en || '—' }}</dd>
+            <dd>
+              {{
+                lodging.vehicles?.vehicle_types?.name_ar ||
+                  lodging.vehicles?.vehicle_types?.name_en ||
+                  '—'
+              }}
+            </dd>
 
             <dt>{{ 'vehicles.make' | translate }}</dt>
             <dd>{{ lodging.vehicles?.make || '—' }}</dd>
 
             <dt>{{ 'vehicles.operatingDept' | translate }}</dt>
             <dd>
-              {{ lodging.vehicles?.operating_departments?.name_ar || lodging.vehicles?.operating_departments?.name_en || '—' }}
+              {{
+                lodging.vehicles?.operating_departments?.name_ar ||
+                  lodging.vehicles?.operating_departments?.name_en ||
+                  '—'
+              }}
             </dd>
 
             <dt>{{ 'garageLodging.garage' | translate }}</dt>
@@ -42,26 +59,34 @@
             <dd>{{ lodging.reason }}</dd>
 
             <dt>{{ 'garageLodging.entryDate' | translate }}</dt>
-            <dd>{{ lodging.entry_date | date : 'dd/MM/yyyy' }}</dd>
+            <dd>{{ lodging.entry_date | date: 'dd/MM/yyyy' }}</dd>
 
             <dt>{{ 'garageLodging.exitDate' | translate }}</dt>
             <dd>
               @if (lodging.exit_date) {
-                {{ lodging.exit_date | date : 'dd/MM/yyyy' }}
+                {{ lodging.exit_date | date: 'dd/MM/yyyy' }}
               } @else {
-                <span class="badge badge--warn">{{ 'garageLodging.statusInGarage' | translate }}</span>
+                <span class="badge badge--warn">{{
+                  'garageLodging.statusInGarage' | translate
+                }}</span>
               }
             </dd>
 
             <dt>{{ 'garageLodging.duration' | translate }}</dt>
-            <dd class="mono">{{ lodging.duration_days ?? '—' }}</dd>
+            <dd class="mono">
+              {{
+                lodging.duration_days ?? calculateDuration(lodging.entry_date, lodging.exit_date)
+              }}
+            </dd>
 
             <dt>{{ 'common.status' | translate }}</dt>
             <dd>
               @if (lodging.exit_date) {
                 <span class="badge badge--ok">{{ 'garageLodging.statusClosed' | translate }}</span>
               } @else {
-                <span class="badge badge--warn">{{ 'garageLodging.statusInGarage' | translate }}</span>
+                <span class="badge badge--warn">{{
+                  'garageLodging.statusInGarage' | translate
+                }}</span>
               }
             </dd>
           </dl>
@@ -81,7 +106,9 @@
                 <span class="stat-label">{{ 'garageLodging.visitsThisYear' | translate }}</span>
               </div>
               <div class="stat-card">
-                <span class="stat-value mono">{{ yearStat.total_duration_days_this_year ?? 0 }}</span>
+                <span class="stat-value mono">{{
+                  yearStat.total_duration_days_this_year ?? 0
+                }}</span>
                 <span class="stat-label">{{ 'garageLodging.totalDaysLodged' | translate }}</span>
               </div>
             </div>
@@ -162,14 +189,19 @@
               @for (h of vehicleHistory; track h.id) {
                 <div class="history-item" [class.history-item--current]="h.id === lodging.id">
                   <div class="history-main">
-                    <span class="mono">{{ h.entry_date | date : 'dd/MM/yyyy' }}</span>
+                    <span class="mono">{{ h.entry_date | date: 'dd/MM/yyyy' }}</span>
                     <span class="arrow">→</span>
                     @if (h.exit_date) {
-                      <span class="mono">{{ h.exit_date | date : 'dd/MM/yyyy' }}</span>
+                      <span class="mono">{{ h.exit_date | date: 'dd/MM/yyyy' }}</span>
                     } @else {
-                      <span class="badge badge--warn">{{ 'garageLodging.statusInGarage' | translate }}</span>
+                      <span class="badge badge--warn">{{
+                        'garageLodging.statusInGarage' | translate
+                      }}</span>
                     }
-                    <span class="days mono">({{ h.duration_days ?? '—' }} {{ 'garageLodging.days' | translate }})</span>
+                    <span class="days mono"
+                      >({{ h.duration_days ?? calculateDuration(h.entry_date, h.exit_date) }}
+                      {{ 'garageLodging.days' | translate }})</span
+                    >
                   </div>
                   <div class="history-meta">
                     <span>{{ h.garage_locations?.garage_name || '—' }}</span>
