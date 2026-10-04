@@ -51,6 +51,55 @@ export class EngineFormComponent implements OnInit, OnChanges {
   selectedPartIds: string[] = [];
   selectedVehicleMakes: string[] = [];
 
+  /** Static lookup options for enum / fixed-vocabulary fields */
+  readonly fuelTypeOptions: SearchableSelectOption[] = [
+    { value: 'diesel', label: 'Diesel' },
+    { value: 'petrol_92', label: 'Petrol 92' },
+    { value: 'petrol_95', label: 'Petrol 95' },
+    { value: 'petrol_90', label: 'Petrol 90' },
+    { value: 'gasoline', label: 'Gasoline' },
+    { value: 'hybrid', label: 'Hybrid' },
+    { value: 'electric', label: 'Electric' },
+    { value: 'cng', label: 'CNG' },
+  ];
+
+  readonly camTypeOptions: SearchableSelectOption[] = [
+    { value: 'DOHC', label: 'DOHC' },
+    { value: 'SOHC', label: 'SOHC' },
+    { value: 'OHV', label: 'OHV' },
+  ];
+
+  readonly timingSystemOptions: SearchableSelectOption[] = [
+    { value: 'Chain', label: 'Chain' },
+    { value: 'Belt', label: 'Belt' },
+    { value: 'Gear', label: 'Gear' },
+  ];
+
+  readonly fuelSystemOptions: SearchableSelectOption[] = [
+    { value: 'Carburetor', label: 'Carburetor' },
+    { value: 'MPI', label: 'Multi-Point Injection' },
+    { value: 'GDI', label: 'Direct Injection' },
+    { value: 'Common Rail', label: 'Common Rail' },
+    { value: 'TBI', label: 'Throttle Body' },
+  ];
+
+  readonly materialOptions: SearchableSelectOption[] = [
+    { value: 'Aluminum', label: 'Aluminum' },
+    { value: 'Cast Iron', label: 'Cast Iron' },
+    { value: 'Aluminum / Iron', label: 'Aluminum / Iron' },
+  ];
+
+  readonly headMaterialOptions: SearchableSelectOption[] = [
+    { value: 'Aluminum', label: 'Aluminum' },
+    { value: 'Cast Iron', label: 'Cast Iron' },
+  ];
+
+  readonly coolingTypeOptions: SearchableSelectOption[] = [
+    { value: 'Water', label: 'Water' },
+    { value: 'Air', label: 'Air' },
+    { value: 'Oil', label: 'Oil' },
+  ];
+
   private originalVehicleTypeIds = new Set<string>();
   private originalPartIds = new Set<string>();
   private originalVehicleMakes = new Set<string>();

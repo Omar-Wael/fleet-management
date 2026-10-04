@@ -21,33 +21,45 @@
           <div class="field-grid">
             <label class="field">
               <span>{{ 'engines.serialNumber' | translate }} *</span>
-              <input type="text" formControlName="engine_serial_number" [placeholder]="'engines.serialPlaceholder' | translate" />
+              <input
+                type="text"
+                formControlName="engine_serial_number"
+                [placeholder]="'engines.serialPlaceholder' | translate"
+              />
             </label>
             <label class="field">
               <span>{{ 'engines.model' | translate }}</span>
-              <input type="text" formControlName="model_name" [placeholder]="'engines.modelPlaceholder' | translate" />
+              <input
+                type="text"
+                formControlName="model_name"
+                [placeholder]="'engines.modelPlaceholder' | translate"
+              />
             </label>
             <label class="field">
               <span>{{ 'engines.manufacturer' | translate }}</span>
-              <input type="text" formControlName="manufacturer" [placeholder]="'engines.manufacturerPlaceholder' | translate" />
+              <input
+                type="text"
+                formControlName="manufacturer"
+                [placeholder]="'engines.manufacturerPlaceholder' | translate"
+              />
             </label>
             <label class="field">
               <span>{{ 'engines.family' | translate }}</span>
-              <input type="text" formControlName="family" [placeholder]="'engines.familyPlaceholder' | translate" />
+              <input
+                type="text"
+                formControlName="family"
+                [placeholder]="'engines.familyPlaceholder' | translate"
+              />
             </label>
             <label class="field">
               <span>{{ 'engines.fuelType' | translate }}</span>
-              <select formControlName="fuel_type">
-                <option value="">{{ 'engines.selectFuelType' | translate }}</option>
-                <option value="diesel">Diesel</option>
-                <option value="petrol_92">Petrol 92</option>
-                <option value="petrol_95">Petrol 95</option>
-                <option value="petrol_90">Petrol 90</option>
-                <option value="gasoline">Gasoline</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="electric">Electric</option>
-                <option value="cng">CNG</option>
-              </select>
+              <app-searchable-select
+                formControlName="fuel_type"
+                [options]="fuelTypeOptions"
+                [placeholder]="'engines.selectFuelType' | translate"
+                [searchPlaceholder]="'common.search' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
             </label>
             <label class="field field--checkbox">
               <input type="checkbox" formControlName="is_in_stock" />
@@ -89,12 +101,13 @@
           <div class="field-grid">
             <label class="field">
               <span>{{ 'engines.camType' | translate }}</span>
-              <select formControlName="cam_type">
-                <option value="">{{ 'engines.selectCamType' | translate }}</option>
-                <option value="DOHC">DOHC</option>
-                <option value="SOHC">SOHC</option>
-                <option value="OHV">OHV</option>
-              </select>
+              <app-searchable-select
+                formControlName="cam_type"
+                [options]="camTypeOptions"
+                [placeholder]="'engines.selectCamType' | translate"
+                [searchPlaceholder]="'common.search' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
             </label>
             <label class="field">
               <span>{{ 'engines.valvesPerCylinder' | translate }}</span>
@@ -106,12 +119,13 @@
             </label>
             <label class="field">
               <span>{{ 'engines.timingSystem' | translate }}</span>
-              <select formControlName="timing_system">
-                <option value="">{{ 'engines.selectTiming' | translate }}</option>
-                <option value="Chain">Chain</option>
-                <option value="Belt">Belt</option>
-                <option value="Gear">Gear</option>
-              </select>
+              <app-searchable-select
+                formControlName="timing_system"
+                [options]="timingSystemOptions"
+                [placeholder]="'engines.selectTiming' | translate"
+                [searchPlaceholder]="'common.search' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
             </label>
           </div>
         </section>
@@ -122,14 +136,13 @@
           <div class="field-grid">
             <label class="field">
               <span>{{ 'engines.fuelSystem' | translate }}</span>
-              <select formControlName="fuel_system">
-                <option value="">{{ 'engines.selectFuelSystem' | translate }}</option>
-                <option value="Carburetor">Carburetor</option>
-                <option value="MPI">Multi-Point Injection</option>
-                <option value="GDI">Direct Injection</option>
-                <option value="Common Rail">Common Rail</option>
-                <option value="TBI">Throttle Body</option>
-              </select>
+              <app-searchable-select
+                formControlName="fuel_system"
+                [options]="fuelSystemOptions"
+                [placeholder]="'engines.selectFuelSystem' | translate"
+                [searchPlaceholder]="'common.search' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
             </label>
             <label class="field">
               <span>{{ 'engines.horsepower' | translate }}</span>
@@ -156,7 +169,11 @@
           <div class="field-grid">
             <label class="field">
               <span>{{ 'engines.compressionRatio' | translate }}</span>
-              <input type="text" formControlName="compression_ratio" [placeholder]="'engines.compressionRatioPlaceholder' | translate" />
+              <input
+                type="text"
+                formControlName="compression_ratio"
+                [placeholder]="'engines.compressionRatioPlaceholder' | translate"
+              />
             </label>
             <label class="field">
               <span>{{ 'engines.compressionPressure' | translate }}</span>
@@ -164,7 +181,11 @@
             </label>
             <label class="field">
               <span>{{ 'engines.firingOrder' | translate }}</span>
-              <input type="text" formControlName="firing_order" [placeholder]="'engines.firingOrderPlaceholder' | translate" />
+              <input
+                type="text"
+                formControlName="firing_order"
+                [placeholder]="'engines.firingOrderPlaceholder' | translate"
+              />
             </label>
           </div>
         </section>
@@ -175,20 +196,23 @@
           <div class="field-grid">
             <label class="field">
               <span>{{ 'engines.blockMaterial' | translate }}</span>
-              <select formControlName="block_material">
-                <option value="">{{ 'engines.selectMaterial' | translate }}</option>
-                <option value="Aluminum">Aluminum</option>
-                <option value="Cast Iron">Cast Iron</option>
-                <option value="Aluminum / Iron">Aluminum / Iron</option>
-              </select>
+              <app-searchable-select
+                formControlName="block_material"
+                [options]="materialOptions"
+                [placeholder]="'engines.selectMaterial' | translate"
+                [searchPlaceholder]="'common.search' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
             </label>
             <label class="field">
               <span>{{ 'engines.headMaterial' | translate }}</span>
-              <select formControlName="head_material">
-                <option value="">{{ 'engines.selectMaterial' | translate }}</option>
-                <option value="Aluminum">Aluminum</option>
-                <option value="Cast Iron">Cast Iron</option>
-              </select>
+              <app-searchable-select
+                formControlName="head_material"
+                [options]="headMaterialOptions"
+                [placeholder]="'engines.selectMaterial' | translate"
+                [searchPlaceholder]="'common.search' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
             </label>
             <label class="field">
               <span>{{ 'engines.lengthMm' | translate }}</span>
@@ -219,16 +243,21 @@
             </label>
             <label class="field">
               <span>{{ 'engines.oilType' | translate }}</span>
-              <input type="text" formControlName="oil_type" [placeholder]="'engines.oilTypePlaceholder' | translate" />
+              <input
+                type="text"
+                formControlName="oil_type"
+                [placeholder]="'engines.oilTypePlaceholder' | translate"
+              />
             </label>
             <label class="field">
               <span>{{ 'engines.coolingType' | translate }}</span>
-              <select formControlName="cooling_type">
-                <option value="">{{ 'engines.selectCooling' | translate }}</option>
-                <option value="Water">Water</option>
-                <option value="Air">Air</option>
-                <option value="Oil">Oil</option>
-              </select>
+              <app-searchable-select
+                formControlName="cooling_type"
+                [options]="coolingTypeOptions"
+                [placeholder]="'engines.selectCooling' | translate"
+                [searchPlaceholder]="'common.search' | translate"
+                [clearable]="true"
+              ></app-searchable-select>
             </label>
           </div>
         </section>
@@ -238,7 +267,11 @@
           <h3 class="section-title">{{ 'common.notes' | translate }}</h3>
           <div class="field-grid">
             <label class="field field--wide">
-              <textarea formControlName="notes" rows="3" [placeholder]="'engines.notesPlaceholder' | translate"></textarea>
+              <textarea
+                formControlName="notes"
+                rows="3"
+                [placeholder]="'engines.notesPlaceholder' | translate"
+              ></textarea>
             </label>
           </div>
         </section>

@@ -12,6 +12,7 @@ export interface VehicleMissionGridRow extends VehicleMission {
     plate_number: string;
     vehicle_types?: { name_ar: string; name_en: string };
     make?: string;
+    fuel_type?: string;
     operating_departments?: { name_ar: string; name_en: string | null };
   };
   operating_departments?: { name_ar: string; name_en: string | null };
@@ -19,7 +20,7 @@ export interface VehicleMissionGridRow extends VehicleMission {
 
 const MISSION_SELECT = `
   *,
-  vehicles (plate_number, vehicle_types (name_ar, name_en), make, operating_departments (name_ar, name_en)),
+  vehicles (plate_number, vehicle_types (name_ar, name_en), make, fuel_type, operating_departments (name_ar, name_en)),
   operating_departments:receiving_department_id (name_ar, name_en)
 `;
 
@@ -88,6 +89,10 @@ export class VehicleMissionsService {
     );
   }
 
+  delete(id: string): Observable<void> {
+    return fromSupabase<void>(this.client.from('vehicle_missions').delete().eq('id', id));
+  }
+
   /** تسجيل رجوع السيارة من المأمورية */
   recordReturn(
     id: string,
@@ -111,5 +116,11 @@ export class VehicleMissionsService {
         .eq('vehicle_id', vehicleId)
         .limit(1),
     ).pipe(switchMap((rows) => of(rows[0] ?? null)));
+  }
+
+  bulkInsert(entries: Partial<VehicleMission>[]): Observable<VehicleMission[]> {
+    return fromSupabase<VehicleMission[]>(
+      this.client.from('vehicle_missions').insert(entries).select(),
+    );
   }
 }

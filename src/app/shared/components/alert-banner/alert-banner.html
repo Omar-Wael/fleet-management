@@ -1,7 +1,7 @@
-@if (licenses.length || maintenance.length) {
+@if (hasAny) {
   <div class="alert-strip">
     @if (licenses.length) {
-      <div class="alert-chip" [class.critical]="licenses.length > 0">
+      <div class="alert-chip" [class.critical]="true">
         <span class="alert-dot"></span>
         <span class="alert-count">{{ licenses.length }}</span>
         <span class="alert-label">
@@ -10,6 +10,16 @@
               ? 'shared.alertBanner.licenseSingular'
               : 'shared.alertBanner.licensePlural') | translate
           }}
+          @if (insuranceCount || inspectionCount) {
+            <span class="alert-sub">
+              @if (insuranceCount) {
+                · {{ insuranceCount }} {{ 'shared.alertBanner.insurance' | translate }}
+              }
+              @if (inspectionCount) {
+                · {{ inspectionCount }} {{ 'shared.alertBanner.inspection' | translate }}
+              }
+            </span>
+          }
         </span>
         <button type="button" class="alert-action" (click)="viewLicenses.emit()">
           {{ 'shared.alertBanner.review' | translate }}

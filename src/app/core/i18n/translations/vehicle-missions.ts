@@ -1,6 +1,13 @@
 import { TranslationEntry } from './types';
 
 export const VEHICLE_MISSIONS_TRANSLATIONS: Record<string, TranslationEntry> = {
+  'vehicleMissions.colDistance': { en: 'Distance', ar: 'المسافة' },
+  'vehicleMissions.colDays': { en: 'Days', ar: 'الأيام' },
+  'vehicleMissions.colReturn': { en: 'Return', ar: 'الرجوع' },
+  'vehicleMissions.colHandover': { en: 'Handover', ar: 'التسليم' },
+  'vehicleMissions.colDepartment': { en: 'Department', ar: 'الإدارة' },
+  'vehicleMissions.colRecipient': { en: 'Recipient', ar: 'المستلم' },
+  'vehicleMissions.colVehicle': { en: 'Vehicle', ar: 'السيارة' },
   'vehicleMissions.title': { en: 'Vehicle Missions', ar: 'المأموريات' },
   'vehicleMissions.shown': { en: 'mission(s) shown', ar: 'مأمورية/مأموريات معروضة' },
   'vehicleMissions.addButton': { en: '+ New Mission', ar: '+ مأمورية جديدة' },
@@ -29,7 +36,10 @@ export const VEHICLE_MISSIONS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'vehicleMissions.recipientPhone': { en: 'Recipient Phone', ar: 'رقم تليفون المستلم' },
   'vehicleMissions.handoverDate': { en: 'Handover Date', ar: 'تاريخ التسليم' },
   'vehicleMissions.returnDate': { en: 'Return Date', ar: 'تاريخ الرجوع' },
-  'vehicleMissions.odometerAtHandover': { en: 'Odometer at Handover', ar: 'قراءة العداد عند التسليم' },
+  'vehicleMissions.odometerAtHandover': {
+    en: 'Odometer at Handover',
+    ar: 'قراءة العداد عند التسليم',
+  },
   'vehicleMissions.odometerAtReturn': { en: 'Odometer at Return', ar: 'قراءة العداد عند الرجوع' },
   'vehicleMissions.odometerUnit': { en: 'Odometer Unit', ar: 'وحدة العداد' },
   'vehicleMissions.unitKm': { en: 'km', ar: 'كم' },
@@ -66,5 +76,37 @@ export const VEHICLE_MISSIONS_TRANSLATIONS: Record<string, TranslationEntry> = {
   'vehicleMissions.returnConfirm': {
     en: 'Record return of this vehicle from mission today?',
     ar: 'تسجيل رجوع هذه السيارة من المأمورية اليوم؟',
+  },
+
+  'vehicleMissions.importedCount': { en: 'Imported', ar: 'تم استيراد' },
+  'vehicleMissions.importedUnit': { en: 'mission(s).', ar: 'مأمورية/مأموريات.' },
+  'vehicleMissions.skippedRows': {
+    en: 'row(s) skipped (unknown plate or missing required fields).',
+    ar: 'صف/صفوف تم تخطيها (لوحة غير معروفة أو حقول مطلوبة ناقصة).',
+  },
+  'vehicleMissions.importNoRows': {
+    en: 'No valid mission rows found to import.',
+    ar: 'لم يتم العثور على صفوف مأموريات صالحة للاستيراد.',
+  },
+
+  'vehicleMissions.view': { en: 'View', ar: 'عرض' },
+
+  'vehicleMissions.viewTitle': { en: 'Mission details', ar: 'تفاصيل المأمورية' },
+
+  'vehicleMissions.sectionVehicle': { en: 'Vehicle', ar: 'السيارة' },
+
+  'vehicleMissions.sectionRecipient': { en: 'Recipient', ar: 'المستلم' },
+
+  'vehicleMissions.sectionMission': { en: 'Mission', ar: 'المأمورية' },
+
+  'vehicleMissions.vehicleType': { en: 'Vehicle type', ar: 'نوع السيارة' },
+
+  'vehicleMissions.vehicleDepartment': { en: 'Vehicle department', ar: 'إدارة السيارة' },
+
+  'vehicleMissions.make': { en: 'Make', ar: 'الماركة' },
+
+  'vehicleMissions.deleteConfirm': {
+    en: 'Delete this mission permanently?',
+    ar: 'حذف هذه المأمورية نهائياً؟',
   },
 };

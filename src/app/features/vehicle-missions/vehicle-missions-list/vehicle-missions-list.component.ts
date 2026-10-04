@@ -3,12 +3,31 @@ import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@
 import { FormsModule } from '@angular/forms';
 
 import { VehicleMissionsFormComponent } from '../vehicle-missions-form/vehicle-missions-form.component';
+import { VehicleMissionsDetailDrawerComponent } from '../vehicle-missions-detail-drawer/vehicle-missions-detail-drawer/vehicle-missions-detail-drawer.component';
 import {
   VehicleMissionsService,
   VehicleMissionGridRow,
 } from '../../../core/services/vehicle-missions.service';
 import { VehiclesService } from '../../../core/services/vehicles.service';
-import { VVehicleMissionSummary, VehicleWithLookups } from '../../../core/models/fleet.models';
+import { LookupsService } from '../../../core/services/lookups.service';
+import {
+  OperatingDepartment,
+  VVehicleMissionSummary,
+  VehicleWithLookups,
+} from '../../../core/models/fleet.models';
+import {
+  exportToExcel,
+  ExcelExportColumn,
+  downloadImportTemplate,
+} from '../../../shared/utils/excel-import-export.util';
+import { downloadGridReportPdf, PdfReportColumn } from '../../../shared/utils/pdf-report.util';
+import { importFileWithMapping } from '../../../shared/utils/document-import.util';
+import {
+  VehicleMissionImportRow,
+  VEHICLE_MISSION_IMPORT_MAP,
+  VEHICLE_MISSION_IMPORT_TEMPLATE_HEADERS,
+  resolveVehicleMissionForeignKeys,
+} from '../../../shared/utils/import-column-maps';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { SharedDataTableComponent } from '../../../shared/components/data-table/data-table.component';
@@ -21,7 +40,13 @@ import {
 @Component({
   selector: 'app-vehicle-missions-list',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, SharedDataTableComponent, VehicleMissionsFormComponent],
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    SharedDataTableComponent,
+    VehicleMissionsFormComponent,
+    VehicleMissionsDetailDrawerComponent,
+  ],
   templateUrl: './vehicle-missions-list.component.html',
   styleUrls: ['./vehicle-missions-list.component.scss'],
   providers: [DatePipe],
@@ -31,6 +56,7 @@ export class VehicleMissionsListComponent implements OnInit {
   rows: VehicleMissionGridRow[] = [];
   total = 0;
   vehicles: VehicleWithLookups[] = [];
+  departments: OperatingDepartment[] = [];
   loading = true;
   loadError: string | null = null;
 
@@ -51,11 +77,21 @@ export class VehicleMissionsListComponent implements OnInit {
   formOpen = false;
   editingMission: VehicleMissionGridRow | null = null;
 
+  drawerOpen = false;
+  viewingMission: VehicleMissionGridRow | null = null;
+
   returningId: string | null = null;
+  deletingId: string | null = null;
+
+  // ---- import state ----
+  importing = false;
+  importError: string | null = null;
+  importSummary: { savedCount: number; unresolvedCount: number } | null = null;
 
   constructor(
     private missionsService: VehicleMissionsService,
     private vehiclesService: VehiclesService,
+    private lookupsService: LookupsService,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
     readonly i18n: TranslationService,
@@ -80,11 +116,27 @@ export class VehicleMissionsListComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+    this.lookupsService.listOperatingDepartments(true).subscribe({
+      next: (deps) => {
+        this.departments = deps;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  /** Days between handover and return (or today if still open). */
+  durationDays(m: VehicleMissionGridRow): number {
+    if (!m.handover_date) return 0;
+    const start = new Date(m.handover_date);
+    start.setHours(0, 0, 0, 0);
+    const end = m.return_date ? new Date(m.return_date) : new Date();
+    end.setHours(0, 0, 0, 0);
+    const ms = end.getTime() - start.getTime();
+    return Math.max(0, Math.round(ms / 86_400_000));
   }
 
   private buildColumns(): void {
     this.columns = [
-      { key: 'index', header: '#', width: '48px', render: (_v, rowNumber) => String(rowNumber) },
       {
         key: 'vehicle',
         header: this.i18n.t('vehicleMissions.vehicle'),
@@ -92,38 +144,33 @@ export class VehicleMissionsListComponent implements OnInit {
         render: (m) => m.vehicles?.plate_number || '—',
       },
       {
-        key: 'department',
-        header: this.i18n.t('vehicleMissions.receivingDepartment'),
+        key: 'vehicle_department',
+        header: this.i18n.t('vehicles.operatingDept'),
         render: (m) =>
-          m.operating_departments?.name_ar ||
-          m.receiving_department_name ||
-          m.operating_departments?.name_en ||
+          m.vehicles?.operating_departments?.name_ar ||
+          m.vehicles?.operating_departments?.name_en ||
           '—',
       },
       {
-        key: 'recipient',
-        header: this.i18n.t('vehicleMissions.recipientName'),
-        render: (m) => m.recipient_name,
+        key: 'vehicle_type',
+        header: this.i18n.t('vehicles.vehicleType'),
+        render: (m) =>
+          m.vehicles?.vehicle_types?.name_ar || m.vehicles?.vehicle_types?.name_en || '—',
       },
       {
-        key: 'phone',
-        header: this.i18n.t('vehicleMissions.recipientPhone'),
-        render: (m) => m.recipient_phone || '—',
+        key: 'receiving_department',
+        header: this.i18n.t('vehicleMissions.receivingDepartment'),
+        render: (m) =>
+          m.receiving_department_name ||
+          m.operating_departments?.name_ar ||
+          m.operating_departments?.name_en ||
+          '—',
       },
       {
         key: 'handover_date',
         header: this.i18n.t('vehicleMissions.handoverDate'),
         sortable: true,
         render: (m) => this.datePipe.transform(m.handover_date, 'dd/MM/yyyy') || '—',
-      },
-      {
-        key: 'odometer_handover',
-        header: this.i18n.t('vehicleMissions.odometerAtHandover'),
-        mono: true,
-        render: (m) =>
-          m.odometer_at_handover != null
-            ? `${m.odometer_at_handover} ${m.odometer_unit_at_handover || ''}`
-            : '—',
       },
       {
         key: 'return_date',
@@ -136,13 +183,8 @@ export class VehicleMissionsListComponent implements OnInit {
         key: 'duration',
         header: this.i18n.t('vehicleMissions.durationDays'),
         mono: true,
-        render: (m) => (m.duration_days != null ? String(m.duration_days) : '—'),
-      },
-      {
-        key: 'distance',
-        header: this.i18n.t('vehicleMissions.distanceTraveled'),
-        mono: true,
-        render: (m) => (m.distance_traveled != null ? String(m.distance_traveled) : '—'),
+        align: 'end',
+        render: (m) => String(this.durationDays(m)),
       },
       {
         key: 'status',
@@ -159,16 +201,35 @@ export class VehicleMissionsListComponent implements OnInit {
         align: 'end',
         actions: () => [
           {
+            label: this.i18n.t('vehicleMissions.view'),
+            icon: '👁️',
+            display: 'icon',
+            variant: 'info',
+            onClick: (row) => this.openView(row),
+          },
+          {
             label: this.i18n.t('vehicleMissions.edit'),
+            icon: '✏️',
+            display: 'icon',
+            variant: 'default',
             onClick: (row) => this.openEdit(row),
           },
           {
-            label: this.i18n.t(
-              this.returningId ? 'vehicleMissions.recordingReturn' : 'vehicleMissions.recordReturn',
-            ),
+            label: this.i18n.t('vehicleMissions.recordReturn'),
+            icon: '↩️',
+            display: 'icon',
+            variant: 'default',
             onClick: (row) => this.recordReturn(row),
             hidden: (row) => !!row.return_date,
             disabled: (row) => this.returningId === row.id,
+          },
+          {
+            label: this.i18n.t('common.delete'),
+            icon: '🗑️️',
+            display: 'icon',
+            variant: 'danger',
+            onClick: (row) => this.deleteMission(row),
+            disabled: (row) => this.deletingId === row.id,
           },
         ],
       },
@@ -242,6 +303,25 @@ export class VehicleMissionsListComponent implements OnInit {
     });
   }
 
+  openView(m: VehicleMissionGridRow): void {
+    this.viewingMission = m;
+    this.drawerOpen = true;
+  }
+
+  onDrawerClosed(): void {
+    this.drawerOpen = false;
+    this.viewingMission = null;
+  }
+
+  onDrawerEdit(m: VehicleMissionGridRow): void {
+    this.onDrawerClosed();
+    this.openEdit(m);
+  }
+
+  onDrawerReturn(m: VehicleMissionGridRow): void {
+    this.recordReturn(m);
+  }
+
   openNew(): void {
     this.editingMission = null;
     this.formOpen = true;
@@ -270,11 +350,209 @@ export class VehicleMissionsListComponent implements OnInit {
       next: () => {
         this.returningId = null;
         this.loadMissions(this.currentQuery);
+        if (this.viewingMission?.id === m.id) {
+          this.drawerOpen = false;
+          this.viewingMission = null;
+        }
       },
       error: () => {
         this.returningId = null;
         this.cdr.markForCheck();
       },
     });
+  }
+
+  deleteMission(m: VehicleMissionGridRow): void {
+    if (!window.confirm(this.i18n.t('vehicleMissions.deleteConfirm'))) return;
+    this.deletingId = m.id;
+    this.missionsService.delete(m.id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        if (this.viewingMission?.id === m.id) {
+          this.drawerOpen = false;
+          this.viewingMission = null;
+        }
+        this.loadMissions(this.currentQuery);
+      },
+      error: (err) => {
+        this.deletingId = null;
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  // -------------------------------------------------------------
+  // Import (Excel / PDF / Word)
+  // -------------------------------------------------------------
+
+  onImportButtonClick(fileInput: HTMLInputElement): void {
+    fileInput.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file) return;
+
+    this.importing = true;
+    this.cdr.markForCheck();
+    this.importError = null;
+    this.importSummary = null;
+
+    const vehicleIdByPlate = new Map(
+      this.vehicles.map((v) => [v.plate_number.trim().toLowerCase(), v.id]),
+    );
+    const departmentIdByName = new Map<string, string>();
+    for (const d of this.departments) {
+      if (d.name_en) departmentIdByName.set(d.name_en.trim().toLowerCase(), d.id);
+      if (d.name_ar) departmentIdByName.set(d.name_ar.trim().toLowerCase(), d.id);
+    }
+
+    importFileWithMapping<VehicleMissionImportRow>(file, VEHICLE_MISSION_IMPORT_MAP)
+      .then((result) => {
+        const { resolved, unresolved } = resolveVehicleMissionForeignKeys(
+          result.valid,
+          vehicleIdByPlate,
+          departmentIdByName,
+        );
+        const totalUnresolved = unresolved.length + result.errors.length;
+
+        if (resolved.length === 0) {
+          this.importing = false;
+          this.importError = this.i18n.t('vehicleMissions.importNoRows');
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.missionsService.bulkInsert(resolved).subscribe({
+          next: (saved) => {
+            this.importing = false;
+            this.importSummary = { savedCount: saved.length, unresolvedCount: totalUnresolved };
+            this.loadMissions(this.currentQuery);
+            this.cdr.markForCheck();
+          },
+          error: (err) => {
+            this.importing = false;
+            this.importError =
+              err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+            this.cdr.markForCheck();
+          },
+        });
+      })
+      .catch((err) => {
+        this.importing = false;
+        this.importError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      });
+  }
+
+  downloadTemplate(): void {
+    downloadImportTemplate(
+      VEHICLE_MISSION_IMPORT_TEMPLATE_HEADERS,
+      'vehicle-missions-import-template',
+      {
+        'Plate Number': this.vehicles[0]?.plate_number || 'e.g. ABC-1234',
+        'Recipient Name': 'John Doe',
+        'Recipient Phone': '01000000000',
+        'Receiving Department': this.departments[0]?.name_en || this.departments[0]?.name_ar || '',
+        'Handover Date': new Date().toISOString().slice(0, 10),
+        'Odometer at Handover': '50000',
+        'Odometer Unit at Handover': 'km',
+        'Return Date': '',
+        'Odometer at Return': '',
+        'Odometer Unit at Return': '',
+        Notes: '',
+      },
+    );
+  }
+
+  exportExcel(): void {
+    this.missionsService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) => exportToExcel(rows, this.excelColumns(), 'vehicle-missions-export'),
+      error: (err) => {
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  exportPdf(): void {
+    this.missionsService.listAllMatching(this.currentQuery).subscribe({
+      next: (rows) =>
+        downloadGridReportPdf(
+          rows,
+          this.pdfColumns(),
+          {
+            title: 'Vehicle Missions Report',
+            subtitle: `Generated ${new Date().toLocaleDateString()}`,
+            orientation: 'landscape',
+          },
+          'vehicle-missions-report',
+        ),
+      error: (err) => {
+        this.loadError =
+          err instanceof Error ? err.message : this.i18n.t('common.somethingWentWrong');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private excelColumns(): ExcelExportColumn<VehicleMissionGridRow>[] {
+    return [
+      { header: 'Plate Number', accessor: (m) => m.vehicles?.plate_number },
+      {
+        header: 'Vehicle Department',
+        accessor: (m) =>
+          m.vehicles?.operating_departments?.name_en || m.vehicles?.operating_departments?.name_ar,
+      },
+      {
+        header: 'Vehicle Type',
+        accessor: (m) => m.vehicles?.vehicle_types?.name_en || m.vehicles?.vehicle_types?.name_ar,
+      },
+      { header: 'Recipient Name', accessor: (m) => m.recipient_name },
+      { header: 'Recipient Phone', accessor: (m) => m.recipient_phone },
+      {
+        header: 'Receiving Department',
+        accessor: (m) =>
+          m.receiving_department_name ||
+          m.operating_departments?.name_en ||
+          m.operating_departments?.name_ar,
+      },
+      { header: 'Handover Date', accessor: (m) => m.handover_date },
+      { header: 'Return Date', accessor: (m) => m.return_date },
+      { header: 'Duration (days)', accessor: (m) => this.durationDays(m) },
+      { header: 'Distance', accessor: (m) => m.distance_traveled },
+      { header: 'Notes', accessor: (m) => m.notes },
+    ];
+  }
+
+  private pdfColumns(): PdfReportColumn<VehicleMissionGridRow>[] {
+    return [
+      { header: 'Plate', accessor: (m) => m.vehicles?.plate_number },
+      {
+        header: 'Vehicle Dept',
+        accessor: (m) =>
+          m.vehicles?.operating_departments?.name_en || m.vehicles?.operating_departments?.name_ar,
+      },
+      {
+        header: 'Type',
+        accessor: (m) => m.vehicles?.vehicle_types?.name_en || m.vehicles?.vehicle_types?.name_ar,
+      },
+      {
+        header: 'Receiving Dept',
+        accessor: (m) =>
+          m.receiving_department_name ||
+          m.operating_departments?.name_en ||
+          m.operating_departments?.name_ar,
+      },
+      { header: 'Handover', accessor: (m) => m.handover_date },
+      { header: 'Return', accessor: (m) => m.return_date },
+      { header: 'Days', accessor: (m) => this.durationDays(m) },
+    ];
   }
 }

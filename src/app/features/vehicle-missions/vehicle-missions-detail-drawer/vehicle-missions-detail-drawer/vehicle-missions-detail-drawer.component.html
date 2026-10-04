@@ -1,0 +1,120 @@
+@if (open && mission) {
+  <div class="drawer-backdrop" (click)="onBackdrop($event)">
+    <aside class="drawer" role="dialog" [attr.aria-label]="'vehicleMissions.viewTitle' | translate">
+      <header class="drawer-header">
+        <div>
+          <h2>{{ 'vehicleMissions.viewTitle' | translate }}</h2>
+          <p class="drawer-subtitle mono">{{ vehicleLabel(mission) }}</p>
+        </div>
+        <button
+          type="button"
+          class="drawer-close"
+          (click)="close()"
+          [attr.aria-label]="'common.close' | translate"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="drawer-body">
+        <section class="profile-section">
+          <h3>{{ 'vehicleMissions.sectionVehicle' | translate }}</h3>
+          <dl class="detail-dl">
+            <dt>{{ 'vehicleMissions.vehicle' | translate }}</dt>
+            <dd class="mono">{{ vehicleLabel(mission) }}</dd>
+
+            <dt>{{ 'vehicles.vehicleType' | translate }}</dt>
+            <dd>{{ vehicleType(mission) }}</dd>
+
+            <dt>{{ 'vehicles.operatingDept' | translate }}</dt>
+            <dd>{{ vehicleDepartment(mission) }}</dd>
+
+            <dt>{{ 'vehicleMissions.make' | translate }}</dt>
+            <dd>{{ mission.vehicles?.make || '—' }}</dd>
+
+            <dt>{{ 'vehicles.fuelType' | translate }}</dt>
+            <dd>{{ (mission.vehicles?.fuel_type | translate) || '—' }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>{{ 'vehicleMissions.sectionRecipient' | translate }}</h3>
+          <dl class="detail-dl">
+            <dt>{{ 'vehicleMissions.recipientName' | translate }}</dt>
+            <dd>{{ mission.recipient_name || '—' }}</dd>
+
+            <dt>{{ 'vehicleMissions.recipientPhone' | translate }}</dt>
+            <dd class="mono">{{ mission.recipient_phone || '—' }}</dd>
+
+            <dt>{{ 'vehicleMissions.receivingDepartment' | translate }}</dt>
+            <dd>{{ receivingDepartment(mission) }}</dd>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <h3>{{ 'vehicleMissions.sectionMission' | translate }}</h3>
+          <dl class="detail-dl">
+            <dt>{{ 'vehicleMissions.handoverDate' | translate }}</dt>
+            <dd>{{ formatDate(mission.handover_date) }}</dd>
+
+            <dt>{{ 'vehicleMissions.odometerAtHandover' | translate }}</dt>
+            <dd class="mono">{{ odometerHandover(mission) }}</dd>
+
+            <dt>{{ 'vehicleMissions.returnDate' | translate }}</dt>
+            <dd>
+              @if (mission.return_date) {
+                {{ formatDate(mission.return_date) }}
+              } @else {
+                <span class="badge badge--warn">{{
+                  'vehicleMissions.statusOpen' | translate
+                }}</span>
+              }
+            </dd>
+
+            <dt>{{ 'vehicleMissions.odometerAtReturn' | translate }}</dt>
+            <dd class="mono">{{ odometerReturn(mission) }}</dd>
+
+            <dt>{{ 'vehicleMissions.durationDays' | translate }}</dt>
+            <dd class="mono">{{ durationDays(mission) }}</dd>
+
+            <dt>{{ 'vehicleMissions.distanceTraveled' | translate }}</dt>
+            <dd class="mono">
+              {{ mission.distance_traveled != null ? mission.distance_traveled : '—' }}
+            </dd>
+
+            <dt>{{ 'common.status' | translate }}</dt>
+            <dd>
+              @if (mission.return_date) {
+                <span class="badge badge--ok">{{
+                  'vehicleMissions.statusReturned' | translate
+                }}</span>
+              } @else {
+                <span class="badge badge--warn">{{
+                  'vehicleMissions.statusOpen' | translate
+                }}</span>
+              }
+            </dd>
+          </dl>
+
+          @if (mission.notes) {
+            <p class="notes-text">{{ mission.notes }}</p>
+          }
+        </section>
+      </div>
+
+      <footer class="drawer-footer">
+        <button type="button" class="btn btn--ghost" (click)="close()">
+          {{ 'common.close' | translate }}
+        </button>
+        @if (!mission.return_date) {
+          <button type="button" class="btn btn--ghost" (click)="recordReturn()">
+            {{ 'vehicleMissions.recordReturn' | translate }}
+          </button>
+        }
+        <button type="button" class="btn btn--primary" (click)="edit()">
+          {{ 'vehicleMissions.edit' | translate }}
+        </button>
+      </footer>
+    </aside>
+  </div>
+}
